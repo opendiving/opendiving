@@ -127,6 +127,11 @@ means — but `docker-compose.yml` resolves both OpenDiving images through
 `v0.3.0` the newest images running against a compose file three releases old. That combination is
 both the one nobody wants and the one hardest to notice, because everything starts.
 
+For the same reason the flag turns off the shortcut that installs the bundle sitting next to the
+script instead of downloading one. That shortcut exists so a change to these files can be tested
+before it is tagged; combined with `--version` it would install a working tree while pinning images
+to a release — a version skew of exactly the kind the flag is there to prevent.
+
 ## The DNS check asks this machine, not a stranger
 
 A domain that does not resolve here is the most common failed install, and the failure surfaces as

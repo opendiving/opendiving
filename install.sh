@@ -207,13 +207,14 @@ trap 'rm -rf "$TMP"' EXIT
 
 # Running from a checkout - or from a directory where the three files are already sitting
 # next to this script - installs those rather than re-fetching a release. It is what makes
-# a change to the bundle testable before it is tagged.
+# a change to the bundle testable before it is tagged, and it is off when --version is
+# given: that flag names a release, and the files next to the script are not one.
 SCRIPT_DIR=""
 if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fi
 
-if [ -n "$SCRIPT_DIR" ] && [ -f "$SCRIPT_DIR/docker-compose.yml" ] && [ -f "$SCRIPT_DIR/Caddyfile" ] && [ -f "$SCRIPT_DIR/example.env" ]; then
+if [ -z "$PIN_VERSION" ] && [ -n "$SCRIPT_DIR" ] && [ -f "$SCRIPT_DIR/docker-compose.yml" ] && [ -f "$SCRIPT_DIR/Caddyfile" ] && [ -f "$SCRIPT_DIR/example.env" ]; then
     step "Using the bundle next to this script"
     say "  $DIM$SCRIPT_DIR$OFF"
     cp "$SCRIPT_DIR/docker-compose.yml" "$SCRIPT_DIR/Caddyfile" "$TMP/"
@@ -370,7 +371,15 @@ else
 fi
 
 while :; do
-    ask EMAIL_FROM_ADDRESS "Address the mail comes from:" "noreply@$DOMAIN"
+    # `noreply@$DOMAIN` is a suggestion to correct, not an answer to inherit: this address
+    # has to be one the relay is allowed to send for, and a wrong one fails hours later in
+    # somebody's spam folder rather than here. Offered where it will be read, required
+    # where it would not be.
+    if [ -n "$TTY" ]; then
+        ask EMAIL_FROM_ADDRESS "Address the mail comes from:" "noreply@$DOMAIN"
+    else
+        ask EMAIL_FROM_ADDRESS "Address the mail comes from:"
+    fi
     EMAIL_FROM_ADDRESS="$(printf '%s' "$EMAIL_FROM_ADDRESS" | sed 's#[[:space:]]##g')"
     if printf '%s' "$EMAIL_FROM_ADDRESS" | grep -qE '^[^@]+@[^@]+\.[^@]+$'; then
         break
