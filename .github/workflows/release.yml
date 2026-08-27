@@ -1,0 +1,142 @@
+name: Release
+
+# The product release. `opendiving-api` and `opendiving-web` each publish their own image
+# on their own `v*` tag; this is the release a self-hoster actually reads, and the only
+# one that ships the three files an install is made of.
+#
+# It runs LAST in the ritual, and that ordering is the whole point: by the time this tag
+# is pushed, both images either exist at this version or they do not, and the guard below
+# can simply look. That check used to be a line in a plan telling a human to eyeball GHCR
+# before publishing, because a per-repo workflow cannot see its sibling - the one failure
+# mode a lockstep release has that neither repo can catch alone.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing vX.Y.Z tag to (re)build the release for"
+        required: true
+
+# `contents: write` opens the release; `packages: read` is what the GHCR inspect needs.
+permissions:
+  contents: write
+  packages: read
+
+# Two runs racing over the same release would fight over its assets. Queue rather than
+# cancel: a cancelled upload can leave a release half-populated.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          persist-credentials: false
+
+      - name: Work out the version
+        id: version
+        env:
+          SOURCE_REF: ${{ inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          # A dispatch may name the tag either way round.
+          SOURCE_REF="${SOURCE_REF#refs/tags/}"
+          # Same shape rule as both image workflows: nothing here can alias a pre-release,
+          # and a tag under `v*` that cannot be resolved to a version has to fail rather
+          # than publish a release naming nothing.
+          if [[ ! "$SOURCE_REF" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            echo "::error::${SOURCE_REF} is not a vX.Y.Z tag."
+            exit 1
+          fi
+          echo "tag=$SOURCE_REF" >> "$GITHUB_OUTPUT"
+          echo "version=${SOURCE_REF#v}" >> "$GITHUB_OUTPUT"
+
+      # Anonymous pulls are enough once both packages are public. While they are private,
+      # this repository has to be granted access to each package (package settings ->
+      # Manage Actions access) or every run fails here with a manifest-unknown that reads
+      # exactly like a missing image.
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # The guard. Both images, at this exact version, each carrying both architectures.
+      #
+      # The architecture half is not padding: a release whose arm64 leg failed to push
+      # still has a `X.Y.Z` tag that resolves, and the first person to find out otherwise
+      # is somebody installing on a Raspberry Pi. `imagetools inspect --raw` on a manifest
+      # list prints the platforms, so this costs one network round trip per image.
+      - name: Both images must exist at this version, on both architectures
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          FAILED=0
+          for NAME in opendiving-api opendiving-web; do
+            REF="ghcr.io/opendiving/${NAME}:${VERSION}"
+            if ! RAW="$(docker buildx imagetools inspect "$REF" --raw 2>&1)"; then
+              echo "::error::${REF} does not exist. Its repository's Publish Image run has not gone green for this version - do that first, then re-run this."
+              FAILED=1
+              continue
+            fi
+            for ARCH in amd64 arm64; do
+              if ! grep -q "\"architecture\": *\"${ARCH}\"" <<<"$RAW"; then
+                echo "::error::${REF} exists but carries no linux/${ARCH}. A half-published manifest is worse than a missing one - re-run that repository's build before releasing."
+                FAILED=1
+              fi
+            done
+            echo "ok: ${REF}"
+          done
+          exit "$FAILED"
+
+      # An install is `curl` of these three files and `docker compose up -d`, so they are
+      # release *artifacts* rather than paths someone has to find and match to a version:
+      # `releases/latest/download/<name>` always names the newest published release, and
+      # `releases/download/vX.Y.Z/<name>` pins one.
+      #
+      # The template is `example.env` and NOT `.env.example`, because **GitHub renames a
+      # release asset whose name starts with a dot**: uploaded as `.env.example` it is
+      # stored as `default.env.example`, the documented URL 404s, and the workflow goes
+      # green anyway. Verified by uploading one; Immich's `example.env` is the same
+      # workaround. Do not "fix" the name.
+      #
+      # Draft, and finished by hand: the headline paragraph and the Breaking section are
+      # what someone deciding whether to upgrade actually reads, and generated notes omit
+      # an empty category rather than saying "None". Assets go up before the notes are
+      # written, so a draft sitting there waiting on its Breaking section already carries
+      # the install.
+      - name: Open a draft release with the install bundle attached
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          ASSETS=(docker-compose.yml Caddyfile example.env)
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists - refreshing its install bundle only."
+            gh release upload "$TAG" "${ASSETS[@]}" --clobber
+            exit 0
+          fi
+          gh release create "$TAG" --draft --generate-notes --title "$TAG" "${ASSETS[@]}"
+
+      - name: Summarise
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          {
+            echo "## Draft release \`$TAG\`"
+            echo
+            echo "Both images verified at \`$VERSION\`, amd64 + arm64."
+            echo
+            echo "Write the headline paragraph and the **Breaking** section, then publish."
+          } >> "$GITHUB_STEP_SUMMARY"

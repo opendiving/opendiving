@@ -1,0 +1,67 @@
+{
+  // What tells anyone a dependency here has moved. "Here" is three third-party image
+  // digests in `docker-compose.yml` and the actions in `.github/workflows/` - this
+  // repository ships no code of its own.
+  //
+  // The other half of the story lives in `opendiving-api` and `opendiving-web`, whose
+  // scheduled Trivy scans watch the images that are *already published*: a base image
+  // grows a CVE weeks after it shipped, with no PR in flight, and no bot that reads a
+  // repository's files can see that. The two are not substitutes.
+  //
+  // **This file is inert until Renovate is enabled on the repository** - it is
+  // configuration for a bot that has to be running somewhere. The Mend-hosted Renovate
+  // GitHub App is installed on the `opendiving` org; a repository added after that
+  // install has to be added to it too, and until it is, the digests below are frozen and
+  // nothing says so.
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+
+  "extends": [
+    "config:recommended",
+
+    // Every routine Renovate PR is titled `chore(deps): ...`, which `pr-title.yml`
+    // accepts. `config:recommended` alone titles production-dependency updates
+    // `fix(deps):`, which files a version bump in the release notes' Fixes section beside
+    // real bug fixes. `vulnerabilityAlerts` below is the deliberate exception: a
+    // vulnerability-driven update *is* a fix, and says so.
+    ":semanticCommitTypeAll(chore)",
+  ],
+
+  "dependencyDashboard": true,
+  "labels": ["dependencies"],
+
+  // Routine updates arrive in one weekly batch rather than whenever an upstream
+  // publishes. Vulnerability-driven ones ignore this entirely - see below.
+  "schedule": ["before 9am on monday"],
+
+  // Load-bearing here, and the opposite of what it means in `opendiving-api`. Nothing in
+  // this repository is ever *built*: an operator pulls, so postgres/redis/caddy are
+  // pinned `tag@sha256:...` and Renovate's job is to renew that pin rather than to
+  // normalise it away. There is no Dockerfile here whose base is deliberately floating,
+  // which is the case `pinDigests: true` would have broken over there.
+  "pinDigests": false,
+
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": ["at any time"],
+    "semanticCommitType": "fix",
+    "labels": ["dependencies", "security"],
+  },
+
+  // GitHub's own alerts have to be switched on in repository settings to reach Renovate.
+  // OSV needs nothing switched on anywhere, so alerting works from the merge of this file
+  // rather than from whenever someone remembers the settings page.
+  "osvVulnerabilityAlerts": true,
+
+  "packageRules": [
+    {
+      // The bundle is not code anyone runs from this repository - it is three files
+      // uploaded as release assets, so a digest bumped here reaches an install on the
+      // next tag and not before. Worth saying in the PR, because the instinct on a
+      // security bump is that merging it shipped it.
+      "matchFileNames": ["docker-compose.yml"],
+      "prBodyNotes": [
+        "This file ships as a **release asset**, so merging this does not reach any existing install: the new digest travels on the next `vX.Y.Z` tag, and only for someone who re-downloads `docker-compose.yml`. See CONTRIBUTING.md, \"Cutting a release\".",
+      ],
+    },
+  ],
+}
