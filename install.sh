@@ -403,7 +403,8 @@ env_quote() {
 }
 
 # In place, one line at a time, because the comments around each setting are the
-# documentation an operator has at 1am - the file is 300 lines of them and 20 of settings.
+# documentation an operator has at 1am - the template is almost all comments and barely any
+# settings, and a tidy generated .env would be the settings without the documentation.
 # The value goes through the environment rather than a `-v` assignment: awk interprets
 # backslash escapes in `-v`, and an SMTP password containing one would arrive mangled.
 set_env() {   # set_env KEY VALUE

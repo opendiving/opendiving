@@ -2,7 +2,7 @@ name: Release
 
 # The product release. `opendiving-api` and `opendiving-web` each publish their own image
 # on their own `v*` tag; this is the release a self-hoster actually reads, and the only
-# one that ships the three files an install is made of.
+# one that ships the files an install is made of.
 #
 # It runs LAST in the ritual, and that ordering is the whole point: by the time this tag
 # is pushed, both images either exist at this version or they do not, and the guard below
@@ -97,10 +97,16 @@ jobs:
           done
           exit "$FAILED"
 
-      # An install is `curl` of these three files and `docker compose up -d`, so they are
+      # An install is `curl` of these files and `docker compose up -d`, so they are
       # release *artifacts* rather than paths someone has to find and match to a version:
       # `releases/latest/download/<name>` always names the newest published release, and
       # `releases/download/vX.Y.Z/<name>` pins one.
+      #
+      # `install.sh` is an asset for the same reason and one more: it downloads the other
+      # three from this same base, so `--version vX.Y.Z` gets a bundle that matches the
+      # script that fetched it. The first release carrying it is the first one where the
+      # documented `curl` of it resolves - like every other asset here, merging changes
+      # nothing for anybody until a tag is pushed.
       #
       # The template is `example.env` and NOT `.env.example`, because **GitHub renames a
       # release asset whose name starts with a dot**: uploaded as `.env.example` it is
@@ -120,7 +126,7 @@ jobs:
           TAG: ${{ steps.version.outputs.tag }}
         run: |
           set -euo pipefail
-          ASSETS=(docker-compose.yml Caddyfile example.env)
+          ASSETS=(install.sh docker-compose.yml Caddyfile example.env)
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists - refreshing its install bundle only."
             gh release upload "$TAG" "${ASSETS[@]}" --clobber

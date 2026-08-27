@@ -1,21 +1,24 @@
 # opendiving
 
 The install bundle and the operator documentation for OpenDiving. Three files an operator
-downloads — `docker-compose.yml`, `Caddyfile`, `example.env` — plus `docs/`, plus the workflow that
-publishes them as release assets.
+downloads — `docker-compose.yml`, `Caddyfile`, `example.env` — plus `install.sh`, which downloads
+those three and writes the `.env`, plus `docs/`, plus the workflow that publishes all four as
+release assets.
 
 `DECISIONS.md` records why things are the way they are, and is the file to read before changing
 anything unfamiliar here — and to append to when you hit a new non-obvious choice.
 
 ## What is different about this repository
 
-- **Nothing is built.** No code, no test suite, no lockfile, no image. The checks that exist are the
-  PR-title workflow and whatever a human reads.
-- **Nothing here reaches an existing install by merging.** The three files ship as **release
+- **Nothing is built.** No lockfile, no image, nothing compiled. `install.sh` is the only
+  executable thing here, and the only automated check on it is `shellcheck` — there is no fixture
+  for "a fresh VPS with Docker, a domain and a mail relay", so the rest is the PR-title workflow and
+  whatever a human reads.
+- **Nothing here reaches an existing install by merging.** The four files ship as **release
   assets**. A digest bumped on `main` is live only for someone who re-downloads
   `docker-compose.yml` after the next `vX.Y.Z` tag. Never write a comment or a doc line implying
   that a merge shipped something.
-- **The audience is holding three files and no repository.** That is why the bundle carries comments
+- **The audience is holding a few files and no repository.** That is why the bundle carries comments
   far longer than code review would tolerate: an operator debugging at 1am has the file, not the
   git history and not this document. Explaining *why* a value is what it is, where they will read
   it, is the job.
@@ -35,6 +38,13 @@ anything unfamiliar here — and to append to when you hit a new non-obvious cho
 - **The three third-party images stay digest-pinned** (`tag@sha256:...`). An operator pulls rather
   than builds, so a floating tag would hand them bytes this bundle was never tested against. This is
   the opposite of the deliberate float on `opendiving-api`'s Dockerfile base, and both are correct.
+- **`install.sh` edits `example.env`; it never writes a `.env` of its own.** The template is
+  mostly comments, and those comments are the documentation the operator has afterwards. A
+  generated twelve-line `.env` would throw away the most useful file in the bundle. Same rule for
+  anything else that touches it: replace the value on a line, keep the line's neighbours.
+- **`install.sh` starts nothing.** It prints `docker compose up -d` and stops. Caddy asks Let's
+  Encrypt for a certificate the moment it comes up, and failed challenges are rate-limited per
+  hostname per hour, so whether DNS is ready is the operator's call to make.
 - **`docs/` is flat.** A `self-hosting/` subdirectory in a repository that is only self-hosting is a
   directory for nothing. The docs cross-link each other as siblings; keep it that way.
 - Semantic **PR titles** — `<type>[(scope)][!]: <description>`, squash-merged, so the title becomes
@@ -63,3 +73,26 @@ refuses before it parses anything else — which is why the copy is part of the 
 assumed prerequisite. It validates shape and interpolation and nothing else. A real change to the bundle — a new service, a changed
 volume, a new required variable — is confirmed by installing it on a throwaway machine by following
 `docs/install.md` verbatim, and every deviation you were tempted to make is a documentation bug.
+
+`install.sh` has two checks, and neither needs a release to exist. The linter, which is what CI
+runs:
+
+```bash
+docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable install.sh
+```
+
+And an actual install into a scratch directory. Run from a checkout the script installs the three
+files sitting next to it instead of downloading a release — which is what makes a bundle change
+testable before it is tagged — and every value it would ask for can be supplied in the environment,
+so it needs no terminal either:
+
+```bash
+mkdir /tmp/od-test && cd /tmp/od-test
+DOMAIN=dives.example.com SMTP_HOST=smtp.example.com SMTP_PORT=587 SMTP_USERNAME= \
+  EMAIL_FROM_ADDRESS=noreply@example.com bash ~/path/to/opendiving/install.sh
+diff <(sed 's/=.*//' ~/path/to/opendiving/example.env) <(sed 's/=.*//' .env)
+docker compose config >/dev/null
+```
+
+That `diff` is the check worth keeping: line for line, the `.env` it writes has to be the template
+with values replaced. Any difference at all means a comment went missing.

@@ -18,18 +18,20 @@ no shutdown, acquisition, or paywall can ever take your logbook with it.
 
 ## Install
 
-Four commands, a domain, and a mail relay.
+One command, a domain, and a mail relay.
 
 ```bash
 mkdir opendiving && cd opendiving
-curl -LO https://github.com/opendiving/opendiving/releases/latest/download/docker-compose.yml
-curl -LO https://github.com/opendiving/opendiving/releases/latest/download/Caddyfile
-curl -Lo .env https://github.com/opendiving/opendiving/releases/latest/download/example.env
-$EDITOR .env          # six values
-docker compose up -d
+curl -LO https://github.com/opendiving/opendiving/releases/latest/download/install.sh
+less install.sh       # it is about to write your .env
+bash install.sh
 ```
 
-Point your domain's DNS record at the machine **before** that last command — the bundled Caddy asks
+It checks Docker, fetches the bundle, generates the secrets, asks for the few values only you know,
+and stops — leaving you a `.env` and the `docker compose up -d` to run. Four commands and an editor
+do the same thing by hand: [install guide](docs/install.md).
+
+Point your domain's DNS record at the machine **before** starting the stack — the bundled Caddy asks
 Let's Encrypt for a certificate as it starts, and it can only get one for a name that already
 resolves. Then open `https://your-domain`, ask for a sign-in link, and the first account to sign in
 is yours.
@@ -45,7 +47,7 @@ what you need, what the six values are, and what the seven containers do.
 
 | Guide                                              |                                                |
 | -------------------------------------------------- | ---------------------------------------------- |
-| [Install](docs/install.md)                         | The four commands, what you need, what starts  |
+| [Install](docs/install.md)                         | The script, the four commands, what you need   |
 | [Configuration](docs/configuration.md)             | Every setting, grouped — and which six matter  |
 | [Reverse proxy](docs/reverse-proxy.md)             | Bring your own, or run on a LAN with no domain |
 | [Backup & restore](docs/backup-restore.md)         | The dump, the files volume, and the drill      |
@@ -116,10 +118,10 @@ Honest answers to "why not X":
 
 The install, and the documentation for running it. Three files —
 [`docker-compose.yml`](docker-compose.yml), [`Caddyfile`](Caddyfile) and
-[`example.env`](example.env) — plus [`docs/`](docs/). Every release publishes those three as
-assets, which is what the `curl` lines above fetch, and a release here is the product's release: the
-version that both images are tagged with, verified to exist for both architectures before the notes
-are ever written.
+[`example.env`](example.env) — plus [`install.sh`](install.sh), which fetches them and writes the
+`.env`, plus [`docs/`](docs/). Every release publishes all four as assets, which is what the `curl`
+line above fetches, and a release here is the product's release: the version that both images are
+tagged with, verified to exist for both architectures before the notes are ever written.
 
 The application itself lives next door:
 
