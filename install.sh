@@ -410,7 +410,9 @@ gen_hex() {
 
 SECRET_KEY="$(gen_hex 32)"
 POSTGRES_PASSWORD="$(gen_hex 24)"
-[ ${#SECRET_KEY} -eq 64 ] && [ ${#POSTGRES_PASSWORD} -eq 48 ] || die "Could not generate a secret: neither openssl nor /dev/urandom produced one. Install openssl and run this again - and do not fill SECRET_KEY in by hand with anything you thought of yourself."
+if [ ${#SECRET_KEY} -ne 64 ] || [ ${#POSTGRES_PASSWORD} -ne 48 ]; then
+    die "Could not generate a secret: neither openssl nor /dev/urandom produced one. Install openssl and run this again - and do not fill SECRET_KEY in by hand with anything you thought of yourself."
+fi
 
 # ============================================================================
 # Write .env

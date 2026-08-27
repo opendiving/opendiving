@@ -27,18 +27,15 @@ jobs:
         with:
           persist-credentials: false
 
-      # ShellCheck ships in the GitHub-hosted runner image; the install is a fallback for
-      # the day it stops. The same check locally, with no install at all:
-      #
-      #     docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable install.sh
+      # The image rather than the runner's own shellcheck, because the runner's is pinned to
+      # whatever that image generation shipped - 0.9.0 while this was written - and it
+      # reports findings a current one does not. Running the same container CONTRIBUTING.md
+      # tells a contributor to run is what makes green here and green there the same claim.
       - name: Lint install.sh
         run: |
           set -euo pipefail
-          if ! command -v shellcheck >/dev/null 2>&1; then
-            sudo apt-get update && sudo apt-get install -y shellcheck
-          fi
-          shellcheck --version
-          shellcheck install.sh
+          docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable --version
+          docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable install.sh
 
       # Cheap, and it is bash's own parser rather than ShellCheck's reimplementation of it.
       - name: Parse install.sh with bash itself
