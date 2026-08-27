@@ -25,6 +25,8 @@ rate-limits failed challenges per hostname per hour. Open `https://your-domain`,
 link, and the first account to sign in is yours.
 
 It takes one option: `--version vX.Y.Z`, to install a specific release rather than the newest one.
+That pins both halves — the bundle comes from that release's assets, and `OPENDIVING_VERSION` is set
+in the `.env` so `docker compose up` pulls images of the same version rather than `latest`.
 
 ## Or by hand
 

@@ -118,6 +118,15 @@ bytes as hex is the same 192 bits over an alphabet that needs escaping nowhere.
 not. The `-v` matters: `od` collapses repeated identical lines into `*`, which would silently
 shorten a secret on the input that happens to repeat.
 
+## `--version` pins both halves
+
+The flag picks the release the bundle is downloaded from *and* writes `OPENDIVING_VERSION` into the
+`.env`. Only the first half is obvious, and only the first half is what the flag looks like it
+means — but `docker-compose.yml` resolves both OpenDiving images through
+`${OPENDIVING_VERSION:-latest}`, so pinning the files alone would hand somebody who asked for
+`v0.3.0` the newest images running against a compose file three releases old. That combination is
+both the one nobody wants and the one hardest to notice, because everything starts.
+
 ## The DNS check asks this machine, not a stranger
 
 A domain that does not resolve here is the most common failed install, and the failure surfaces as

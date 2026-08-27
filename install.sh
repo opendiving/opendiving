@@ -21,7 +21,9 @@
 # do is generate a secret, or check Docker and the ports and DNS before Caddy does.
 #
 # Options:
-#   --version vX.Y.Z   install that release instead of the newest one
+#   --version vX.Y.Z   install that release instead of the newest one - the bundle comes
+#                      from its assets, and OPENDIVING_VERSION is pinned to it so the
+#                      images that `docker compose up` pulls are the same version
 #   --help
 #
 # Unattended: any value that is already in the environment is used as-is and not asked for,
@@ -60,7 +62,9 @@ Install OpenDiving into the current directory.
 
   bash install.sh [--version vX.Y.Z]
 
-  --version vX.Y.Z   install that release rather than the newest one
+  --version vX.Y.Z   install that release rather than the newest one: the bundle comes
+                     from its assets, and OPENDIVING_VERSION is pinned to match, so the
+                     images are that version too
   --help             this
 
 It downloads docker-compose.yml, Caddyfile and example.env, writes .env, and stops
@@ -81,6 +85,12 @@ while [ $# -gt 0 ]; do
     esac
 done
 
+# Set only by --version, and it does two things: it picks the release the bundle is
+# fetched from, and it becomes OPENDIVING_VERSION in the .env. Without the second half the
+# flag would pin the compose file and leave `docker compose up` pulling `latest` images
+# against it - which is the one combination nobody asked for.
+PIN_VERSION=""
+
 if [ "$VERSION" = "latest" ]; then
     ASSETS="$REPO/releases/latest/download"
 else
@@ -92,6 +102,8 @@ else
         *) die "--version wants a released version like v0.4.0, not '$VERSION'." ;;
     esac
     ASSETS="$REPO/releases/download/$TAG"
+    # The tag is `v0.4.0`; the images are `0.4.0`.
+    PIN_VERSION="${TAG#v}"
 fi
 
 # ============================================================================
@@ -230,13 +242,23 @@ ok "docker-compose.yml, Caddyfile, example.env"
 # The values only you know
 # ============================================================================
 
-# Read from the terminal rather than from stdin: piping this script into bash makes stdin
-# the script itself, and a `read` would eat it.
+# Ask on the terminal rather than on stdin: piping this script into bash makes stdin the
+# script itself, and a `read` would eat it.
+#
+# Probed by opening the device, not by testing its permission bits. `/dev/tty` is world
+# rw even where there is no controlling terminal behind it, so `[ -r /dev/tty ]` is true
+# under `ssh host 'bash install.sh'` with no pty, under cron, and in `docker exec` without
+# -t - and the first prompt then fails on a raw "No such device or address" instead of the
+# explanation below. The open happens in a subshell because a failed redirection on `exec`
+# takes a non-interactive shell down with it.
 TTY=""
-if [ -r /dev/tty ] && [ -w /dev/tty ]; then TTY=/dev/tty; fi
+if (exec 3<>/dev/tty) 2>/dev/null; then TTY=/dev/tty; fi
 
 ask() {   # ask VAR "question" ["default"]
-    local var="$1" question="$2" default="${3-}" answer=""
+    local var="$1" question="$2" default="${3-}" has_default=0 answer=""
+    # `$#` rather than `[ -n "$default" ]`: SMTP_USERNAME's default is the empty string,
+    # and "no answer" and "answered nothing" are different answers.
+    if [ $# -ge 3 ]; then has_default=1; fi
 
     # Already in the environment - an unattended install, or a second pass after a value
     # was rejected. Taken as given, empty included: an empty SMTP_USERNAME means something.
@@ -245,7 +267,17 @@ ask() {   # ask VAR "question" ["default"]
         return 0
     fi
 
-    [ -n "$TTY" ] || die "$var is not set and there is no terminal to ask on. Either run this script from a terminal, or set the values it needs in the environment: DOMAIN, SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD and EMAIL_FROM_ADDRESS."
+    # No terminal to ask on. A question with a default still has an answer - which is what
+    # makes the unattended install in this script's header the three variables it names,
+    # rather than every variable that gets asked about.
+    if [ -z "$TTY" ]; then
+        if [ "$has_default" = "0" ]; then
+            die "$var is not set and there is no terminal to ask on. Run this from a terminal, or set what it needs in the environment: DOMAIN, SMTP_HOST and EMAIL_FROM_ADDRESS are required, and SMTP_PORT, SMTP_USERNAME and SMTP_PASSWORD have defaults."
+        fi
+        printf '  %s %s%s%s\n' "$question" "$DIM" "${default:-(empty)}" "$OFF" >&2
+        printf -v "$var" '%s' "$default"
+        return 0
+    fi
 
     if [ -n "$default" ]; then
         printf '  %s %s[%s]%s ' "$question" "$DIM" "$default" "$OFF" > "$TTY"
@@ -445,6 +477,11 @@ set_env SMTP_PORT "$SMTP_PORT"
 set_env SMTP_USERNAME "$SMTP_USERNAME"
 set_env SMTP_PASSWORD "$SMTP_PASSWORD"
 set_env EMAIL_FROM_ADDRESS "$EMAIL_FROM_ADDRESS"
+
+if [ -n "$PIN_VERSION" ]; then
+    enable_env OPENDIVING_VERSION "$PIN_VERSION"
+    ok "OPENDIVING_VERSION=$PIN_VERSION, so the images match the bundle"
+fi
 
 # The template's default is `starttls`, which is right for 587 and silently wrong for 465:
 # an implicit-TLS relay does not answer a plaintext greeting, and the first thing that finds
