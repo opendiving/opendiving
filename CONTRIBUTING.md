@@ -24,6 +24,21 @@ Use semantic **PR titles** — `<type>[(scope)][!]: <description>`, where type i
 `refactor`, `docs`, `test`, `chore`, `perf`, `ci`, `build`, `revert`. PRs are squash-merged, so the
 title becomes the commit subject on `main` and is the only thing that outlives the branch.
 
+## Verifying a change to the bundle
+
+There is no CI that can tell you a compose file is right. What can be checked locally:
+
+```bash
+cp example.env .env && docker compose config >/dev/null && rm .env
+```
+
+`.env` has to exist for that to run at all — the services declare `env_file: .env`, and compose
+refuses before it parses anything else — which is why the copy is part of the command rather than an
+assumed prerequisite. It validates shape and interpolation and nothing else. A real change to the
+bundle — a new service, a changed volume, a new required variable — is confirmed by installing it on
+a throwaway machine by following `docs/install.md` verbatim, and every deviation you were tempted to
+make is a documentation bug.
+
 ## Cutting a release
 
 A release here is the **product's** release: the version both images are tagged with, plus the three
