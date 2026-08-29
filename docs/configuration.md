@@ -210,15 +210,17 @@ records are in Postgres, and the uploaded files themselves are on the `files-dat
 
 ## Optional features
 
-| Variable                                                    | Default   | What it does                                                                                                                                                                                                                                           |
-| ----------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `CONTACT_FORM_EMAIL`                                        | *(none)*  | Where the contact form delivers. Unset, that endpoint answers 503 and the form is off.                                                                                                                                                                 |
-| `CONTACT_EMAIL`                                             | *(none)*  | Shown on the contact page as a fallback. Display only.                                                                                                                                                                                                 |
-| `GOOGLE_CLIENT_ID`                                          | *(none)*  | Offers Google Sign-In, which needs an OAuth client of your own — see [Setting up Google sign-in](#setting-up-google-sign-in). Nothing of Google's loads in a visitor's browser; pressing the button takes them to Google. Unset, the button is hidden. |
-| `GOOGLE_CLIENT_SECRET`                                      | *(none)*  | The other half of that OAuth client, and a real secret. Required whenever `GOOGLE_CLIENT_ID` is set — the API refuses to start without it. See [Setting up Google sign-in](#setting-up-google-sign-in).                                                |
-| `MAP_TILE_URL`, `MAP_TILE_URL_DARK`, `MAP_TILE_ATTRIBUTION` | Carto     | The basemap behind every map the web app draws — see [Third-party calls](#third-party-calls). The CSP follows these automatically.                                                                                                                     |
-| `GEOCODER_URL`                                              | Nominatim | Turns a map pin into a place name, server-side. Set to `""` to switch geocoding off entirely.                                                                                                                                                          |
-| `WORMS_API_URL`, `WIKIDATA_API_URL`                         | public    | The species picker's two registers, also called server-side.                                                                                                                                                                                           |
+| Variable                                                | Default       | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CONTACT_FORM_EMAIL`                                    | *(none)*      | Where the contact form delivers. Unset, that endpoint answers 503 and the form is off.                                                                                                                                                                                                                                                                                                                                                                    |
+| `CONTACT_EMAIL`                                         | *(none)*      | Shown on the contact page as a fallback. Display only.                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `GOOGLE_CLIENT_ID`                                      | *(none)*      | Offers Google Sign-In, which needs an OAuth client of your own — see [Setting up Google sign-in](#setting-up-google-sign-in). Nothing of Google's loads in a visitor's browser; pressing the button takes them to Google. Unset, the button is hidden.                                                                                                                                                                                                    |
+| `GOOGLE_CLIENT_SECRET`                                  | *(none)*      | The other half of that OAuth client, and a real secret. Required whenever `GOOGLE_CLIENT_ID` is set — the API refuses to start without it. See [Setting up Google sign-in](#setting-up-google-sign-in).                                                                                                                                                                                                                                                   |
+| `MAP_STYLE_URL`, `MAP_STYLE_URL_DARK`                   | OpenFreeMap   | A MapLibre vector style of your own, in place of the pair the web image ships — see [Third-party calls](#third-party-calls). Wins over the raster group below on every map but the dive-site form's picker. The dark one falls back to the light one; setting it alone does nothing. Serve the style's tiles, glyphs and sprite from the style URL's own host: that origin is the only one the CSP admits, so a style reaching a second host draws blank. |
+| `MAP_ATTRIBUTION`                                       | the basemap's | The credit drawn over whichever basemap is active — one variable, not one per mode, which is why it is no longer `MAP_TILE_ATTRIBUTION`. **Required whenever `MAP_STYLE_URL` is set**: the app refuses to serve without it, because it cannot know what your style's licence asks for.                                                                                                                                                                    |
+| `MAP_TILE_URL`, `MAP_TILE_URL_DARK`, `MAP_TILE_API_KEY` | OpenStreetMap | The raster escape hatch, in `{z}/{x}/{y}` form, for a tile server you run or a keyed provider — and still what the dive-site form's picker draws whatever style is set. The CSP follows all of these automatically.                                                                                                                                                                                                                                       |
+| `GEOCODER_URL`                                          | Nominatim     | Turns a map pin into a place name, server-side. Set to `""` to switch geocoding off entirely.                                                                                                                                                                                                                                                                                                                                                             |
+| `WORMS_API_URL`, `WIKIDATA_API_URL`                     | public        | The species picker's two registers, also called server-side.                                                                                                                                                                                                                                                                                                                                                                                              |
 
 ### Account deletion
 
@@ -317,19 +319,29 @@ this copy. Leave the panel off, as it ships, and none of this exists.
 
 Nothing here phones home. What the app can be told to contact:
 
-- **From the browser**: map tiles. Nothing else, in any configuration, profile pictures included: an
-  avatar is stored on your own files volume and served by your own API. (Gravatar used to be an
+- **From the browser**: the basemap. Nothing else, in any configuration, profile pictures included:
+  an avatar is stored on your own files volume and served by your own API. (Gravatar used to be an
   option here, disclosing a hash of every signed-in user's email address and their IP to Automattic
   on every page. It is gone, along with its `GRAVATAR_ENABLED` variable.)
 
-  **Tiles** are requested wherever a map is on screen, and carry only the `z/x/y` of the area shown.
-  Five surfaces draw one: the form to add or edit a dive site, a dive site's own page, the form to
-  add or edit a trip, a trip with places on it, and the page of a dive that has a position — from
-  the site it was logged at, or from the GPS reading in the file it was imported from. The two forms
-  load a map as soon as they open; the other three load none when there is nothing to show. Your
-  tile provider therefore sees a visitor's IP address and roughly where they dive, and nothing else
-  — not their account, their dive log, or the name of anything on the map. Point `MAP_TILE_URL` at a
-  tile server you run and none of that leaves your machine.
+  **The basemap** is fetched wherever a map is on screen, and each request carries only the `z/x/y`
+  of the area shown. Unconfigured, that is the MapLibre vector pair the web image ships — its
+  tiles, its label glyphs and a low-zoom raster underlay, all from `tiles.openfreemap.org`. Five
+  surfaces draw a map: the form to add or edit a dive site, a dive site's own page, the form to add
+  or edit a trip, a trip with places on it, and the page of a dive that has a position — from the
+  site it was logged at, or from the GPS reading in the file it was imported from. The two forms
+  load a map as soon as they open; the other three load none when there is nothing to show. Whoever
+  serves the basemap therefore sees a visitor's IP address and roughly where they dive, and nothing
+  else — not their account, their dive log, or the name of anything on the map.
+
+  **Keeping a vector basemap while removing the third party takes both map variables today, not
+  one.** `MAP_STYLE_URL` covers the four surfaces MapLibre draws; the fifth, the dive-site form's
+  picker, is still the older raster renderer and fetches `MAP_TILE_URL` — `tile.openstreetmap.org`
+  by default — whatever style is set. So the shipped default contacts two hosts, and pointing both
+  at something you serve is what stops anything leaving your machine. A raster tile server of your
+  own is the exception that needs one: `MAP_TILE_URL` alone puts all five surfaces, the four
+  MapLibre ones included, on that single host. What goes when the picker moves to MapLibre is the
+  second fetch, not the variable — the raster group stays, as the escape hatch.
 
   **Google sign-in is deliberately absent from that bullet**, and it is worth saying why rather than
   leaving it to be inferred. With `GOOGLE_CLIENT_ID` set, no page this app serves fetches, embeds or
@@ -357,9 +369,12 @@ Nothing here phones home. What the app can be told to contact:
   volume. That one is best-effort; a failure just means the account starts with initials.
 
 There is no analytics of any kind. The web app's Content-Security-Policy narrows where anything
-could be *sent*: `connect-src` names this instance's own origin and its API and nothing else, in
-every configuration, so a `fetch`, an `XMLHttpRequest`, a WebSocket or a `navigator.sendBeacon`
-aimed at a third-party collector is refused by the browser until the policy itself is widened.
+could be *sent*: `connect-src` names this instance's own origin, its API and the host serving the
+basemap, and nothing else, in every configuration, so a `fetch`, an `XMLHttpRequest`, a WebSocket or
+a `navigator.sendBeacon` aimed at a third-party collector is refused by the browser until the policy
+itself is widened. (The basemap sits in that directive in both of its modes rather than in
+`img-src`, because MapLibre decodes even raster tile bytes from an `ArrayBuffer` it fetched. What
+`img-src` still carries is the picker's own `<img>` tiles.)
 Google sign-in needs no exception to that and is granted none — a navigation is not a fetch, and
 CSP's fetch directives govern what a page loads rather than where the visitor goes next. Take that
 for what it is and no more — it constrains destinations, not dependencies. Script bundled into the
