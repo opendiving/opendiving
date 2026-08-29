@@ -334,11 +334,13 @@ Nothing here phones home. What the app can be told to contact:
   serves the basemap therefore sees a visitor's IP address and roughly where they dive, and nothing
   else — not their account, their dive log, or the name of anything on the map.
 
-  **Removing the third party takes both map variables today, not one.** `MAP_STYLE_URL` covers the
-  four surfaces MapLibre draws; the fifth, the dive-site form's picker, is still the older raster
-  renderer and fetches `MAP_TILE_URL` — `tile.openstreetmap.org` by default — whatever style is
-  set. So the shipped default contacts two hosts, and pointing both variables at something you serve
-  is what stops anything leaving your machine. What goes when that picker moves to MapLibre is the
+  **Keeping a vector basemap while removing the third party takes both map variables today, not
+  one.** `MAP_STYLE_URL` covers the four surfaces MapLibre draws; the fifth, the dive-site form's
+  picker, is still the older raster renderer and fetches `MAP_TILE_URL` — `tile.openstreetmap.org`
+  by default — whatever style is set. So the shipped default contacts two hosts, and pointing both
+  at something you serve is what stops anything leaving your machine. A raster tile server of your
+  own is the exception that needs one: `MAP_TILE_URL` alone puts all five surfaces, the four
+  MapLibre ones included, on that single host. What goes when the picker moves to MapLibre is the
   second fetch, not the variable — the raster group stays, as the escape hatch.
 
   **Google sign-in is deliberately absent from that bullet**, and it is worth saying why rather than
