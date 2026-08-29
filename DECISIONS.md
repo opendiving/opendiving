@@ -12,7 +12,7 @@ this repository's *existence* decided.
 
 The install lived in `opendiving-api` because that is where it was first written, and it was never
 an api-level thing: `docker-compose.yml` pins the web image and sets `SITE_URL`, `GOOGLE_CLIENT_ID`,
-`MAP_TILE_*`, `WEB_HSTS` and `WEB_NOINDEX`, none of which the API has any use for. Two consequences
+`MAP_*`, `WEB_HSTS` and `WEB_NOINDEX`, none of which the API has any use for. Two consequences
 made the accident worth undoing.
 
 The first is that the project had no front door. `opendiving-api`'s README opened "The backend for

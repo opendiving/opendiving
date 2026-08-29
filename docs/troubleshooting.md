@@ -159,6 +159,24 @@ normal case. Otherwise `docker compose logs web` and `docker compose logs api` i
 web container proxies `/api/v1` to `api:8000`, so an API that is restarting shows up as a gateway
 error from the web app rather than as an obvious API failure.
 
+## Every page 500s, but the container reports healthy
+
+One configuration does exactly this: `MAP_STYLE_URL` set without `MAP_ATTRIBUTION`. The web app
+refuses to serve a basemap it cannot credit — it has no way to learn what your style's licence
+requires, and crediting the tiles it ships would put the wrong name on yours — so it throws, naming
+both variables:
+
+```bash
+docker compose logs web | grep MAP_ATTRIBUTION
+```
+
+It looks healthy because that configuration is read on the first request rather than at startup.
+The process starts normally and `/healthz` reads none of it, so the healthcheck goes on answering
+200 while every actual page returns 500. Set `MAP_ATTRIBUTION` to the credit your style asks for, or
+unset `MAP_STYLE_URL` to go back to the basemap the image ships — then `docker compose up -d` and
+**load a page**, because the healthcheck will not tell you whether it worked. The variables are in
+[configuration.md](configuration.md#optional-features).
+
 ## Starting over
 
 The local data is yours, and this destroys **all** of it:

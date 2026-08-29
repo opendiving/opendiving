@@ -137,9 +137,22 @@ services:
       SITE_URL: ${SITE_URL:-https://${DOMAIN}}
       CONTACT_EMAIL: ${CONTACT_EMAIL:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      # The basemap, in two groups and one variable that belongs to neither. Unset, the web
+      # app draws the MapLibre vector styles it ships, from tiles.openfreemap.org - no key,
+      # no account, nothing to set. MAP_STYLE_URL replaces that style outright; the raster
+      # MAP_TILE_* group is the escape hatch, and is also what the dive-site form's picker
+      # still draws whatever style is set. So two hosts are contacted in every
+      # configuration, the default included - there the picker falls back to
+      # tile.openstreetmap.org while everything else draws OpenFreeMap. MAP_ATTRIBUTION is
+      # the one credit rendered over whichever basemap is active, which is why it is in
+      # neither group and why setting MAP_STYLE_URL without it makes the app refuse to
+      # serve. See docs/configuration.md.
+      MAP_STYLE_URL: ${MAP_STYLE_URL:-}
+      MAP_STYLE_URL_DARK: ${MAP_STYLE_URL_DARK:-}
       MAP_TILE_URL: ${MAP_TILE_URL:-}
       MAP_TILE_URL_DARK: ${MAP_TILE_URL_DARK:-}
-      MAP_TILE_ATTRIBUTION: ${MAP_TILE_ATTRIBUTION:-}
+      MAP_TILE_API_KEY: ${MAP_TILE_API_KEY:-}
+      MAP_ATTRIBUTION: ${MAP_ATTRIBUTION:-}
       WEB_HSTS: ${WEB_HSTS:-}
       WEB_NOINDEX: ${WEB_NOINDEX:-}
     expose:
