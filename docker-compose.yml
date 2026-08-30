@@ -139,15 +139,16 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       # The basemap, in two groups and one variable that belongs to neither. Unset, the web
       # app draws the MapLibre vector styles it ships, from tiles.openfreemap.org - no key,
-      # no account, nothing to set. MAP_STYLE_URL replaces that style outright; the raster
-      # MAP_TILE_* group is the escape hatch, and is also what the dive-site form's picker
-      # still draws whatever style is set. So a configured style contacts two hosts, its own
-      # and the picker's, and so does the default - OpenFreeMap for four surfaces and
-      # tile.openstreetmap.org for the picker. Setting only the raster group is the one
-      # configuration that contacts one host: every surface then draws that template.
-      # MAP_ATTRIBUTION is the one credit rendered over whichever basemap is active, which
-      # is why it is in neither group and why setting MAP_STYLE_URL without it makes the
-      # app refuse to serve. See docs/configuration.md.
+      # no account, nothing to set. MAP_STYLE_URL replaces that style outright, on every map
+      # the app draws; the raster MAP_TILE_* group is the escape hatch, and one renderer
+      # draws both - a `{z}/{x}/{y}` template is wrapped into a minimal style rather than
+      # handed to a second renderer. The two groups are alternatives, not layers, so a style
+      # set alongside the raster group leaves that group inert. The shipped default
+      # therefore contacts one host, and pointing either variable at something you serve is
+      # what removes the third party outright - one setting reaches every map, with no
+      # second fetch beside it. MAP_ATTRIBUTION is the one credit rendered over whichever
+      # basemap is active, which is why it is in neither group and why setting MAP_STYLE_URL
+      # without it makes the app refuse to serve. See docs/configuration.md.
       MAP_STYLE_URL: ${MAP_STYLE_URL:-}
       MAP_STYLE_URL_DARK: ${MAP_STYLE_URL_DARK:-}
       MAP_TILE_URL: ${MAP_TILE_URL:-}
