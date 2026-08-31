@@ -172,9 +172,9 @@ services:
     expose:
       - "8000"
     volumes:
-      # Every uploaded dive-computer export and every c-card image. This is the **second
-      # half of your backup** - the database dump does not carry it. See
-      # docs/backup-restore.md, which gives the tar recipe for it.
+      # Every uploaded dive-computer export, c-card image, profile picture and species
+      # photograph. This is the **second half of your backup** - the database dump does not
+      # carry it. See docs/backup-restore.md, which gives the tar recipe for it.
       - files-data:/data/files
     # The image's own healthcheck asks `/api/v1/health/ready`, which round-trips Postgres
     # and Redis - so `service_healthy` here means "can serve", not "has a process".
@@ -277,7 +277,8 @@ services:
 
 volumes:
   postgres-data:
-  # Uploaded dive-computer exports and c-card images, one ordinary file each, named by the
+  # Uploaded dive-computer exports, c-card images, profile pictures and the species
+  # photographs fetched from Wikimedia Commons - one ordinary file each, named by the
   # `storage_key` its row carries. The other half of your backup: `pg_dump` does not
   # contain these, and a restore of the dump alone leaves every download 500ing. Back it up
   # with the tar recipe in docs/backup-restore.md - and note that `docker

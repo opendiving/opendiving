@@ -186,8 +186,9 @@ docker compose down -v
 ```
 
 `-v` takes every volume, and that now includes `files-data` — every uploaded dive-computer export,
-every c-card image and every profile picture, none of which the database dump contains. If there is
-anything in there, take both artifacts first: [backup-restore.md](backup-restore.md).
+every c-card image, every profile picture and every species photograph, none of which the database
+dump contains. If there is anything in there, take both artifacts first:
+[backup-restore.md](backup-restore.md).
 
 ## Reporting a bug
 
