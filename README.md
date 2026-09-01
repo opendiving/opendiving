@@ -1,7 +1,8 @@
 # OpenDiving
 
-**A self-hosted dive log, built to outlive every vendor. Your dives, your data — original files
-kept, open formats, on your own server.**
+**A dive log built to outlive every vendor. Your dives, your data — original files kept, open
+formats, everything exportable in one click. Yours to self-host, and this repository is the
+install.**
 
 OpenDiving is an open-source logbook for scuba divers, recreational and technical: log dives with
 multi-tank gas mixtures, import them straight from your dive computer's export file — full
@@ -9,10 +10,11 @@ depth/temperature/tank-pressure profile, deco ceiling and dive events included �
 trips, and keep your gear service history and c-cards in one place.
 
 Cloud dive logs come and go — Movescount, Deepblu, Diveboard — and when they go, years of dive
-history go with them. OpenDiving is built on a different premise: the app is AGPL-licensed, the data
-lives in your own Postgres database, and every dive keeps the original dive-computer export it was
-imported from, downloadable at any time. Self-hosting isn't a feature here; it's the guarantee that
-no shutdown, acquisition, or paywall can ever take your logbook with it.
+history go with them. OpenDiving is built on a different premise: the app is AGPL-licensed, every
+dive keeps the original dive-computer export it was imported from, downloadable at any time, and one
+click takes everything out in open formats. Self-hosting is what turns that from a promise into a
+guarantee — the whole stack is yours to run, on your own machine and your own Postgres, so no
+shutdown, acquisition, or paywall can ever take your logbook with it.
 
 ![Dashboard](docs/screenshots/dashboard.png)
 
