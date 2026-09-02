@@ -12,7 +12,7 @@ this repository's *existence* decided.
 
 The install lived in `opendiving-api` because that is where it was first written, and it was never
 an api-level thing: `docker-compose.yml` pins the web image and sets `SITE_URL`, `GOOGLE_CLIENT_ID`,
-`MAP_TILE_*`, `WEB_HSTS` and `WEB_NOINDEX`, none of which the API has any use for. Two consequences
+`MAP_*`, `WEB_HSTS` and `WEB_NOINDEX`, none of which the API has any use for. Two consequences
 made the accident worth undoing.
 
 The first is that the project had no front door. `opendiving-api`'s README opened "The backend for
@@ -86,7 +86,7 @@ repository.
 
 So the script downloads the template and rewrites the value on the few lines an install cannot
 start without, leaving every comment where it was. The check is a `diff` of the template and the result with values stripped: it
-has to be identical line for line, or a comment went missing. `AGENTS.md` carries the command.
+has to be identical line for line, or a comment went missing. `CONTRIBUTING.md` carries the command.
 
 The same reasoning rules out the other tempting shape, a script that prompts its way through every
 setting. It fills in what an install cannot start without, plus `SMTP_TLS_MODE` in the one case
@@ -164,6 +164,28 @@ All nineteen cross-links between the six documents were sibling-relative and sur
 untouched. The single link that pointed out of the old tree, `configuration.md`'s reference to
 `../../src/.env.example`, is now a URL into `opendiving-api` — which is the general rule here, and
 the one thing to get right when moving text between these repositories.
+
+## Self-hosting is a capability, not the product's identity
+
+`README.md` calls OpenDiving "yours to self-host" rather than "a self-hosted dive log", and puts
+"your own machine and your own Postgres" inside the sentence *about* self-hosting rather than
+stating it as a standing fact about the product. `SECURITY.md` opens the same way. It is deliberate,
+and it reads exactly like a tagline that lost its nerve.
+
+What the software can promise every diver is the same wherever it runs: AGPL, the original
+dive-computer file kept forever, and one click that takes everything out in open formats. Where the
+data physically sits is a fact about *who runs a copy*, not about the app — the operator of an
+instance decides that, which is the same line `docs/configuration.md` draws under **You are the
+controller**. Copy defining the product as self-hosted-only makes that call on the operator's
+behalf, and it is not the app's to make.
+
+Self-hosting keeps the strong framing it earns: it is what turns data ownership from a promise into
+a guarantee, it is the differentiator the Subsurface comparison turns on, and the licence section
+still says run it, change it, self-host it freely. The change is register, not retreat.
+
+**This repository's own framing is untouched.** It *is* the install bundle and the self-hosting
+documentation, every page here is addressed to an operator on purpose, and none of that is what the
+distinction is about — it is between describing this repository's job and defining the product.
 
 ## Operator issues here, application bugs next door
 

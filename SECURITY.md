@@ -1,8 +1,8 @@
 # Security Policy
 
-OpenDiving is self-hosted software: every instance is somebody's own server, holding their own dive
-log. A defect in what we ship reaches all of them at once, so we would much rather hear about one
-privately than read about it in a public issue.
+OpenDiving is yours to self-host, and this repository is what you install: every instance run from
+it is somebody's own server, holding their own dive log. A defect in what we ship reaches all of
+them at once, so we would much rather hear about one privately than read about it in a public issue.
 
 This project is [AGPL-3.0](LICENSE) and run by a single maintainer in their spare time. There is no
 bug bounty and no money behind any of this — what we can offer is a prompt reply, a fix in the next

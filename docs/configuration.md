@@ -196,11 +196,11 @@ file to the service names and are not yours to change. `POSTGRES_USER` and `POST
 default to `opendiving` and can be overridden in `.env` before the first start (afterwards they name
 a database that already exists under a different name).
 
-| Variable           | Default       | What it does                                                                                                                                                                                                                                                                                                                          |
-| ------------------ | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MIGRATE_ON_START` | `true`        | Runs `alembic upgrade head` as the API starts, which is what makes an upgrade `pull` + `up -d`. Turn it off only if you'd rather run `docker compose run --rm api alembic upgrade head` yourself.                                                                                                                                     |
-| `REDIS_PASSWORD`   | *(none)*      | For pointing the app at a managed Redis instead of the bundled one. The bundled one needs no password and is not reachable outside the compose network.                                                                                                                                                                               |
-| `FILE_STORAGE_DIR` | `/data/files` | Where uploaded dive-computer exports, c-card images and profile pictures are written inside the container. The compose file mounts the `files-data` volume there, so there is nothing to set unless you replaced that volume with a bind mount — and then the host directory has to be owned by uid 1000 or the API refuses to start. |
+| Variable           | Default       | What it does                                                                                                                                                                                                                                                                                                                                               |
+| ------------------ | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MIGRATE_ON_START` | `true`        | Runs `alembic upgrade head` as the API starts, which is what makes an upgrade `pull` + `up -d`. Turn it off only if you'd rather run `docker compose run --rm api alembic upgrade head` yourself.                                                                                                                                                          |
+| `REDIS_PASSWORD`   | *(none)*      | For pointing the app at a managed Redis instead of the bundled one. The bundled one needs no password and is not reachable outside the compose network.                                                                                                                                                                                                    |
+| `FILE_STORAGE_DIR` | `/data/files` | Where uploaded dive-computer exports, c-card images, profile pictures and species photographs are written inside the container. The compose file mounts the `files-data` volume there, so there is nothing to set unless you replaced that volume with a bind mount — and then the host directory has to be owned by uid 1000 or the API refuses to start. |
 
 Redis holds cache entries, open rate-limit windows and in-flight passkey challenges. Losing it costs
 a cold cache and interrupts passkey sign-in until it is back (see [Sign-in](#sign-in)); nothing
@@ -210,15 +210,21 @@ records are in Postgres, and the uploaded files themselves are on the `files-dat
 
 ## Optional features
 
-| Variable                                                    | Default   | What it does                                                                                                                                                                                                                                           |
-| ----------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `CONTACT_FORM_EMAIL`                                        | *(none)*  | Where the contact form delivers. Unset, that endpoint answers 503 and the form is off.                                                                                                                                                                 |
-| `CONTACT_EMAIL`                                             | *(none)*  | Shown on the contact page as a fallback. Display only.                                                                                                                                                                                                 |
-| `GOOGLE_CLIENT_ID`                                          | *(none)*  | Offers Google Sign-In, which needs an OAuth client of your own — see [Setting up Google sign-in](#setting-up-google-sign-in). Nothing of Google's loads in a visitor's browser; pressing the button takes them to Google. Unset, the button is hidden. |
-| `GOOGLE_CLIENT_SECRET`                                      | *(none)*  | The other half of that OAuth client, and a real secret. Required whenever `GOOGLE_CLIENT_ID` is set — the API refuses to start without it. See [Setting up Google sign-in](#setting-up-google-sign-in).                                                |
-| `MAP_TILE_URL`, `MAP_TILE_URL_DARK`, `MAP_TILE_ATTRIBUTION` | Carto     | The basemap behind every map the web app draws — see [Third-party calls](#third-party-calls). The CSP follows these automatically.                                                                                                                     |
-| `GEOCODER_URL`                                              | Nominatim | Turns a map pin into a place name, server-side. Set to `""` to switch geocoding off entirely.                                                                                                                                                          |
-| `WORMS_API_URL`, `WIKIDATA_API_URL`                         | public    | The species picker's two registers, also called server-side.                                                                                                                                                                                           |
+| Variable                                                                                                           | Default             | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------------------------------------------------------ | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CONTACT_FORM_EMAIL`                                                                                               | *(none)*            | Where the contact form delivers. Unset, that endpoint answers 503 and the form is off.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `CONTACT_EMAIL`                                                                                                    | *(none)*            | Shown on the contact page as a fallback. Display only.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `GOOGLE_CLIENT_ID`                                                                                                 | *(none)*            | Offers Google Sign-In, which needs an OAuth client of your own — see [Setting up Google sign-in](#setting-up-google-sign-in). Nothing of Google's loads in a visitor's browser; pressing the button takes them to Google. Unset, the button is hidden.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `GOOGLE_CLIENT_SECRET`                                                                                             | *(none)*            | The other half of that OAuth client, and a real secret. Required whenever `GOOGLE_CLIENT_ID` is set — the API refuses to start without it. See [Setting up Google sign-in](#setting-up-google-sign-in).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `MAP_STYLE_URL`, `MAP_STYLE_URL_DARK`                                                                              | OpenFreeMap         | A MapLibre vector style of your own, in place of the pair the web image ships — see [Third-party calls](#third-party-calls). Wins over the raster group below outright, on every map the app draws, leaving those variables inert. The dark one falls back to the light one; setting it alone does nothing. Serve the style's tiles, glyphs and sprite from the style URL's own host: that origin is the only one the CSP admits, so a style reaching a second host draws blank.                                                                                                                                                                                                                                                                                                                            |
+| `MAP_ATTRIBUTION`                                                                                                  | the basemap's       | The credit drawn over whichever basemap is active — one variable, not one per mode, which is why it is no longer `MAP_TILE_ATTRIBUTION`. **Required whenever `MAP_STYLE_URL` is set**: the app refuses to serve without it, because it cannot know what your style's licence asks for.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `MAP_TILE_URL`, `MAP_TILE_URL_DARK`, `MAP_TILE_API_KEY`                                                            | *(none)*            | The raster escape hatch, in `{z}/{x}/{y}` form, for a tile server you run or a keyed provider. A whole-map mode chosen instead of the vector default, not a second renderer: MapLibre wraps the template into a minimal style. Ignored entirely when `MAP_STYLE_URL` is set. The CSP follows all of these automatically.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `GEOCODER_URL`                                                                                                     | Nominatim           | Turns a map pin into a place name, server-side. Set to `""` to switch geocoding off entirely.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `GEOCODER_USER_AGENT`                                                                                              | the project's       | The `User-Agent` on every geocoder call, and the only place it is sent. Ships as `OpenDiving (+https://github.com/opendiving/opendiving-api)`. It fails closed harder than `SPECIES_USER_AGENT` does: Nominatim answers **403** to an empty value *and* to a merely generic one — `python-httpx/0.27` was measured taking the same 403 as `""`, where the shipped default takes a 200. Geocoding is no optional enrichment either, so a generic value costs all three things it backs — place search on the dive site form, place search on the trip form, and naming the spot behind a pin — and leaves an instance indistinguishable from `GEOCODER_URL=""`: search answers with nothing, reverse with "we could not ask", the API stays healthy, and no log line names the 403. Change it because the default identifies the *project*, not your instance — see [Third-party calls](#third-party-calls). |
+| `WORMS_API_URL`, `WIKIDATA_API_URL`                                                                                | public              | The two name registers the species picker searches, called server-side. WoRMS is the taxonomic authority every catalog row is keyed on; Wikidata supplies the common names it lacks — WoRMS records exactly one vernacular for the clownfish, and it is in Japanese. Emptying one does not switch the feature off the way `GEOCODER_URL` does: search falls back to the species already in your catalog, and resolving one nobody has logged yet fails.                                                                                                                                                                                                                                                                                                                                                     |
+| `COMMONS_API_URL`                                                                                                  | public              | Wikimedia Commons, asked for a species photo's credit metadata and the URL of one scaled copy, once Wikidata has named the file — never for anything a diver typed. This one *is* optional in the way the two above are not: `""` or an unreachable host simply means species have no photos. It configures the **metadata** call only. The image bytes are only ever fetched from `thumb.wikimedia.org` or `upload.wikimedia.org`, the two hosts one Commons reply can name; that pair is hard-coded and deliberately has no setting in front of it, because it is an SSRF fence — see [Third-party calls](#third-party-calls).                                                                                                                                                                            |
+| `SPECIES_USER_AGENT`                                                                                               | the project's       | The `User-Agent` on every species call — both registers, and Commons for the credit metadata and the image bytes. Ships as `OpenDiving (+https://github.com/opendiving/opendiving-api)`. Emptying it is **not** the graceful off switch the row above is: Wikimedia answers **403** to an empty one, on the metadata call and the byte fetch both, and the same header goes to WoRMS and Wikidata — so a blank value takes species search and resolution with it, not only the photos, and the API starts normally either way. Change it because the default identifies the *project*, not your instance: every deployment sends that one string, so one operator's runaway backfill is attributed to everyone running OpenDiving; put your own contact in — see [Third-party calls](#third-party-calls).   |
+| `SPECIES_WORMS_RATE_LIMIT_REQUESTS`, `SPECIES_WIKIDATA_RATE_LIMIT_REQUESTS`, `SPECIES_COMMONS_RATE_LIMIT_REQUESTS` | `120`, `300`, `120` | What the whole instance may spend on each upstream, over `SPECIES_WORMS_RATE_LIMIT_WINDOW_SECONDS`, `SPECIES_WIKIDATA_RATE_LIMIT_WINDOW_SECONDS` and `SPECIES_COMMONS_RATE_LIMIT_WINDOW_SECONDS` — `60` seconds each. Counted across every user and charged only to calls that actually leave, so exceeding one is never a 429: that upstream drops out and the rest still answer. Neither provider publishes a limit — WoRMS states none at all, and Wikimedia's applies to anonymous heavy use rather than to a call every few seconds — so all three are self-imposed politeness, set well above what a picker generates. Commons's is lower than Wikidata's and still ample — it is charged at most twice per *new* species, the credit call and the byte fetch, rather than once per search candidate. |
 
 ### Account deletion
 
@@ -317,19 +323,33 @@ this copy. Leave the panel off, as it ships, and none of this exists.
 
 Nothing here phones home. What the app can be told to contact:
 
-- **From the browser**: map tiles. Nothing else, in any configuration, profile pictures included: an
-  avatar is stored on your own files volume and served by your own API. (Gravatar used to be an
-  option here, disclosing a hash of every signed-in user's email address and their IP to Automattic
-  on every page. It is gone, along with its `GRAVATAR_ENABLED` variable.)
+- **From the browser**: the basemap. Nothing else, in any configuration — profile pictures and
+  species photographs included. An avatar is stored on your own files volume and served by your own
+  API, and so is the Commons photograph on a species: the server fetches it once and stores it, so
+  no visitor's browser ever contacts Wikimedia. (Gravatar used to be an option here, disclosing a
+  hash of every signed-in user's email address and their IP to Automattic on every page. It is gone,
+  along with its `GRAVATAR_ENABLED` variable.)
 
-  **Tiles** are requested wherever a map is on screen, and carry only the `z/x/y` of the area shown.
-  Five surfaces draw one: the form to add or edit a dive site, a dive site's own page, the form to
-  add or edit a trip, a trip with places on it, and the page of a dive that has a position — from
-  the site it was logged at, or from the GPS reading in the file it was imported from. The two forms
-  load a map as soon as they open; the other three load none when there is nothing to show. Your
-  tile provider therefore sees a visitor's IP address and roughly where they dive, and nothing else
-  — not their account, their dive log, or the name of anything on the map. Point `MAP_TILE_URL` at a
-  tile server you run and none of that leaves your machine.
+  **The basemap** is fetched wherever a map is on screen, and each request carries only the `z/x/y`
+  of the area shown. Unconfigured, that is the MapLibre vector pair the web image ships — its
+  tiles, its label glyphs and a low-zoom raster underlay, all from `tiles.openfreemap.org`. Five
+  surfaces draw a map: the form to add or edit a dive site, a dive site's own page, the form to add
+  or edit a trip, a trip with places on it, and the page of a dive that has a position — from the
+  site it was logged at, or from the GPS reading in the file it was imported from. The two forms
+  load a map as soon as they open; the other three load none when there is nothing to show. Whoever
+  serves the basemap therefore sees a visitor's IP address and roughly where they dive, and nothing
+  else — not their account, their dive log, or the name of anything on the map.
+
+  **Removing the third party takes one variable.** All five surfaces draw through MapLibre, so a
+  single setting reaches every one of them: `MAP_STYLE_URL` for a vector style you serve, or
+  `MAP_TILE_URL` for a raster tile server you run. The two are alternatives rather than layers — a
+  style set alongside the raster group leaves it inert — so there is no second fetch to close off
+  separately. The shipped default contacts one host, `tiles.openfreemap.org`, and pointing either
+  variable at something you serve is what stops anything leaving your machine.
+
+  The raster group is a whole-map mode, not a second renderer: MapLibre wraps a `{z}/{x}/{y}`
+  template into a minimal style and draws it the way it draws a vector one. It stays as the escape
+  hatch — for a tile server you already run, or a keyed provider you prefer.
 
   **Google sign-in is deliberately absent from that bullet**, and it is worth saying why rather than
   leaving it to be inferred. With `GOOGLE_CLIENT_ID` set, no page this app serves fetches, embeds or
@@ -346,10 +366,54 @@ Nothing here phones home. What the app can be told to contact:
   Leaving `GOOGLE_CLIENT_ID` unset still removes the option entirely: no button, and the bundled
   privacy page has no Google section at all.
 
-- **From the server**: the geocoder and the two species registers, on cache misses only. A pinned
-  coordinate or a typed search string goes out; nothing identifying the diver does, and the source
-  IP is your server's. Both are configurable, and the geocoder can be switched off outright. Two
-  more, only if you have set `GOOGLE_CLIENT_ID`. **Every Google sign-in redeems its authorization
+- **From the server**: the geocoder and the two species *name registers*, WoRMS and Wikidata, on
+  cache misses only. A pinned coordinate or a typed search string goes out; nothing identifying the
+  diver does, and the source IP is your server's. All three are configurable, and the geocoder can
+  be switched off outright.
+
+  **Wikimedia Commons is a fourth, and it is not one of those registers.** It is never asked
+  anything a diver typed — it receives a file title derived from an AphiaID, and answers with a
+  photograph's credit metadata and the URL of one scaled copy, which the server then fetches. That
+  is not a cache miss on a search: it happens once, when a species is first resolved into your
+  catalog, and again for species already in it whenever an operator runs the photo backfill script
+  in the API container by hand — nothing runs it on a schedule. `COMMONS_API_URL` points the
+  metadata call at a mirror, and `""` switches species photos off entirely. The image bytes
+  themselves are only ever fetched from `thumb.wikimedia.org` or `upload.wikimedia.org` — one
+  Commons reply names both, the scaled copy on the first and the full-size original on the second
+  for a file already small enough to serve whole. Those two hostnames are hard-coded and have no
+  setting, because that is an SSRF fence and a fence with an environment variable in front of it is
+  not a fence.
+
+  **Every one of those species calls carries the same `User-Agent`**, `SPECIES_USER_AGENT` — the two
+  registers, the Commons metadata call and the byte fetch. It says what the software is, never who
+  the diver is, and both upstreams want it: WoRMS asks to be told who is calling, and
+  [Wikimedia's policy](https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy)
+  requires one. **Unlike `COMMONS_API_URL` it is not an off switch.** An empty value was measured
+  answering 403 on the Commons metadata call and on the image bytes alike, and the registers carry
+  the same header, so blanking it costs species search and resolution rather than only the photos —
+  and nothing warns you, because the API starts and serves normally either way. The default
+  identifies this project rather than your deployment, which is the reason to change it on a public
+  instance: every install that leaves it alone is one indistinguishable client to Wikimedia, so one
+  operator's runaway backfill is attributed to everybody running OpenDiving.
+
+  **The geocoder carries its own, `GEOCODER_USER_AGENT`, and Nominatim is stricter about it.**
+  [Its usage policy](https://operations.osmfoundation.org/policies/nominatim/) asks for "a valid HTTP
+  Referer or User-Agent identifying the application", and adds that a stock one set by an HTTP
+  library will not do — which is enforced rather than advisory. Measured against the public instance
+  on 2026-08-31: an empty agent **403**, a plain `python-httpx/0.27` **403**, the shipped default
+  200. That middle result is what makes this header unlike the species one — non-empty is not
+  enough. And geocoding is not an enrichment that can quietly drop out. Three surfaces rest on it —
+  the place search on the dive site form, the place search on the trip form, and naming the spot
+  behind a pin — so a proxy that rewrites outbound headers, or a generic string pasted in, takes all
+  three at once. What is left is exactly what `GEOCODER_URL=""` gives — search returns nothing,
+  reverse returns "we could not ask", the API stays healthy — and the only trace is a log line
+  naming the exception class, never the 403. The reason to change it on a public instance is the one
+  above, and it is **not** that the default is generic: it is not, and it is accepted. It identifies
+  the project rather than your deployment, so every OpenDiving instance arrives at Nominatim under
+  the same name — leaving its operators no way to tell one from another, or to reach the one giving
+  them trouble. Put your own project and contact address in.
+
+  Two more, only if you have set `GOOGLE_CLIENT_ID`. **Every Google sign-in redeems its authorization
   code** at `oauth2.googleapis.com`, over TLS from your server, using `GOOGLE_CLIENT_SECRET` — that
   call is on the sign-in path itself, so an instance whose outbound traffic is filtered has to allow
   it. And **when somebody signs up with Google**, the API fetches their Google profile picture once
@@ -357,9 +421,13 @@ Nothing here phones home. What the app can be told to contact:
   volume. That one is best-effort; a failure just means the account starts with initials.
 
 There is no analytics of any kind. The web app's Content-Security-Policy narrows where anything
-could be *sent*: `connect-src` names this instance's own origin and its API and nothing else, in
-every configuration, so a `fetch`, an `XMLHttpRequest`, a WebSocket or a `navigator.sendBeacon`
-aimed at a third-party collector is refused by the browser until the policy itself is widened.
+could be *sent*: `connect-src` names this instance's own origin, its API and the host serving the
+basemap, and nothing else, in every configuration, so a `fetch`, an `XMLHttpRequest`, a WebSocket or
+a `navigator.sendBeacon` aimed at a third-party collector is refused by the browser until the policy
+itself is widened. (The basemap sits in that directive in both of its modes rather than in
+`img-src`, because MapLibre decodes even raster tile bytes from an `ArrayBuffer` it fetched. So
+`img-src` names no third-party host at all, in any configuration — `'self'`, `data:`, `blob:` and
+this instance's own API, and nothing else.)
 Google sign-in needs no exception to that and is granted none — a navigation is not a fetch, and
 CSP's fetch directives govern what a page loads rather than where the visitor goes next. Take that
 for what it is and no more — it constrains destinations, not dependencies. Script bundled into the

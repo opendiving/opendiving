@@ -137,9 +137,24 @@ services:
       SITE_URL: ${SITE_URL:-https://${DOMAIN}}
       CONTACT_EMAIL: ${CONTACT_EMAIL:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      # The basemap, in two groups and one variable that belongs to neither. Unset, the web
+      # app draws the MapLibre vector styles it ships, from tiles.openfreemap.org - no key,
+      # no account, nothing to set. MAP_STYLE_URL replaces that style outright, on every map
+      # the app draws; the raster MAP_TILE_* group is the escape hatch, and one renderer
+      # draws both - a `{z}/{x}/{y}` template is wrapped into a minimal style rather than
+      # handed to a second renderer. The two groups are alternatives, not layers, so a style
+      # set alongside the raster group leaves that group inert. The shipped default
+      # therefore contacts one host, and pointing either variable at something you serve is
+      # what removes the third party outright - one setting reaches every map, with no
+      # second fetch beside it. MAP_ATTRIBUTION is the one credit rendered over whichever
+      # basemap is active, which is why it is in neither group and why setting MAP_STYLE_URL
+      # without it makes the app refuse to serve. See docs/configuration.md.
+      MAP_STYLE_URL: ${MAP_STYLE_URL:-}
+      MAP_STYLE_URL_DARK: ${MAP_STYLE_URL_DARK:-}
       MAP_TILE_URL: ${MAP_TILE_URL:-}
       MAP_TILE_URL_DARK: ${MAP_TILE_URL_DARK:-}
-      MAP_TILE_ATTRIBUTION: ${MAP_TILE_ATTRIBUTION:-}
+      MAP_TILE_API_KEY: ${MAP_TILE_API_KEY:-}
+      MAP_ATTRIBUTION: ${MAP_ATTRIBUTION:-}
       WEB_HSTS: ${WEB_HSTS:-}
       WEB_NOINDEX: ${WEB_NOINDEX:-}
     expose:
@@ -157,9 +172,9 @@ services:
     expose:
       - "8000"
     volumes:
-      # Every uploaded dive-computer export and every c-card image. This is the **second
-      # half of your backup** - the database dump does not carry it. See
-      # docs/backup-restore.md, which gives the tar recipe for it.
+      # Every uploaded dive-computer export, c-card image, profile picture and species
+      # photograph. This is the **second half of your backup** - the database dump does not
+      # carry it. See docs/backup-restore.md, which gives the tar recipe for it.
       - files-data:/data/files
     # The image's own healthcheck asks `/api/v1/health/ready`, which round-trips Postgres
     # and Redis - so `service_healthy` here means "can serve", not "has a process".
@@ -262,7 +277,8 @@ services:
 
 volumes:
   postgres-data:
-  # Uploaded dive-computer exports and c-card images, one ordinary file each, named by the
+  # Uploaded dive-computer exports, c-card images, profile pictures and the species
+  # photographs fetched from Wikimedia Commons - one ordinary file each, named by the
   # `storage_key` its row carries. The other half of your backup: `pg_dump` does not
   # contain these, and a restore of the dump alone leaves every download 500ing. Back it up
   # with the tar recipe in docs/backup-restore.md - and note that `docker

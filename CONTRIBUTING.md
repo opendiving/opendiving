@@ -20,7 +20,8 @@ covering setup, checks and house rules. If your change is to the app, it belongs
   run. It edits `example.env` in place rather than writing a `.env` of its own, so the comments
   survive the install; it starts nothing. CI runs `shellcheck`, and
   `docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable install.sh` runs the same check
-  locally. `AGENTS.md` has the end-to-end recipe, which works without a release existing.
+  locally. *Verifying a change to the bundle* below has the end-to-end recipe, which works without a
+  release existing.
 - **The third-party digests.** postgres, redis and caddy are pinned `tag@sha256:...` because nothing
   here is built — an operator pulls, so a floating tag would hand them whatever upstream published
   today. Renovate raises a PR when one moves. Don't unpin them, and don't bump one by hand without
@@ -29,6 +30,44 @@ covering setup, checks and house rules. If your change is to the app, it belongs
 Use semantic **PR titles** — `<type>[(scope)][!]: <description>`, where type is one of `feat`, `fix`,
 `refactor`, `docs`, `test`, `chore`, `perf`, `ci`, `build`, `revert`. PRs are squash-merged, so the
 title becomes the commit subject on `main` and is the only thing that outlives the branch.
+
+## Verifying a change to the bundle
+
+There is no CI that can tell you a compose file is right. What can be checked locally:
+
+```bash
+cp example.env .env && docker compose config >/dev/null && rm .env
+```
+
+`.env` has to exist for that to run at all — the services declare `env_file: .env`, and compose
+refuses before it parses anything else — which is why the copy is part of the command rather than an
+assumed prerequisite. It validates shape and interpolation and nothing else. A real change to the
+bundle — a new service, a changed volume, a new required variable — is confirmed by installing it on
+a throwaway machine by following `docs/install.md` verbatim, and every deviation you were tempted to
+make is a documentation bug.
+
+`install.sh` has two checks of its own, and neither needs a release to exist. The linter, which is
+what CI runs:
+
+```bash
+docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable install.sh
+```
+
+And an actual install into a scratch directory. Run from a checkout, the script installs the three
+files sitting next to it instead of downloading a release — which is what makes a bundle change
+testable before it is tagged — and every value it would ask for can be supplied in the environment,
+so it needs no terminal either:
+
+```bash
+mkdir /tmp/od-test && cd /tmp/od-test
+DOMAIN=dives.example.com SMTP_HOST=smtp.example.com SMTP_PORT=587 SMTP_USERNAME= \
+  EMAIL_FROM_ADDRESS=noreply@example.com bash ~/path/to/opendiving/install.sh
+diff <(sed 's/=.*//' ~/path/to/opendiving/example.env) <(sed 's/=.*//' .env)
+docker compose config >/dev/null
+```
+
+That `diff` is the check worth keeping: line for line, the `.env` it writes has to be the template
+with values replaced. Any difference at all means a comment went missing.
 
 ## Cutting a release
 
