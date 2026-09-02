@@ -1,6 +1,37 @@
 # Install
 
-Four commands, a domain, and a mail relay.
+One command, a domain, and a mail relay.
+
+```bash
+mkdir opendiving && cd opendiving
+curl -LO https://github.com/opendiving/opendiving/releases/latest/download/install.sh
+less install.sh          # it is about to write your .env — read it first
+bash install.sh
+```
+
+It checks that this machine can run the stack, downloads the three files an install is made of,
+generates `SECRET_KEY` and `POSTGRES_PASSWORD`, and asks for the handful only you know: your domain,
+your mail relay and the address mail comes from. Then it stops. The last thing it prints is the
+command it deliberately does not run for you:
+
+```bash
+docker compose up -d
+```
+
+Point `DOMAIN`'s DNS record at this machine **before** that command: the bundled Caddy asks Let's
+Encrypt for a certificate as it starts, and it can only get one for a name that already resolves
+here — the script warns when it doesn't, and leaves the timing to you because Let's Encrypt
+rate-limits failed challenges per hostname per hour. Open `https://your-domain`, ask for a sign-in
+link, and the first account to sign in is yours.
+
+It takes one option: `--version vX.Y.Z`, to install a specific release rather than the newest one.
+That pins both halves — the bundle comes from that release's assets, and `OPENDIVING_VERSION` is set
+in the `.env` so `docker compose up` pulls images of the same version rather than `latest`.
+
+## Or by hand
+
+The script does nothing here you cannot do yourself, and on a machine where you would rather not
+run a downloaded script, this is the same install:
 
 ```bash
 mkdir opendiving && cd opendiving
@@ -20,16 +51,11 @@ Edit six values in `.env` — the file explains each one where it sits:
 | `SMTP_USERNAME` / `SMTP_PASSWORD` | Its credentials, if it wants any                                     |
 | `EMAIL_FROM_ADDRESS`              | An address on a domain that relay may send for                       |
 
-Then:
-
-```bash
-docker compose up -d
-```
-
-Point `DOMAIN`'s DNS record at this machine **before** that last command: the bundled Caddy asks
-Let's Encrypt for a certificate as it starts, and it can only get one for a name that already
-resolves here. Open `https://your-domain`, ask for a sign-in link, and the first account to sign in
-is yours.
+Two things the script would have done for you and are easy to miss here: a password containing
+`@ : / #` has to be percent-encoded in the `CRUD_ADMIN_DB_URL` that `docker-compose.yml` derives, so
+generate one without them; and a value with a space or a `#` in it must be quoted —
+`SMTP_PASSWORD='pa$$w0rd # 1'` — because `.env` otherwise reads it as far as the first ` #` and
+expands the `$`. Then `docker compose up -d`, with the same DNS caveat above.
 
 ## What you need
 

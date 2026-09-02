@@ -1,8 +1,9 @@
 # Contributing
 
-This repository is the install bundle and the operator documentation — three files and a `docs/`
-directory. There is no code here, no test suite and nothing to build, so contributing is mostly
-prose and YAML.
+This repository is the install bundle and the operator documentation — three files, the script that
+downloads them, and a `docs/` directory. Nothing is built and there is no test suite, so
+contributing is mostly prose and YAML, with one shell script that `shellcheck` has an opinion
+about.
 
 The application lives in [opendiving-api](https://github.com/opendiving/opendiving-api) and
 [opendiving-web](https://github.com/opendiving/opendiving-web), each with its own `CONTRIBUTING.md`
@@ -13,8 +14,14 @@ covering setup, checks and house rules. If your change is to the app, it belongs
 - **The docs.** The bar is that an operator can follow them verbatim on a fresh machine. Every
   deviation you had to make on a real install is a documentation bug worth a PR.
 - **The bundle.** `docker-compose.yml`, `Caddyfile` and `example.env` are what people download.
-  They carry long comments on purpose: someone reading them has three files, no repository and a
+  They carry long comments on purpose: someone reading them has a few files, no repository and a
   problem. Explaining *why* a value is what it is where they will read it is the point, not clutter.
+- **`install.sh`.** The same audience, and the same bar — it is downloaded and read before it is
+  run. It edits `example.env` in place rather than writing a `.env` of its own, so the comments
+  survive the install; it starts nothing. CI runs `shellcheck`, and
+  `docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable install.sh` runs the same check
+  locally. *Verifying a change to the bundle* below has the end-to-end recipe, which works without a
+  release existing.
 - **The third-party digests.** postgres, redis and caddy are pinned `tag@sha256:...` because nothing
   here is built — an operator pulls, so a floating tag would hand them whatever upstream published
   today. Renovate raises a PR when one moves. Don't unpin them, and don't bump one by hand without
@@ -39,9 +46,32 @@ bundle — a new service, a changed volume, a new required variable — is confi
 a throwaway machine by following `docs/install.md` verbatim, and every deviation you were tempted to
 make is a documentation bug.
 
+`install.sh` has two checks of its own, and neither needs a release to exist. The linter, which is
+what CI runs:
+
+```bash
+docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable install.sh
+```
+
+And an actual install into a scratch directory. Run from a checkout, the script installs the three
+files sitting next to it instead of downloading a release — which is what makes a bundle change
+testable before it is tagged — and every value it would ask for can be supplied in the environment,
+so it needs no terminal either:
+
+```bash
+mkdir /tmp/od-test && cd /tmp/od-test
+DOMAIN=dives.example.com SMTP_HOST=smtp.example.com SMTP_PORT=587 SMTP_USERNAME= \
+  EMAIL_FROM_ADDRESS=noreply@example.com bash ~/path/to/opendiving/install.sh
+diff <(sed 's/=.*//' ~/path/to/opendiving/example.env) <(sed 's/=.*//' .env)
+docker compose config >/dev/null
+```
+
+That `diff` is the check worth keeping: line for line, the `.env` it writes has to be the template
+with values replaced. Any difference at all means a comment went missing.
+
 ## Cutting a release
 
-A release here is the **product's** release: the version both images are tagged with, plus the three
+A release here is the **product's** release: the version both images are tagged with, plus the
 files that install them. It is cut deliberately, never minted per merge — a version is an event
 self-hosters read before they pull, and a stream of releases whose notes are one PR title each
 trains people onto `latest`, the tag you least want somebody following.
@@ -88,7 +118,7 @@ Then, in order:
    refuses to publish anything if either is missing or half-published. This is the check that no
    per-repository workflow can make, and running it last is what makes it possible at all.
 
-4. **Finish the draft.** The workflow opens a draft release with generated notes and the three
+4. **Finish the draft.** The workflow opens a draft release with generated notes and the four
    install files attached. Write the headline paragraph and confirm the **Breaking** section — say
    "None" in so many words when it is empty, because generated notes simply omit an empty category
    and silence is not an answer somebody deciding whether to upgrade can use. Then publish.

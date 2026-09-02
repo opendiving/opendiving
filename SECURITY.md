@@ -45,9 +45,13 @@ elsewhere, and no report is lost by guessing wrong.
 **In scope** — a defect in what this repository ships:
 
 - The install bundle — [`docker-compose.yml`](docker-compose.yml), [`Caddyfile`](Caddyfile),
-  [`example.env`](example.env) — and anything unsafe about the configuration a fresh install ends up
-  with by following [docs/install.md](docs/install.md): a service exposed that shouldn't be, a
-  default that is dangerous, a digest pinned to a known-vulnerable image.
+  [`example.env`](example.env), [`install.sh`](install.sh) — and anything unsafe about the
+  configuration a fresh install ends up with by following [docs/install.md](docs/install.md): a
+  service exposed that shouldn't be, a default that is dangerous, a digest pinned to a
+  known-vulnerable image. The script is its own case: it is downloaded and run before anything it
+  installs exists, and it is what generates `SECRET_KEY` and the database password, so how it
+  produces either — or anything it writes into `.env` that an operator would not expect — belongs
+  here.
 - Documentation that tells an operator to do something unsafe. A wrong instruction in
   [docs/](docs/) is a real vulnerability in a project whose whole install is people following it.
 

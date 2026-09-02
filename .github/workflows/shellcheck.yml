@@ -1,0 +1,42 @@
+name: Shell
+
+# `install.sh` is the only executable thing in this repository, and it runs once, on
+# somebody else's machine, before anything it installs exists. There is no fixture for "a
+# fresh VPS with Docker, a domain and a mail relay", so a linter is the whole test suite it
+# can have - which makes it worth running on every PR rather than only when the script
+# changes.
+#
+# Not path-filtered on purpose, for the same reason `pr-title.yml` runs on `synchronize`: a
+# required check has to have passed on the PR's latest head SHA, and a filtered workflow
+# that skips leaves the PR waiting for a status that never arrives.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Nothing is published and nothing is written back - the checkout is all this needs.
+permissions:
+  contents: read
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # The image rather than the runner's own shellcheck, because the runner's is pinned to
+      # whatever that image generation shipped - 0.9.0 while this was written - and it
+      # reports findings a current one does not. Running the same container CONTRIBUTING.md
+      # tells a contributor to run is what makes green here and green there the same claim.
+      - name: Lint install.sh
+        run: |
+          set -euo pipefail
+          docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable --version
+          docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable install.sh
+
+      # Cheap, and it is bash's own parser rather than ShellCheck's reimplementation of it.
+      - name: Parse install.sh with bash itself
+        run: bash -n install.sh
