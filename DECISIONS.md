@@ -189,10 +189,18 @@ distinction is about — it is between describing this repository's job and defi
 
 ## The template's registration line is `REGISTRATION_MODE=open`
 
-Every commented-out line in `example.env` is the *non-default* value, because uncommenting a line
-that changes nothing is a decision with no effect and reads as one with an effect. `# WEB_NOINDEX=true`
-against a default of `off` is the shape; `# REGISTRATION_MODE=open` against a default of `invite` is
-the same shape, and it is the one an operator ever has a reason to type.
+A commented-out line in `example.env` is whatever the operator would actually type, and for a
+two-state switch that is the *other* state: uncommenting a line that changes nothing is a decision
+with no effect that reads as one with an effect. `# WEB_NOINDEX=true` sits against a default of
+`off` and `# MIGRATE_ON_START=false` against `true`; `# REGISTRATION_MODE=open` against a default of
+`invite` is the same shape, and it is the only value this setting gives anybody a reason to type.
+
+Lines that are not switches are written differently in the same file, which is the rule applied
+rather than broken. A number or a path appears at its **default** — `# INVITATIONS_PER_USER=5`,
+`# LOG_LEVEL=INFO` — because the operator is adjusting a value rather than picking a state, and the
+value they are moving away from is what helps them decide. A setting with more than two values
+carries them in the paragraph and the default on the line (`# SMTP_TLS_MODE=starttls`), and one with
+no default at all appears as a placeholder (`# CONTACT_FORM_EMAIL=you@example.com`).
 
 Writing it the other way round — `# REGISTRATION_MODE=invite`, matching the default — would be worse
 than redundant here. Uncommenting it changes nothing, so somebody who wanted the open behaviour and
