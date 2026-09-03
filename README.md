@@ -35,8 +35,10 @@ do the same thing by hand: [install guide](docs/install.md).
 
 Point your domain's DNS record at the machine **before** starting the stack — the bundled Caddy asks
 Let's Encrypt for a certificate as it starts, and it can only get one for a name that already
-resolves. Then open `https://your-domain`, ask for a sign-in link, and the first account to sign in
-is yours.
+resolves. Then open `https://your-domain`, press **Sign In**, ask for a link, and the first account
+to sign in is yours — it carries the operator's rights. A new install is invite-only, so everybody
+after you gets in by an invitation you send; `REGISTRATION_MODE=open` is the other setting, and the
+[configuration guide](docs/configuration.md#who-may-create-an-account) has both.
 
 That is the whole product: the web app, the API and its worker, PostgreSQL, Redis, and Caddy
 terminating TLS with a certificate it fetches itself. Nothing is built — every image is pulled,

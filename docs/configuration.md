@@ -41,6 +41,50 @@ self-hoster normally touches, and any setting from that file can be added to `.e
 | `OPENDIVING_VERSION` | `latest`            | The image tag both containers run. Pin it once this instance holds dives you'd miss.                                                                                                        |
 | `LOG_LEVEL`          | `INFO`              | Applied to the API and the worker alike.                                                                                                                                                    |
 
+## Who may create an account
+
+New installs are **invite-only**. That is the default and it is a deliberate one: an instance
+reachable from the internet with nothing configured would otherwise take anybody who found it, and
+this one holds people's dive logs. Set `REGISTRATION_MODE=open` if you want the other behaviour,
+which is what this app did before the setting existed.
+
+| Variable                                   | Default  | What it does                                                                                                                                                                                                                                                                                                       |
+| ------------------------------------------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `REGISTRATION_MODE`                        | `invite` | `invite` admits only an address somebody already invited: the home page offers a stranger a **Request an invite** form instead of a sign-in form, and their address joins a queue you work through. `open` gives an account to anybody who proves they own an address. The first account on an empty instance needs no invitation in either mode — see below. An unknown value refuses to start. |
+| `INVITATIONS_PER_USER`                     | `5`      | How many invitations one member may send per window. A rate, not a lifetime allotment. Counted from the invitations themselves, revoked ones included, so it bounds emails sent. Superusers are exempt.                                                                                                            |
+| `INVITATIONS_WINDOW_DAYS`                  | `1`      | The window those are counted over.                                                                                                                                                                                                                                                                                 |
+| `INVITATION_ATTEMPT_RATE_LIMIT_PER_USER`   | `20`     | A separate backstop on how often one member may *attempt* an invitation, over `MAGIC_LINK_RATE_LIMIT_WINDOW_SECONDS`. Inviting an address that already has an account is refused without creating anything, so the quota above never charges for it; this is what stops that refusal being a probe. Superusers get it too. |
+| `INVITE_REQUEST_RATE_LIMIT_WINDOW_SECONDS` | `3600`   | The window for the two limits below, on the anonymous request-an-invite endpoint. Consulted only in `invite` mode.                                                                                                                                                                                                 |
+| `INVITE_REQUEST_RATE_LIMIT_PER_EMAIL`      | `3`      | Requests per window for one submitted address.                                                                                                                                                                                                                                                                     |
+| `INVITE_REQUEST_RATE_LIMIT_PER_IP`         | `10`     | Requests per window from one caller, subject to `TRUSTED_PROXY_IPS` being right.                                                                                                                                                                                                                                   |
+
+**The first account to sign in is yours, in both modes.** While the `user` table is empty the gate
+lets the address through whatever `REGISTRATION_MODE` says, and the account it creates carries the
+operator's rights. That is what keeps closed-by-default from being a first-run trap — a fresh
+instance has no invitations and nobody who could send one — and it is why nothing here needs SQL or
+a bootstrap script. It fires on the table being empty rather than once, so an instance whose last
+account is deleted and purged hands the same deal to whoever signs in next.
+
+**How you invite people.** Every member has an *Invitations* card in Settings, subject to the quota
+above. As the operator you also get an **Admin** entry in the account menu — sign in as the first
+account, open the menu, choose *Admin* — which lists the queue of addresses that used the request
+form, tells you which of them already have an account, and invites or removes them in a batch. An
+invitation is an entry against the email address rather than a code to forward: the invitee signs in
+with the address that was invited — by link, code or Google, exactly as anybody else does — so there
+is no token for them to lose and nothing extra for you to explain.
+
+Somebody who is not invited still gets their sign-in email. The endpoint that sends it deliberately
+never learns whether an address is invited, or even whether it has an account, which is what keeps
+it from being a way to enumerate your users; the refusal comes afterwards, once the link or code has
+proven the address is theirs. [Troubleshooting](troubleshooting.md) has the message they see.
+
+Requests that nobody acts on are deleted after 90 days, and so is an invitation nobody accepts; both
+are somebody else's email address sitting in your database, and neither is a setting.
+
+Flipping the mode is a restart of the `api` container with the new `.env` applied — `docker compose
+up -d`, as with every setting here. The web app asks the API which mode it is in, so there is
+nothing to change on the `web` service and nothing to redownload.
+
 ## Sign-in
 
 Sign-in is passwordless, and an instance offers up to three ways in. **Email always works**: the
@@ -51,7 +95,9 @@ WebAuthn against this instance, which is a property of how you deployed it rathe
 see below.
 
 Nothing here is required. The defaults are the tested configuration, and an instance that sets none
-of it still has working sign-in as long as mail is delivered.
+of it still has working sign-in as long as mail is delivered. Who is *allowed* to end up with an
+account is the separate question above — [Who may create an account](#who-may-create-an-account) —
+and the answer to it changes none of the three methods.
 
 | Variable                               | Default | What it does                                                                                                                                                                                    |
 | -------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -258,14 +304,23 @@ panel on, its own event and audit tables hold a second copy of whatever you edit
 ### The admin panel
 
 Off by default, and a deliberate opt-in: it is a full CRUD interface over every model and bypasses
-the ownership checks the API applies to everything else.
+the ownership checks the API applies to everything else. It is **not** where you work the invite
+queue — that is the app's own [Admin section](#who-may-create-an-account), which needs none of this.
 
 ```bash
 CRUD_ADMIN_ENABLED=true
 ADMIN_PASSWORD=a-real-password        # production refuses to start without one
 ADMIN_USERNAME=admin
+CRUD_ADMIN_MOUNT_PATH=/crud-admin     # required now: /admin is the app's own admin section
 CRUD_ADMIN_ALLOWED_NETWORKS=10.0.0.0/8   # optional, comma-separated
 ```
+
+**`CRUD_ADMIN_MOUNT_PATH` is the line that is new, and enabling the panel without it gets you the
+wrong page.** The panel still defaults to `/admin`, and `/admin` is now a page of the web app, which
+is where the bundled Caddyfile sends it. Move the panel somewhere else and the two stop colliding —
+then add a route for the path you chose, since the bundle routes only what it knows about. The
+Caddyfile carries a commented-out block for exactly this at the top; for your own proxy it is one
+more `location` or router, alongside the one in [reverse-proxy.md](reverse-proxy.md).
 
 The compose file already points its tables at the app's Postgres (`CRUD_ADMIN_DB_URL`), which is
 what makes it work behind four API workers. If your `POSTGRES_PASSWORD` contains `@`, `/`, `:` or
@@ -273,13 +328,15 @@ what makes it work behind four API workers. If your `POSTGRES_PASSWORD` contains
 
 The allowlist matches the caller's address only when `TRUSTED_PROXY_IPS` names the proxy actually in
 front of the app — the panel's own middleware reads the forwarded address the app was told to
-believe. The same setting is what stops the panel redirecting `/admin` to the HTTPS URL it is
+believe. The same setting is what stops the panel redirecting its own path to the HTTPS URL it is
 already on: it enforces HTTPS on `ENVIRONMENT=production`, and a proxy the app hasn't been told
 about makes every request look like plain HTTP. Both symptoms are one misconfiguration, and the
 shipped value covers the bundled Caddy.
 
-Running your own proxy? Route `/admin` to `api:8000` yourself — the web container carries only
-`/api/v1` — and make sure your proxy is in `TRUSTED_PROXY_IPS` **and** sets `X-Forwarded-Proto`.
+Running your own proxy? The panel is the one thing a single `web:3000` upstream does not carry, so
+route whatever you set `CRUD_ADMIN_MOUNT_PATH` to at `api:8000` yourself — and make sure your proxy
+is in `TRUSTED_PROXY_IPS` **and** sets `X-Forwarded-Proto`. Nothing else needs splitting out:
+`/admin` is a page of the web app and reaches the API the way every other page does.
 
 **The panel signs its administrators in with cookies of its own**, set under `CRUD_ADMIN_MOUNT_PATH`
 when someone logs in to it. They are part of the surface you operate rather than anything a diver

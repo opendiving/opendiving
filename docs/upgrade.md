@@ -24,6 +24,18 @@ own is not breaking, because it applies itself.
 
 <https://github.com/opendiving/opendiving/releases>
 
+**`docker compose pull` updates images and nothing else.** `docker-compose.yml`, `Caddyfile` and the
+`.env` you made from `example.env` are files you downloaded once; they stay exactly as they are
+through every upgrade. So when a release's Breaking section names one of them, re-downloading it is
+the manual step, and it is the only kind of manual step this project's releases have:
+
+```bash
+curl -LO https://github.com/opendiving/opendiving/releases/latest/download/Caddyfile
+```
+
+Your `.env` is never overwritten — take new settings out of that release's `example.env` by hand,
+which is also how you get the paragraph explaining each one.
+
 ## Pin the version
 
 `OPENDIVING_VERSION` in `.env` selects the tag both images run, and it defaults to `latest`. Once

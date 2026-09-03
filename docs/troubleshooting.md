@@ -71,6 +71,39 @@ app one nine times in ten.
   the logs could sign in as any address that asked for one. The API raises there rather than writing
   one to the log.
 
+## The home page asks for an invite — how do I sign in?
+
+That instance is invite-only, which is the default for a new install: the home page offers a
+stranger a request form rather than a sign-in form, because there is nothing a stranger can do with
+the second one. Signing in is unchanged and one click away — the **Sign In** button in the header,
+or "Sign in to this instance" further down the page, both of which go to `/signin` and ask for a
+link the way they always did.
+
+If this is a brand new install and nobody has signed in yet, the first account is admitted
+regardless: sign in as yourself, and everybody else arrives by an invitation you send from Settings
+or from the Admin section. `REGISTRATION_MODE=open` in `.env` and `docker compose up -d` is the
+other answer, and it is the behaviour releases before this one had — see
+[configuration.md](configuration.md#who-may-create-an-account).
+
+## "This address hasn't been invited to this instance yet"
+
+Working as configured, on an instance in `invite` mode. The sign-in email is sent to any address
+that asks for one — the endpoint that sends it deliberately never learns whether an address is
+invited or even registered, which is what keeps it from being a way to enumerate your users — so the
+refusal arrives afterwards, once the link or the code has proven the address belongs to whoever
+clicked it. Nobody's account is affected and nothing was created.
+
+To let them in, invite the address: Settings → Invitations for any member, or the Admin section if
+they used the request form on the home page and you would rather work the queue. The invitation is
+an entry against that exact address, so invite the one they will actually sign in with — an
+invitation for `diver@example.com` does nothing for `diver@work.example.com`.
+
+Getting it on an instance you meant to be open means `REGISTRATION_MODE` is not what you think.
+`docker compose exec api env | grep REGISTRATION_MODE` says what the container is actually running
+with — and prints nothing at all if the variable was never passed in, which is itself the answer,
+since the default is `invite`. An edit to `.env` needs `docker compose up -d`; `restart` keeps the
+environment the container was created with.
+
 ## Everyone shares one rate-limit bucket
 
 Symptom: one person's retries lock sign-in for everybody, or the contact form starts answering 429
@@ -92,7 +125,7 @@ what this one is lenient about. Write the entry as `10.1.2.3` if you mean that a
 `10.0.0.0/8` if you mean the block. The message quotes the offending value and names no setting at
 all, which is why it looks unrelated to anything you edited.
 
-## `/admin` redirects forever, or 403s me
+## The admin panel redirects forever, or 403s me
 
 Both are the same setting. The panel enforces HTTPS on `ENVIRONMENT=production` and applies its IP
 allowlist to the address the app believes the caller has — and the app believes a forwarded address
@@ -100,6 +133,24 @@ only from a proxy listed in `TRUSTED_PROXY_IPS`. Unlisted, every request looks l
 the proxy itself: the panel redirects to the HTTPS URL it is already on, and any honest allowlist
 value matches nobody. Fix the list, not the panel, and make sure your proxy sends
 `X-Forwarded-Proto` — the bundled Caddy does, and the shipped value already names it.
+
+This is the CRUDAdmin panel, the opt-in one, at whatever `CRUD_ADMIN_MOUNT_PATH` says. It is not the
+app's own admin section at `/admin`, which is an ordinary page and has neither behaviour.
+
+## I enabled the admin panel and `/admin` shows me the app
+
+`/admin` is the web app's own admin section now, and the bundled Caddyfile routes it there. The
+panel still defaults to the same path, so the two collide and the app wins. Move the panel:
+
+```bash
+CRUD_ADMIN_MOUNT_PATH=/crud-admin
+```
+
+`docker compose up -d`, and route that path to `api:8000` — the Caddyfile has a commented-out block
+for it at the top, and [reverse-proxy.md](reverse-proxy.md) covers your own proxy. Upgrading an
+instance that ran an older release? The Caddyfile is a file you downloaded, not part of an image, so
+`docker compose pull` does not update it: take the new one from the release you are moving to, or
+delete `/admin*` from the `@api path` line by hand.
 
 ## No passkey option, or a passkey that never works
 
