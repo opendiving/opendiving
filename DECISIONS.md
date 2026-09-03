@@ -187,6 +187,75 @@ still says run it, change it, self-host it freely. The change is register, not r
 documentation, every page here is addressed to an operator on purpose, and none of that is what the
 distinction is about — it is between describing this repository's job and defining the product.
 
+## The template's registration line is `REGISTRATION_MODE=open`
+
+A commented-out line in `example.env` is whatever the operator would actually type, and for a
+two-state switch that is the *other* state: uncommenting a line that changes nothing is a decision
+with no effect that reads as one with an effect. `# WEB_NOINDEX=true` sits against a default of
+`off` and `# MIGRATE_ON_START=false` against `true`; `# REGISTRATION_MODE=open` against a default of
+`invite` is the same shape, and it is the only value this setting gives anybody a reason to type.
+
+Lines that are not switches are written differently in the same file, which is the rule applied
+rather than broken. A number or a path appears at its **default** — `# INVITATIONS_PER_USER=5`,
+`# LOG_LEVEL=INFO` — because the operator is adjusting a value rather than picking a state, and the
+value they are moving away from is what helps them decide. A setting with more than two values
+carries them in the paragraph and the default on the line (`# SMTP_TLS_MODE=starttls`), and one with
+no default at all appears as a placeholder (`# CONTACT_FORM_EMAIL=you@example.com`).
+
+Writing it the other way round — `# REGISTRATION_MODE=invite`, matching the default — would be worse
+than redundant here. Uncommenting it changes nothing, so somebody who wanted the open behaviour and
+uncommented the line they found would get a closed instance and no error, and the paragraph above it
+would be explaining a value they already have. The paragraph is where the default is stated; the line
+is the escape hatch.
+
+The corollary is that `install.sh` does not ask about the mode. It fills in what an install cannot
+start without, and the mode has a working default in both directions — see *`install.sh` fills the
+template in* above. What it does do is say which mode the instance came up in, because a closing
+message that stops at "the first account to sign in is yours" would leave an operator wondering why
+the home page then asked them for an invite.
+
+## Invite-only needs no compose change
+
+`REGISTRATION_MODE` is an API setting and `docker-compose.yml` already passes the API the whole
+`.env` (`env_file`), so it arrives with no edit. The web container gets a curated `environment:`
+list instead, and deliberately gains nothing here: the web app learns the mode by asking the API for
+it (`GET /api/v1/config`) rather than from a copy of its own.
+
+That asymmetry is the whole reason the endpoint exists, and it is a property of *this* file rather
+than a preference of the app's. A variable added to the web service's block is a change to a file
+operators downloaded once — `docker compose pull` updates images, never the compose file — so a
+web-side mirror of this setting would reach every new install and no existing one, and the failure
+would be a landing page showing the wrong form on exactly the instances nobody re-downloaded
+anything for. An endpoint ships inside the image and needs no cooperation from the bundle at all.
+
+There is a second copy of this cost recorded next door: the web mirrors `GOOGLE_CLIENT_ID` in its
+own environment and consequently cannot learn that the API is missing the matching secret, which is
+why the API refuses to boot in that state. One mirror is enough.
+
+## `/admin` is the web app's, and the panel has to move
+
+The bundled `Caddyfile` used to send `/admin*` to `api:8000`, because the only admin surface was
+CRUDAdmin and CRUDAdmin mounts on the API. The app now has an admin section of its own — a
+superuser-gated part of the web app, where the invite queue lives — at `/admin`, and it reaches the
+API through `/api/v1` like every other page. So the matcher drops `/admin*` and the path falls
+through to `web:3000` with everything else.
+
+**This is a breaking change to the bundle, in the sense `CONTRIBUTING.md` defines**: an install that
+pulls new images without taking the new `Caddyfile` keeps routing `/admin` to the API and cannot
+reach its own admin section. Nothing warns them — they get the panel's login form, or a 404 where
+the panel is off — which is why the release notes' Breaking section has to name the file rather than
+only the setting.
+
+The collision it creates is the other half. `CRUD_ADMIN_MOUNT_PATH` still defaults to `/admin`, so
+an operator who enables the panel now has two things claiming one path and the routing decides: the
+app wins, and the panel is unreachable. The fix is one line of `.env` plus a route, and it is
+documented at every place the panel is — `example.env`, `docs/configuration.md`,
+`docs/reverse-proxy.md`, `docs/troubleshooting.md` and a commented-out block in the `Caddyfile`
+itself. *Rejected:* moving the panel's default in the API instead, which would be a second breaking
+change for every install that had already enabled it, in service of a panel that is being retired
+anyway; and keeping `/admin*` on the API and putting the app's section somewhere else, which would
+have let the surface nobody uses keep the path the docs have always pointed operators at.
+
 ## Operator issues here, application bugs next door
 
 An issue about installing, upgrading, backing up or configuring belongs in this repository; a bug in

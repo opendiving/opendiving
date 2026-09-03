@@ -15,6 +15,16 @@
 # Running your own proxy instead? None of this applies - point it at `web:3000` and read
 # https://github.com/opendiving/opendiving/tree/main/docs/reverse-proxy.md, which covers the two things that are easy to get
 # wrong (TRUSTED_PROXY_IPS, and the admin panel's path).
+#
+# Enabled the CRUDAdmin panel? It still defaults to `/admin`, and `/admin` is now the web
+# app's own admin section - so move the panel with CRUD_ADMIN_MOUNT_PATH and add a route
+# for wherever you put it. `handle` blocks are tried in order, so it goes inside the site
+# block below, before the catch-all one at the bottom:
+#
+#	@panel path /crud-admin*
+#	handle @panel {
+#		reverse_proxy api:8000
+#	}
 
 {$CADDY_SITE_ADDRESS} {
 	encode zstd gzip
@@ -23,11 +33,18 @@
 	# perfectly good proxy for `/api/v1` and there is no reason to add a Node hop to a 10
 	# MB card upload or a whole-logbook export archive.
 	#
-	# The three docs paths and `/admin` are here because they mount on the *API*, not on
-	# the web app: a plain "everything to web:3000" file leaves an enabled admin panel and
-	# the OpenAPI docs answering 404 with nothing to suggest why. `/docs` and friends are
-	# absent on ENVIRONMENT=production anyway - routing them costs nothing and means that
-	# a staging instance behaves the way its operator expects.
+	# The three docs paths are here because they mount on the *API*, not on the web app: a
+	# plain "everything to web:3000" file leaves them answering 404 with nothing to suggest
+	# why. They are absent on ENVIRONMENT=production anyway - routing them costs nothing
+	# and means that a staging instance behaves the way its operator expects.
+	#
+	# `/admin` used to be on this line and is deliberately not any more. The operator's
+	# surface is a superuser-gated section of the *web* app now - the invite queue lives
+	# there - and it reaches the API through `/api/v1/admin/*` like every other page does,
+	# so sending `/admin*` here would hand an operator the CRUDAdmin login form instead of
+	# their own admin page. The panel is off by default and still mounts on `/admin` when
+	# it is switched on, which is why enabling it now also means moving it: see the
+	# CRUD_ADMIN_MOUNT_PATH note at the top of this file.
 	#
 	# No body-size limit is set: Caddy imposes none by default, and the app enforces its
 	# own (5 MB dive files, 10 MB card images) with an error message that explains itself.
@@ -39,7 +56,7 @@
 	# the version that also holds for the installs that run their own proxy instead of
 	# this file. Adding them here as well would be a second definition of one policy,
 	# free to drift from the first.
-	@api path /api/v1* /admin* /docs /redoc /openapi.json
+	@api path /api/v1* /docs /redoc /openapi.json
 	handle @api {
 		reverse_proxy api:8000
 	}
@@ -50,9 +67,11 @@
 	#
 	# That covers this handler only - the `@api` paths above are matched first and never
 	# reach it. HSTS is the one exception, and only by accident of being recorded per
-	# *host*: once a browser has loaded any page of the domain, `/admin` is pinned too.
-	# An operator whose first-ever request to the domain is `/admin` itself, from a
-	# bookmark, is the one visitor that misses it.
+	# *host*: once a browser has loaded any page of the domain, those paths are pinned
+	# too. Somebody whose first-ever request to the domain is `/docs` itself, from a
+	# bookmark on a staging instance, is the one visitor that misses it. The admin
+	# section is no longer among them - it is a page of this app and gets its headers
+	# from it directly, HSTS included.
 	handle {
 		reverse_proxy web:3000
 	}

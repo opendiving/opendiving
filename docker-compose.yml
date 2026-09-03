@@ -66,9 +66,11 @@ x-api-environment: &api-environment
   #
   # Without it the app sees every request as plain `http` from Caddy's own address, and
   # two things break in ways that look unrelated to a proxy: the admin panel's
-  # HTTPS-enforcing middleware redirects every `/admin` request to the https URL it is
-  # already on (an infinite loop), and its IP allowlist matches the proxy rather than the
-  # caller, so any honest value there locks the operator out. Per-IP rate limits are
+  # HTTPS-enforcing middleware redirects every request to the panel to the https URL it
+  # is already on (an infinite loop), and its IP allowlist matches the proxy rather than
+  # the caller, so any honest value there locks the operator out. Both are the CRUDAdmin
+  # panel's, which is off by default; the web app's own admin section is an ordinary page
+  # of the app and has neither. Per-IP rate limits are
   # unaffected either way - `core/utils/client_ip.py` does this walk itself, against the
   # same setting, and both take the right-most entry no proxy in the list vouched for.
   FORWARDED_ALLOW_IPS: ${TRUSTED_PROXY_IPS:-}

@@ -564,9 +564,13 @@ fi
 
 printf '\n%sReady.%s %s\n\n' "$BOLD" "$OFF" "$PWD"
 printf '    docker compose up -d\n\n'
-printf '  Then open %shttps://%s%s and ask for a sign-in link - the first account to sign\n' "$BOLD" "$DOMAIN" "$OFF"
-printf '  in is yours. Certificates, images and migrations all happen on that first start;\n'
-printf '  docker compose logs -f is where it reports in.\n\n'
+printf '  Then open %shttps://%s%s, press Sign In and ask for a link - the first account\n' "$BOLD" "$DOMAIN" "$OFF"
+printf '  to sign in is yours, with the rights to invite everybody else. Certificates,\n'
+printf '  images and migrations all happen on that first start; docker compose logs -f is\n'
+printf '  where it reports in.\n\n'
+printf '  This instance is invite-only, which is the default: the home page offers a\n'
+printf '  stranger a request form rather than a sign-in form, and you invite from Settings\n'
+printf '  or from the Admin section. REGISTRATION_MODE in .env is the other setting.\n\n'
 
 if [ "$DNS_CONFIRMED" != "1" ]; then
     printf '  %s!%s Point %s at this machine %sbefore%s that command.\n\n' "$YELLOW" "$OFF" "$DOMAIN" "$BOLD" "$OFF"

@@ -29,8 +29,8 @@ expensive:
 TRUSTED_PROXY_IPS=172.29.0.0/16,10.1.2.3
 ```
 
-Every per-IP rate limit — magic-link requests, sign-in verification, the contact form, ten of them
-in total — is keyed on the caller's address. Behind a proxy that address arrives in
+Every per-IP rate limit — magic-link requests, sign-in verification, the contact form, the
+request-an-invite form — is keyed on the caller's address. Behind a proxy that address arrives in
 `X-Forwarded-For`, and the API believes that header **only** from an address listed here. Get it
 wrong in either direction and something breaks quietly:
 
@@ -49,7 +49,7 @@ container exits at startup with `Error: 10.1.2.3/8 has host bits set`.
 
 Two consequences beyond the rate limits, both admin-panel-only and both invisible until you turn the
 panel on: the app decides whether a request arrived over HTTPS from the same forwarded headers, so a
-proxy it hasn't been told about makes `/admin` redirect to the HTTPS URL it is already on, forever;
+proxy it hasn't been told about makes the panel redirect to the HTTPS URL it is already on, forever;
 and the panel's `CRUD_ADMIN_ALLOWED_IPS`/`..._NETWORKS` allowlist matches whatever address the app
 believes, which is your proxy rather than the caller. Make sure your proxy sets `X-Forwarded-Proto`
 as well as `X-Forwarded-For` — the snippets below do.
@@ -58,19 +58,26 @@ as well as `X-Forwarded-For` — the snippets below do.
 TLS at the proxy and forwarding HTTP internally is fine and needs no change — the browser is what
 the cookie flag concerns.
 
-**5. Route `/admin` yourself** if you enable the admin panel. It mounts on the API, not on the web
-app, so it needs a second upstream: `/admin*` → `api:8000`. Leave it alone otherwise; the panel is
-off by default.
+**5. Route the admin panel yourself** if you enable it — and move it first. It mounts on the API,
+not on the web app, so it needs a second upstream; and its default path, `/admin`, is now the web
+app's own admin section. Set `CRUD_ADMIN_MOUNT_PATH=/crud-admin` in `.env` and give that path a
+route to `api:8000`. Leave all of it alone otherwise; the panel is off by default.
+
+**`/admin` itself needs nothing.** The invite queue and everything else an operator does day to day
+is a superuser-gated section of the web app, reached from the account menu, and it talks to the API
+through `/api/v1` like every other page — so the single `web:3000` upstream in step 2 already
+carries it.
 
 **6. Leave the response headers alone.** There is nothing to add here, and that is the point of this
 step: both containers set their own, so a proxy that simply passes responses through — which is the
 default behaviour of every proxy on this page — gets it right without being configured.
 
 The API sends `Content-Security-Policy: frame-ancestors 'none'`, `X-Frame-Options: DENY` and
-`X-Content-Type-Options: nosniff` on every response. `/admin` is the reason: it is a full
-create/update/delete interface over every table, and CRUDAdmin ships no headers of its own. The web
-app sets a per-request, nonce-based CSP plus `Referrer-Policy`, `Permissions-Policy` and the same
-two above.
+`X-Content-Type-Options: nosniff` on every response, which covers its JSON endpoints, its OpenAPI
+docs and the admin panel wherever you mounted it. The panel is why they are unconditional: it is a
+full create/update/delete interface over every table, and CRUDAdmin ships no headers of its own. The
+web app sets a per-request, nonce-based CSP plus `Referrer-Policy`, `Permissions-Policy` and the
+same two above, and that is what covers `/admin`.
 
 Three ways to undo that, all of them things you have to type:
 
@@ -126,8 +133,10 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Only if you enabled the admin panel.
-    # location /admin { proxy_pass http://127.0.0.1:8000; ... }
+    # Only if you enabled the admin panel, and only at the path you moved it to with
+    # CRUD_ADMIN_MOUNT_PATH - not /admin, which `location /` above already sends to the
+    # web app, where the admin section lives.
+    # location /crud-admin { proxy_pass http://127.0.0.1:8000; ... }
 }
 ```
 
@@ -180,7 +189,10 @@ and setting them explicitly is what overrides it.
 
 Sign-in still needs a mail relay: the magic link has to reach an inbox. A LAN instance can run
 `ENVIRONMENT=local` with no `SMTP_HOST`, which logs the link to `docker compose logs api` instead of
-emailing it — fine for one person who has shell access, and no way to onboard anyone else.
+emailing it — fine for one person who has shell access, and no way to onboard anyone else. That
+holds with invitations too, and for the same reason twice over: an invitation you send is an email,
+and so is the sign-in link the invitee then needs, so both end up in your log rather than in their
+inbox. Configure a relay before inviting anybody.
 
 Passkeys are not offered on this shape, and that is expected: browsers hand out WebAuthn only in a
 secure context, and an IP address is not a valid passkey domain even behind a certificate. The
@@ -193,6 +205,7 @@ certificate the browser trusts — a Tailscale HTTPS name, an internal CA — ma
 something else; the header is never sent on a request that arrived over plain HTTP.
 
 Don't enable the admin panel on a plain-HTTP instance that is also `ENVIRONMENT=production`: the
-panel enforces HTTPS there, so it redirects `/admin` to an `https://` URL this instance does not
+panel enforces HTTPS there, so it redirects its own path to an `https://` URL this instance does not
 answer on. Either put a certificate in front of it or leave the panel off — it is off by default,
-and the API's own endpoints are unaffected.
+and the API's own endpoints are unaffected. The app's `/admin` section is unaffected too; it is an
+ordinary page and enforces nothing of its own.

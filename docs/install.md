@@ -21,8 +21,15 @@ docker compose up -d
 Point `DOMAIN`'s DNS record at this machine **before** that command: the bundled Caddy asks Let's
 Encrypt for a certificate as it starts, and it can only get one for a name that already resolves
 here — the script warns when it doesn't, and leaves the timing to you because Let's Encrypt
-rate-limits failed challenges per hostname per hour. Open `https://your-domain`, ask for a sign-in
-link, and the first account to sign in is yours.
+rate-limits failed challenges per hostname per hour. Open `https://your-domain`, press **Sign In**,
+ask for a link, and the first account to sign in is yours — with the operator's rights, and the
+Admin section that comes with them.
+
+A new install takes no other accounts on its own: the home page offers a stranger a *request an
+invite* form, and everybody after you gets in by an invitation you send from Settings or from that
+Admin section. That is `REGISTRATION_MODE`, it defaults to `invite`, and
+[configuration.md](configuration.md#who-may-create-an-account) covers both values and the invitation
+limits.
 
 It takes one option: `--version vX.Y.Z`, to install a specific release rather than the newest one.
 That pins both halves — the bundle comes from that release's assets, and `OPENDIVING_VERSION` is set
@@ -60,7 +67,8 @@ expands the `$`. Then `docker compose up -d`, with the same DNS caveat above.
 ## What you need
 
 **A mail relay.** Sign-in is passwordless — an emailed link, or the six-digit code beside it, is the
-only way anybody including you gets in — so an instance that cannot send mail cannot be used. Any
+only way anybody including you gets in — so an instance that cannot send mail cannot be used. It
+carries the invitations as well, which is what everybody after the first account arrives by. Any
 SMTP relay works: your mail provider, your host's, or your own existing server. Don't stand up an
 MTA for this unless you already know why; getting mail *accepted* (SPF, DKIM, DMARC, IP reputation,
 a port 25 your host probably blocks) is the hard part, and it is why every serious self-hosted app
