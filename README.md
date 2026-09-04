@@ -78,10 +78,15 @@ what you need, what the six values are, and what the seven containers do.
   in one click, plus service schedules with due-soon reminders on the dashboard and by email.
 - **Certifications** — photos of your c-cards on hand at the dive shop, without digging out the
   plastic.
-- **Full export** — one click takes _everything_ out in open formats: a **UDDF** document other
-  programs import, a **CSV** for a spreadsheet, or a complete archive with structured JSON, every
-  CSV, every dive-computer file you uploaded and both sides of every c-card. A data-ownership log
-  without an exit door is a contradiction.
+- **Full export** — one click takes _everything_ out in open formats: a
+  **[DiveJSON](https://divejson.org)** document — the open dive-log interchange format this
+  project publishes and implements — a **UDDF** document other programs import, a **CSV** for a
+  spreadsheet, or a complete archive carrying all three, every dive-computer file you uploaded and
+  both sides of every c-card. A data-ownership log without an exit door is a contradiction.
+- **Logbook import** — and the door swings both ways: restore an entire logbook from a DiveJSON
+  document or a full archive. You see a preview of exactly what will be created, linked or restored
+  before anything is written, and a deleted dive comes back under the identifier it had. An exit
+  door you cannot walk back through is only half of owning your data.
 - **Passwordless sign-in** — email magic links, a six-digit code, passkeys, or Google. No passwords
   stored, ever.
 - **Dark mode and responsive** — works on the boat, in the dive shop, and on your desk.
