@@ -172,9 +172,9 @@ the one thing to get right when moving text between these repositories.
 stating it as a standing fact about the product. `SECURITY.md` opens the same way. It is deliberate,
 and it reads exactly like a tagline that lost its nerve.
 
-What the software can promise every diver is the same wherever it runs: AGPL, the original
-dive-computer file kept forever, and one click that takes everything out in open formats. Where the
-data physically sits is a fact about *who runs a copy*, not about the app — the operator of an
+What the software can promise every diver is the same wherever it runs: AGPL, the dive-computer file
+you upload to a dive kept with it, and one click that takes everything out in open formats. Where
+the data physically sits is a fact about *who runs a copy*, not about the app — the operator of an
 instance decides that, which is the same line `docs/configuration.md` draws under **You are the
 controller**. Copy defining the product as self-hosted-only makes that call on the operator's
 behalf, and it is not the app's to make.
@@ -265,3 +265,49 @@ the app belongs in `opendiving-api` or `opendiving-web`. The docs' "still stuck?
 It is a soft line and deliberately so — told to guess, people guess wrong, and an issue in the wrong
 repository costs one move. Both `README.md` and `SECURITY.md` say so explicitly rather than
 presenting the split as something the reporter has to get right.
+
+## The README names the import formats, and `## Planned` keeps Shearwater
+
+The API reads whatever the `divejson` converter reads, and builds every sentence it shows a diver —
+the upload field's description, the "no reader claims this file" refusal — from the library's own
+registry rather than from a list written out beside it, so those move on their own when the pinned
+version does. This README cannot: it is prose, published, and read by somebody deciding whether to
+install at all. It names the formats anyway, one by one, because "any format the converter reads"
+tells a diver holding a `.ssrf` nothing, and telling them at a glance whether their file is one is
+the entire point of the feature. The cost is that a version bump adding a reader leaves this list
+short — a stale README rather than a wrong error message, and the fix belongs in the PR that bumps
+the pin.
+
+**Shearwater stays under `## Planned` even though Shearwater Cloud can export UDDF**, which the app
+does read. What is still to come is the whole-database export, and that reader waits on a database
+to build it against: a format worked out from someone else's importer, with no sample file to run
+against, is a guess with a test suite. The `## How it compares` vendor-clouds bullet keeps naming
+all four for the same reason: it is a claim about those clouds' *exports*, and every one of the four
+has one this app reads.
+
+## "The original file is kept" is a claim about an upload to a dive, not about an import
+
+Three sentences in `README.md` promise the file back — the opening paragraph's data-ownership
+promise, the vendor-clouds bullet, and the *Dive-computer import* feature — and all three are now
+written as a claim about a file uploaded **to a dive**, because that is the only path that stores
+one. A logbook the converter reads is read once to produce DiveJSON and then discarded: the
+converter emits no files at all, and the importer creates a stored-file row only for the app's own
+full-export archive, which carries the binaries beside the document. So a diver who imports a zip of
+per-dive FIT files gets every dive and none of the FITs.
+
+It is worth stating because the natural way to write any of the three is the sweeping way — "every
+dive keeps the file it was imported from", which is what the opening paragraph said before the
+converter shipped and read as true only while a bare file could not be a logbook. The *Logbook
+import* bullet now says the asymmetry outright rather than leaving each of the three to imply it
+away, and that is the sentence to correct first if the importer ever does store what it converted.
+
+**The tagline dropped the promise rather than qualifying it.** `README.md`'s first line is a fourth
+site, and the one place the qualifier does not fit: "the files you upload to a dive are kept" is
+accurate and reads as a caveat, which is not what a stranger should meet first. The slot went to the
+import side instead — "vendor exports in, open formats out" — which is true, is what this change
+actually shipped, and leaves the kept-file detail to the two paragraphs below, where there is room
+to say *which* files. The same sweep corrected *Self-hosting is a capability, not the product's
+identity*, which listed the file promise among the things the software offers every diver wherever
+it runs. That sentence is shared rather than local: `opendiving-web` carries it at its own
+`README.md` and twice in the page metadata, so a replacement has to survive being adopted verbatim,
+with nothing front-door-specific in it.
