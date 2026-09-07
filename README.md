@@ -11,7 +11,7 @@ trips, and keep your gear service history and c-cards in one place.
 
 Cloud dive logs come and go — Movescount, Deepblu, Diveboard — and when they go, years of dive
 history go with them. OpenDiving is built on a different premise: the app is AGPL-licensed, every
-dive-computer file you upload is kept with the dive it made, downloadable at any time, and one click
+dive-computer file you upload to a dive is kept with it, downloadable at any time, and one click
 takes everything out in open formats. Self-hosting is what turns that from a promise into a
 guarantee — the whole stack is yours to run, on your own machine and your own Postgres, so no
 shutdown, acquisition, or paywall can ever take your logbook with it.
@@ -88,8 +88,9 @@ what you need, what the six values are, and what the seven containers do.
   app JSON** export, or a zip whose files are all one of those — a watch that writes one file per
   dive arrives as a single upload. You see a preview of exactly what will be created, linked or
   restored before anything is written, and anything a conversion could not carry is listed rather
-  than quietly dropped. Bringing back one of this app's own exports restores a deleted dive under
-  the identifier it had. An exit door you cannot walk back through is only half of owning your data.
+  than quietly dropped. Converting a logbook brings the dives across, not the files behind them; it
+  is the full archive that restores the uploads too, and a deleted dive with them, under the
+  identifier it had. An exit door you cannot walk back through is only half of owning your data.
 - **Passwordless sign-in** — email magic links, a six-digit code, passkeys, or Google. No passwords
   stored, ever.
 - **Dark mode and responsive** — works on the boat, in the dive shop, and on your desk.
@@ -122,8 +123,8 @@ Honest answers to "why not X":
   newer open-source _apps_: local-first, on-device databases, Bluetooth downloads. OpenDiving is the
   household-server alternative: one instance, every browser and family member, one backup, an API.
 - **Vendor clouds (Shearwater, Garmin, Suunto, Oceanic+)** — where dives are born, not where they
-  should live. OpenDiving imports their exports and keeps the original file forever, so switching
-  computers never splits your history.
+  should live. OpenDiving reads their exports, and a file you upload to a dive stays with it
+  forever, so switching computers never splits your history.
 
 ## What is in this repository
 

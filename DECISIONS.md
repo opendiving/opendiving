@@ -281,6 +281,22 @@ the pin.
 **Shearwater stays under `## Planned` even though Shearwater Cloud can export UDDF**, which the app
 does read. What is still to come is the whole-database export, and that reader waits on a database
 to build it against: a format worked out from someone else's importer, with no sample file to run
-against, is a guess with a test suite. That is also why the `## How it compares` vendor-clouds
-bullet stands as written — it is a claim about those clouds' *exports*, and every one of the four it
-names has one this app reads.
+against, is a guess with a test suite. The `## How it compares` vendor-clouds bullet keeps naming
+all four for the same reason: it is a claim about those clouds' *exports*, and every one of the four
+has one this app reads.
+
+## "The original file is kept" is a claim about an upload to a dive, not about an import
+
+Three sentences in `README.md` promise the file back — the opening paragraph's data-ownership
+promise, the vendor-clouds bullet, and the *Dive-computer import* feature — and all three are now
+written as a claim about a file uploaded **to a dive**, because that is the only path that stores
+one. A logbook the converter reads is read once to produce DiveJSON and then discarded: the
+converter emits no files at all, and the importer creates a stored-file row only for the app's own
+full-export archive, which carries the binaries beside the document. So a diver who imports a zip of
+per-dive FIT files gets every dive and none of the FITs.
+
+It is worth stating because the natural way to write any of the three is the sweeping way — "every
+dive keeps the file it was imported from", which is what the opening paragraph said before the
+converter shipped and read as true only while a bare file could not be a logbook. The *Logbook
+import* bullet now says the asymmetry outright rather than leaving each of the three to imply it
+away, and that is the sentence to correct first if the importer ever does store what it converted.
