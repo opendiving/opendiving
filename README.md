@@ -1,8 +1,7 @@
 # OpenDiving
 
-**A dive log built to outlive every vendor. Your dives, your data — original files kept, open
-formats, everything exportable in one click. Yours to self-host, and this repository is the
-install.**
+**A dive log built to outlive every vendor. Your dives, your data — vendor exports in, open
+formats out, everything in one click. Yours to self-host, and this repository is the install.**
 
 OpenDiving is an open-source logbook for scuba divers, recreational and technical: log dives with
 multi-tank gas mixtures, import them straight from your dive computer's export file — full

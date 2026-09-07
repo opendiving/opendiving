@@ -172,9 +172,9 @@ the one thing to get right when moving text between these repositories.
 stating it as a standing fact about the product. `SECURITY.md` opens the same way. It is deliberate,
 and it reads exactly like a tagline that lost its nerve.
 
-What the software can promise every diver is the same wherever it runs: AGPL, the original
-dive-computer file kept forever, and one click that takes everything out in open formats. Where the
-data physically sits is a fact about *who runs a copy*, not about the app — the operator of an
+What the software can promise every diver is the same wherever it runs: AGPL, the dive-computer file
+you upload to a dive kept with it, and one click that takes everything out in open formats. Where
+the data physically sits is a fact about *who runs a copy*, not about the app — the operator of an
 instance decides that, which is the same line `docs/configuration.md` draws under **You are the
 controller**. Copy defining the product as self-hosted-only makes that call on the operator's
 behalf, and it is not the app's to make.
@@ -300,3 +300,14 @@ dive keeps the file it was imported from", which is what the opening paragraph s
 converter shipped and read as true only while a bare file could not be a logbook. The *Logbook
 import* bullet now says the asymmetry outright rather than leaving each of the three to imply it
 away, and that is the sentence to correct first if the importer ever does store what it converted.
+
+**The tagline dropped the promise rather than qualifying it.** `README.md`'s first line is a fourth
+site, and the one place the qualifier does not fit: "the files you upload to a dive are kept" is
+accurate and reads as a caveat, which is not what a stranger should meet first. The slot went to the
+import side instead — "vendor exports in, open formats out" — which is true, is what this change
+actually shipped, and leaves the kept-file detail to the two paragraphs below, where there is room
+to say *which* files. The same sweep corrected *Self-hosting is a capability, not the product's
+identity*, which listed the file promise among the things the software offers every diver wherever
+it runs. That sentence is shared rather than local: `opendiving-web` carries it at its own
+`README.md` and twice in the page metadata, so a replacement has to survive being adopted verbatim,
+with nothing front-door-specific in it.
