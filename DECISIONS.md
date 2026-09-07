@@ -265,3 +265,22 @@ the app belongs in `opendiving-api` or `opendiving-web`. The docs' "still stuck?
 It is a soft line and deliberately so — told to guess, people guess wrong, and an issue in the wrong
 repository costs one move. Both `README.md` and `SECURITY.md` say so explicitly rather than
 presenting the split as something the reporter has to get right.
+
+## The README names the import formats, and `## Planned` keeps Shearwater
+
+The API reads whatever the `divejson` converter reads, and builds every sentence it shows a diver —
+the upload field's description, the "no reader claims this file" refusal — from the library's own
+registry rather than from a list written out beside it, so those move on their own when the pinned
+version does. This README cannot: it is prose, published, and read by somebody deciding whether to
+install at all. It names the formats anyway, one by one, because "any format the converter reads"
+tells a diver holding a `.ssrf` nothing, and telling them at a glance whether their file is one is
+the entire point of the feature. The cost is that a version bump adding a reader leaves this list
+short — a stale README rather than a wrong error message, and the fix belongs in the PR that bumps
+the pin.
+
+**Shearwater stays under `## Planned` even though Shearwater Cloud can export UDDF**, which the app
+does read. What is still to come is the whole-database export, and that reader waits on a database
+to build it against: a format worked out from someone else's importer, with no sample file to run
+against, is a guess with a test suite. That is also why the `## How it compares` vendor-clouds
+bullet stands as written — it is a claim about those clouds' *exports*, and every one of the four it
+names has one this app reads.

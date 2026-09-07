@@ -11,8 +11,8 @@ trips, and keep your gear service history and c-cards in one place.
 
 Cloud dive logs come and go — Movescount, Deepblu, Diveboard — and when they go, years of dive
 history go with them. OpenDiving is built on a different premise: the app is AGPL-licensed, every
-dive keeps the original dive-computer export it was imported from, downloadable at any time, and one
-click takes everything out in open formats. Self-hosting is what turns that from a promise into a
+dive-computer file you upload is kept with the dive it made, downloadable at any time, and one click
+takes everything out in open formats. Self-hosting is what turns that from a promise into a
 guarantee — the whole stack is yours to run, on your own machine and your own Postgres, so no
 shutdown, acquisition, or paywall can ever take your logbook with it.
 
@@ -83,10 +83,13 @@ what you need, what the six values are, and what the seven containers do.
   project publishes and implements — a **UDDF** document other programs import, a **CSV** for a
   spreadsheet, or a complete archive carrying all three, every dive-computer file you uploaded and
   both sides of every c-card. A data-ownership log without an exit door is a contradiction.
-- **Logbook import** — and the door swings both ways: restore an entire logbook from a DiveJSON
-  document or a full archive. You see a preview of exactly what will be created, linked or restored
-  before anything is written, and a deleted dive comes back under the identifier it had. An exit
-  door you cannot walk back through is only half of owning your data.
+- **Logbook import** — and the door swings both ways: bring a whole logbook in from a **DiveJSON**
+  document, a full archive, a **UDDF** file, a Subsurface **`.ssrf`**, a **FIT** file, a **Suunto
+  app JSON** export, or a zip whose files are all one of those — a watch that writes one file per
+  dive arrives as a single upload. You see a preview of exactly what will be created, linked or
+  restored before anything is written, and anything a conversion could not carry is listed rather
+  than quietly dropped. Bringing back one of this app's own exports restores a deleted dive under
+  the identifier it had. An exit door you cannot walk back through is only half of owning your data.
 - **Passwordless sign-in** — email magic links, a six-digit code, passkeys, or Google. No passwords
   stored, ever.
 - **Dark mode and responsive** — works on the boat, in the dive shop, and on your desk.
@@ -99,10 +102,9 @@ what you need, what the six values are, and what the seven containers do.
 
 Roughly in priority order — contributions welcome:
 
-- **More importers** — Subsurface XML and UDDF (which also covers Apple Watch dives via Oceanic+'s
-  UDDF export), then Shearwater Cloud exports; a pluggable importer layer, so every format someone
-  is stranded with becomes a migration path in. Longer term,
-  [libdivecomputer](https://www.libdivecomputer.org/) for direct hardware support.
+- **More importers** — Shearwater Cloud's whole-database export, once a database is in hand to
+  build the reader against. Longer term, [libdivecomputer](https://www.libdivecomputer.org/) for
+  direct hardware support.
 - **Statistics** — depth and time records, dives per year, a sites map.
 - **Sharing** — a public link to a dive or a trip.
 - **iOS companion app** — parked until the server story is done.
@@ -114,8 +116,8 @@ Honest answers to "why not X":
 - **[Subsurface](https://subsurface-divelog.org/)** — the open-source reference, with unmatched
   dive-computer support and a full deco planner. It's desktop-first, with no web app or
   self-hostable server; OpenDiving is the server-shaped complement — a modern web UI on your own
-  box, API-first, reachable from any browser. Use Subsurface to download over a cable; a Subsurface
-  import is high on the roadmap so both can hold the same log.
+  box, API-first, reachable from any browser. Use Subsurface to download over a cable, then bring
+  its `.ssrf` in whole, so both can hold the same log.
 - **[Submersion](https://submersion.app/) / [Bubbletrail](https://bubbletrail.app/)** — excellent
   newer open-source _apps_: local-first, on-device databases, Bluetooth downloads. OpenDiving is the
   household-server alternative: one instance, every browser and family member, one backup, an API.
