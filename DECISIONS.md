@@ -165,6 +165,26 @@ untouched. The single link that pointed out of the old tree, `configuration.md`'
 `../../src/.env.example`, is now a URL into `opendiving-api` — which is the general rule here, and
 the one thing to get right when moving text between these repositories.
 
+## `MAP_TILE_API_KEY` is documented as public, not as a secret
+
+`configuration.md` lists it beside `SECRET_KEY`, `POSTGRES_PASSWORD` and `SMTP_PASSWORD`, and it is
+the one in that neighbourhood that an operator must *not* treat the way they treat the others. The
+basemap is drawn by MapLibre in the visitor's browser, so the key is served to every browser that
+loads a page with a map on it. `opendiving-web`'s `publicConfig()` (`src/lib/runtime-config.ts`)
+builds the object handed to the client field by field, and `basemap` — the key included — is one of
+the two fields in it.
+
+So the docs say to use a key the provider has restricted to your own domain, rather than saying to
+keep it safe, which is advice nothing can act on. It is said in three places — `example.env` beside
+the setting, and twice in `configuration.md`, in the variable table and in *Third-party calls* —
+because an operator reads whichever one they happen to open, and the instinct on meeting "API key"
+in a server-side `.env` is that the server is where it stays. Every other secret in that file does.
+
+The rule for changing any of the three is that the claim is about a *function next door*:
+`opendiving-web`'s `publicConfig()` decides what reaches the browser, and if it ever stops carrying
+`basemap` all three passages become wrong at once. Derive them with
+`git grep -n MAP_TILE_API_KEY` rather than from this list.
+
 ## Self-hosting is a capability, not the product's identity
 
 `README.md` calls OpenDiving "yours to self-host" rather than "a self-hosted dive log", and puts
@@ -312,12 +332,31 @@ have let the surface nobody uses keep the path the docs have always pointed oper
 ## Operator issues here, application bugs next door
 
 An issue about installing, upgrading, backing up or configuring belongs in this repository; a bug in
-the app belongs in `opendiving-api` or `opendiving-web`. The docs' "still stuck?" links and
-`SECURITY.md` both route on that line.
+the app belongs in `opendiving-api` or `opendiving-web`. Every place that sends a reporter *away*
+routes on that line — derive them with `git grep -nE 'opendiving-(api|web)/(issues|security)'`
+rather than trusting a list here, which is the kind of sentence that goes stale the first time a
+surface is added. `docs/troubleshooting.md` points the other way, at this repository's own issue
+form.
 
 It is a soft line and deliberately so — told to guess, people guess wrong, and an issue in the wrong
-repository costs one move. Both `README.md` and `SECURITY.md` say so explicitly rather than
-presenting the split as something the reporter has to get right.
+repository costs one move. `README.md`, `SECURITY.md` and both issue templates say so explicitly
+rather than presenting the split as something the reporter has to get right.
+
+**Discussions live here rather than in a code repository.** The front door is the product's
+repository: it is where `opendiving.app` sends people, where an operator's question already belongs,
+and the only one of the three whose subject is the *whole* product rather than one half of its
+implementation. The rejected alternative was `opendiving-api`, which is merely the oldest of the
+three — a question about a chart would then be asked in the backend repository, and "ask in api,
+report in web" is precisely the split the paragraph above exists to spare people. One space, at the
+front door, is the version of this with nothing to get wrong.
+
+This repository's `.github/ISSUE_TEMPLATE/config.yml` is the first to say so. The other two still
+send questions to `opendiving-api/discussions`, from before the decision and from before Discussions
+were switched on here — a tab that is not enabled over there, so those links currently resolve to
+nothing. They are changed in their own repositories, which is why this paragraph describes where the
+space lives rather than claiming all three configs already agree: the claim would be the sort that
+is written once and never re-checked. `gh repo view opendiving/<repo> --json hasDiscussionsEnabled`
+is what settles it for any of the three.
 
 ## The README names the import formats, and `## Planned` keeps Shearwater
 

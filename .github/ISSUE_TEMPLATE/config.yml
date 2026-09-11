@@ -1,0 +1,26 @@
+# Blank issues stay enabled on purpose: the form beside this one exists to collect the version and
+# host details an install report is useless without, not to refuse anything that doesn't fit that
+# shape. A report nobody anticipated is worth more than a well-formatted one.
+blank_issues_enabled: true
+
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/opendiving/opendiving/security/advisories/new
+    about: >-
+      Report it privately here, never as a public issue — every instance running this bundle is
+      exposed for as long as it takes to cut a release. No GitHub account? security@opendiving.app.
+
+  - name: Something in the app itself
+    url: https://github.com/opendiving/opendiving-web/issues/new/choose
+    about: >-
+      A page, a form, a chart, a dive that imported wrongly — anything you saw after signing in
+      belongs with the code. The web app is here; authentication, stored data, imports and the
+      worker are in opendiving-api. Same maintainer reads all three, so file it wherever looks
+      right and it will be moved.
+
+  - name: Question, idea, or show and tell
+    url: https://github.com/opendiving/opendiving/discussions
+    about: >-
+      Discussions live here and cover the whole project — this bundle, the API and the web app
+      alike. A question about running an instance gets answered faster there than in the tracker,
+      and docs/troubleshooting.md is worth a look first.

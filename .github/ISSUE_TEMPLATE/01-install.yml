@@ -1,0 +1,110 @@
+name: Install, upgrade or configuration problem
+description: Something in the bundle, the installer or the operator docs did not go as written
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Found a **security** problem instead? Don't file it here — [SECURITY.md](https://github.com/opendiving/opendiving/blob/main/SECURITY.md)
+        has the private channel. Every instance running this bundle is exposed for as long as a
+        public issue is open.
+
+        Is the stack **up**, and the problem is something you saw in the app? That belongs with the
+        code: [opendiving-web](https://github.com/opendiving/opendiving-web/issues/new/choose) for a
+        page, a form or a chart, [opendiving-api](https://github.com/opendiving/opendiving-api/issues/new/choose)
+        for sign-in, stored data, imports or the worker. Same maintainer reads all three, so file it
+        wherever looks right rather than agonising — it will be moved.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "`GET /api/v1/health` reports what the instance is actually running. If it is not up that far, `OPENDIVING_VERSION` from your `.env` — or `latest`, if it is still commented out — and `docker compose images` for the tags that were pulled."
+      placeholder: "0.4.0, or latest"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Where did it go wrong?
+      options:
+        - Fresh install — following docs/install.md
+        - Upgrade — following docs/upgrade.md
+        - Backup or restore — following docs/backup-restore.md
+        - A setting from docs/configuration.md
+        - TLS, the domain, or a reverse proxy of my own
+        - Something else (say so below)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: method
+    attributes:
+      label: How did you install it?
+      options:
+        - install.sh from a release
+        - The three bundle files downloaded by hand
+        - An existing install I have upgraded before
+        - Something else (say so below)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: proxy
+    attributes:
+      label: What is in front of it?
+      description: Worth asking even when the problem looks unrelated — everything that reaches the app has passed through this first.
+      options:
+        - The bundled Caddy, with a domain and a certificate
+        - The bundled Caddy on a LAN — CADDY_SITE_ADDRESS=:80, no certificate
+        - My own reverse proxy, with COMPOSE_PROFILES commented out
+        - Something else (say so below)
+    validations:
+      required: true
+
+  - type: input
+    id: host
+    attributes:
+      label: Host
+      description: Operating system and Docker version — `docker version --format '{{.Server.Version}}'`. Architecture too, if it is arm64.
+      placeholder: "Debian 13, Docker 28.1.1, amd64"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you ran, and what came back. The exact command and its output beats a description of them.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What the docs said would happen
+      description: Which page and which step. If you had to deviate from it to get anywhere, that deviation is the bug.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        `docker compose ps` and the logs of whichever container is unhappy — `docker compose logs api --tail=100`,
+        or `caddy`, `web`, `db`. Read them before pasting: on an instance still running `ENVIRONMENT=local` the
+        sign-in emails are written to the log, and those magic links and six-digit codes are live credentials for
+        whoever's account they belong to.
+      render: shell
+
+  - type: textarea
+    id: env
+    attributes:
+      label: Your .env, with the secrets removed
+      description: |
+        Optional, and often the fastest route to an answer for a configuration problem. Strip every value that is
+        a credential — `POSTGRES_PASSWORD`, `SECRET_KEY`, `SMTP_PASSWORD`, any API key — rather than trusting that
+        an issue is unimportant enough not to be read.
+      render: shell

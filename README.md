@@ -158,11 +158,18 @@ one of those; this repository is where the two of them become something you can 
 
 Issues and pull requests are welcome — a typo in the install guide as much as a new importer. Open
 an issue first for anything large, so the shape can be agreed before the work.
+[CONTRIBUTING.md](CONTRIBUTING.md) is the rest of it: what a change here looks like, how to verify a
+change to the bundle locally without a release existing, and how a release is cut.
 
 An issue about **installing, upgrading, backing up or configuring** an instance belongs here. A bug
 in the app itself belongs in `opendiving-api` or `opendiving-web`; if you can't tell which, open it
 here and it will be moved. Security problems go through [SECURITY.md](SECURITY.md) rather than the
-issue tracker.
+issue tracker. Everyone taking part is covered by the
+[Code of Conduct](CODE_OF_CONDUCT.md).
+
+Questions, ideas and show-and-tell go in
+[Discussions](https://github.com/opendiving/opendiving/discussions), which cover the whole project —
+this repository, the API and the web app alike.
 
 ## License
 

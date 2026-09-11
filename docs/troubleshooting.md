@@ -260,5 +260,6 @@ be emptied deliberately or not at all.
 ## Reporting a bug
 
 `GET /api/v1/health` reports the version this instance is running. Include that, the relevant
-`docker compose logs` output, and whether the instance runs the bundled Caddy or your own proxy:
-<https://github.com/opendiving/opendiving/issues>
+`docker compose logs` output, and whether the instance runs the bundled Caddy or your own proxy —
+the issue form asks for all three:
+<https://github.com/opendiving/opendiving/issues/new/choose>
