@@ -177,6 +177,10 @@ services:
       # Every uploaded dive-computer export, c-card image, profile picture and species
       # photograph. This is the **second half of your backup** - the database dump does not
       # carry it. See docs/backup-restore.md, which gives the tar recipe for it.
+      #
+      # Unless you set FILE_STORAGE_BACKEND=s3, in which case the files are in your bucket,
+      # this mount goes unused, and the backup's second half is a copy of that bucket
+      # instead - docs/configuration.md.
       - files-data:/data/files
     # The image's own healthcheck asks `/api/v1/health/ready`, which round-trips Postgres
     # and Redis - so `service_healthy` here means "can serve", not "has a process".
@@ -205,8 +209,20 @@ services:
       retries: 3
       start_period: 20s
     volumes:
-      # The worker reads no stored file today. Mounted anyway so the first background job
-      # that does cannot silently write into its own container layer instead.
+      # The worker deletes stored files. The hourly purge destroys an account whose grace
+      # period has run out, and every file that account uploaded goes with it. Without this
+      # mount it would be unlinking from an empty directory in its own container layer
+      # while the real files sat on the volume, and the purge would report success - an
+      # erasure feature that quietly erases nothing.
+      #
+      # The worker's own startup check does not cover for losing this line, which is worth
+      # knowing because it looks like it would: the image creates /data/files owned by uid
+      # 1000, so an unmounted worker finds a perfectly writable directory in its own layer
+      # and passes. This mount is the only thing standing between you and that.
+      #
+      # On FILE_STORAGE_BACKEND=s3 there is nothing here to mount - both services reach the
+      # same bucket, which is the arrangement that setting exists for. The mount is
+      # harmless there and stays, so that switching back is one variable.
       - files-data:/data/files
     depends_on:
       db:
@@ -244,9 +260,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-opendiving}
     volumes:
       # Every dive, every dive site, every certification record - the whole logbook except
-      # the uploaded files themselves, which live on `files-data` below. A backup is those
-      # two artifacts, dump first and files second; neither is complete alone
-      # (docs/backup-restore.md).
+      # the uploaded files themselves, which live on `files-data` below - or in your
+      # bucket, on FILE_STORAGE_BACKEND=s3. A backup is those two artifacts, dump first
+      # and files second; neither is complete alone (docs/backup-restore.md).
       #
       # Postgres 18+ images store the cluster in a version-specific PGDATA
       # (/var/lib/postgresql/18/docker) under this mount, so the volume goes one level up
@@ -285,6 +301,8 @@ volumes:
   # contain these, and a restore of the dump alone leaves every download 500ing. Back it up
   # with the tar recipe in docs/backup-restore.md - and note that `docker
   # compose down -v` destroys it along with everything else.
+  #
+  # Empty and unused on FILE_STORAGE_BACKEND=s3, where those files live in your bucket.
   files-data:
   redis-data:
   caddy-data:

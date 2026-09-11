@@ -43,7 +43,8 @@ That is the whole product: the web app, the API and its worker, PostgreSQL, Redi
 terminating TLS with a certificate it fetches itself. Nothing is built — every image is pulled,
 prebuilt for **amd64 and arm64**, so a Raspberry Pi runs the same bytes as a VPS. Migrations apply
 themselves on startup, so an upgrade is `docker compose pull && docker compose up -d`. A backup is
-two artifacts: a `pg_dump` and a tar of the volume the uploaded files live on.
+two artifacts: a `pg_dump` and a copy of the uploaded files, which are on a volume beside the stack
+unless you point the API at an object store instead.
 
 **[Read the install guide first](docs/install.md)** if you'd rather know what you're getting into —
 what you need, what the six values are, and what the seven containers do.
@@ -53,7 +54,7 @@ what you need, what the six values are, and what the seven containers do.
 | [Install](docs/install.md)                         | The script, the four commands, what you need   |
 | [Configuration](docs/configuration.md)             | Every setting, grouped — and which six matter  |
 | [Reverse proxy](docs/reverse-proxy.md)             | Bring your own, or run on a LAN with no domain |
-| [Backup & restore](docs/backup-restore.md)         | The dump, the files volume, and the drill      |
+| [Backup & restore](docs/backup-restore.md)         | The dump, the uploaded files, and the drill    |
 | [Upgrade](docs/upgrade.md)                         | Pull, up, done — and the stance on downgrades  |
 | [Troubleshooting](docs/troubleshooting.md)         | Certificates, mail, rate limits, starting over |
 
