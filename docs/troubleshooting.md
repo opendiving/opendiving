@@ -28,6 +28,18 @@ somebody's spam folder rather than here.
 **`CRUD_ADMIN_ENABLED is true in production but ADMIN_PASSWORD is unset`** — the panel is a full
 CRUD interface over every model. Set a real password, or turn it off.
 
+**`FILE_STORAGE_BACKEND is s3 but … are not set`** — the message names the ones that are missing.
+All four of `S3_ENDPOINT_URL`, `S3_BUCKET`, `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` are
+required once the backend is `s3`, because an upload has nowhere to go without them. Fill them in,
+or set `FILE_STORAGE_BACKEND=local` to go back to the volume —
+[configuration.md](configuration.md#object-storage).
+
+**`Cannot write to the object store bucket …`** — the credentials parsed and the store refused the
+write. The startup probe puts one object and deletes it again, so this is a bucket that does not
+exist, a name misspelled, a key that may read but not write, or a bucket in a different account
+from the credential. The message carries the endpoint and the bucket it tried. The same check runs
+in the `worker` container, so fix it once in `.env` and both come up.
+
 **An edit to `.env` seems to have done nothing** — `docker compose restart` does *not* re-read the
 file. It restarts the process inside a container that keeps the environment it was created with.
 `docker compose up -d` recreates what changed, and that is what applies an edit.
@@ -240,6 +252,10 @@ docker compose down -v
 every c-card image, every profile picture and every species photograph, none of which the database
 dump contains. If there is anything in there, take both artifacts first:
 [backup-restore.md](backup-restore.md).
+
+On `FILE_STORAGE_BACKEND=s3` it reaches none of those: the uploads are in your bucket and `-v` does
+not touch it. That cuts both ways — starting over leaves the old instance's files sitting there, to
+be emptied deliberately or not at all.
 
 ## Reporting a bug
 

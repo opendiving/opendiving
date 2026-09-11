@@ -242,17 +242,86 @@ file to the service names and are not yours to change. `POSTGRES_USER` and `POST
 default to `opendiving` and can be overridden in `.env` before the first start (afterwards they name
 a database that already exists under a different name).
 
-| Variable           | Default       | What it does                                                                                                                                                                                                                                                                                                                                               |
-| ------------------ | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MIGRATE_ON_START` | `true`        | Runs `alembic upgrade head` as the API starts, which is what makes an upgrade `pull` + `up -d`. Turn it off only if you'd rather run `docker compose run --rm api alembic upgrade head` yourself.                                                                                                                                                          |
-| `REDIS_PASSWORD`   | *(none)*      | For pointing the app at a managed Redis instead of the bundled one. The bundled one needs no password and is not reachable outside the compose network.                                                                                                                                                                                                    |
-| `FILE_STORAGE_DIR` | `/data/files` | Where uploaded dive-computer exports, c-card images, profile pictures and species photographs are written inside the container. The compose file mounts the `files-data` volume there, so there is nothing to set unless you replaced that volume with a bind mount — and then the host directory has to be owned by uid 1000 or the API refuses to start. |
+| Variable                 | Default       | What it does                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------ | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MIGRATE_ON_START`       | `true`        | Runs `alembic upgrade head` as the API starts, which is what makes an upgrade `pull` + `up -d`. Turn it off only if you'd rather run `docker compose run --rm api alembic upgrade head` yourself.                                                                                                                                                          |
+| `REDIS_PASSWORD`         | *(none)*      | For pointing the app at a managed Redis instead of the bundled one. The bundled one needs no password and is not reachable outside the compose network.                                                                                                                                                                                                    |
+| `FILE_STORAGE_BACKEND`   | `local`       | Where uploaded files are kept: `local` writes them into `FILE_STORAGE_DIR`, `s3` puts them in an S3-compatible bucket. The bundle mounts a volume for `local`, so a compose install on one machine has nothing to set here — see [Object storage](#object-storage) for the install that does. Any other value refuses to start.                             |
+| `FILE_STORAGE_DIR`       | `/data/files` | Where the `local` backend writes uploaded dive-computer exports, c-card images, profile pictures and species photographs, inside the container. The compose file mounts the `files-data` volume there, so there is nothing to set unless you replaced that volume with a bind mount — and then the host directory has to be owned by uid 1000 or the API refuses to start. Ignored entirely under `s3`. |
 
 Redis holds cache entries, open rate-limit windows and in-flight passkey challenges. Losing it costs
 a cold cache and interrupts passkey sign-in until it is back (see [Sign-in](#sign-in)); nothing
 durable lives there. What is durable lives in two places, and a backup has to cover both: the
-records are in Postgres, and the uploaded files themselves are on the `files-data` volume. See
-[backup-restore.md](backup-restore.md).
+records are in Postgres, and the uploaded files themselves are on the `files-data` volume — or in
+your bucket, if you switched the backend below. See [backup-restore.md](backup-restore.md).
+
+### Object storage
+
+The default is a filesystem volume, and for almost every install that is the right answer: one
+machine, one disk, no credentials to hold. `FILE_STORAGE_BACKEND=s3` is for the install where it is
+not — a platform whose disk attaches to one service at a time, while both the `api` and the `worker`
+container need the same files. Any S3-compatible store will do: Cloudflare R2, MinIO, Garage, Ceph,
+Backblaze B2, AWS itself. Nothing about the app changes; the same uploads go to a bucket instead of a
+directory, under the same names.
+
+| Variable                                   | Default  | What it does                                                                                                                                                                                                            |
+| ------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `S3_ENDPOINT_URL`                          | *(none)* | The store's full origin, scheme included — `https://<account-id>.eu.r2.cloudflarestorage.com` for R2, `http://minio:9000` for a MinIO beside this stack. There is no default because every store's is different.       |
+| `S3_BUCKET`                                | *(none)* | The bucket. It has to exist already; nothing here creates one.                                                                                                                                                          |
+| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | *(none)* | The credential. It needs to read, write, delete and list inside that one bucket, and nothing beyond it.                                                                                                                 |
+| `S3_REGION`                                | `auto`   | `auto` is what R2 documents and what every other S3-compatible store ignores. A real AWS bucket needs its own region here instead.                                                                                      |
+| `S3_PREFIX`                                | *(none)* | An optional key prefix, for sharing one bucket between instances. Prepended to every object name. The keys the database holds are the same either way, so adding or removing it later means moving the objects to match. |
+
+**The first four are required, and startup enforces it.** With `FILE_STORAGE_BACKEND=s3` and any of
+them unset, the API refuses to start and names the ones that are missing, rather than starting and
+failing on the first diver's upload. Then it writes a probe object and deletes it again, so a wrong
+bucket name, a credential that can read but not write, or a bucket in somebody else's account fails
+at `docker compose up -d` with the endpoint and the bucket in the message.
+
+**The worker needs the credentials too**, and the compose file already hands them over — `.env` goes
+to `api` and `worker` wholesale, so there is nothing extra to set. It is worth knowing why it
+matters: the worker is what destroys a deleted account's files once the grace period runs out (see
+[Account deletion](#account-deletion)), and it runs that same probe at startup, so a worker that
+cannot reach the bucket dies loudly instead of reporting erasures it did not perform. The
+`files-data` mount on both services goes unused under `s3`; leave it there, and switching back stays
+one variable.
+
+**Keep the bucket private.** Every byte is served through the API, which reads the object and hands
+it to a request it has already authorised — nothing generates a public or pre-signed URL, so a
+bucket that allows anonymous reads is not enabling anything, only exposing c-card scans to whoever
+guesses a key.
+
+**Deletions land just after the job, not at the click.** What a purge destroys is unchanged, but on
+`s3` the objects go in a request the app does not wait for: the transaction commits, the rows are
+gone, and the delete follows a moment later on a background thread — because waiting for a round trip
+to the store there would stall everything else the process is serving. So a bucket you are watching
+may still list a purged account's keys for a few seconds. If one fails, it is logged and the object
+becomes an orphan, which is what the sweeper reclaims:
+
+```bash
+docker compose exec api python -m src.scripts.sweep_orphaned_files          # report only
+docker compose exec api python -m src.scripts.sweep_orphaned_files --delete
+```
+
+**Switching between the two backends is a copy, not a migration** — the key a row carries is the same
+string on both, which is why nothing in the database has to change. Set the `S3_*` group and leave
+`FILE_STORAGE_BACKEND` naming the backend you are moving *away* from, so both are configured at once,
+then:
+
+```bash
+docker compose exec api python -m src.scripts.migrate_blobs --to s3
+```
+
+`--to local` copies the other way. It never deletes from the source, and it is resumable: every key
+ends in the sha256 of its own content, so an object already sitting under that key cannot hold
+different bytes and is skipped rather than re-sent. Interrupt it and run it again. When it reports no
+failures, set `FILE_STORAGE_BACKEND=s3` in `.env` and `docker compose up -d`.
+
+Run it against a quiet instance. Anything uploaded after the copy has walked past its key stays on
+the old backend, and its row will point at bytes the new one does not have — a second run after the
+switch catches whatever arrived in between. Reclaiming the old copy is a separate, deliberate step
+once the new backend has been seen to serve: `docker volume rm opendiving_files-data` with the stack
+down, or the bucket's own lifecycle rules going the other way.
 
 ## Optional features
 
@@ -381,7 +450,7 @@ this copy. Leave the panel off, as it ships, and none of this exists.
 Nothing here phones home. What the app can be told to contact:
 
 - **From the browser**: the basemap. Nothing else, in any configuration — profile pictures and
-  species photographs included. An avatar is stored on your own files volume and served by your own
+  species photographs included. An avatar is stored by your own instance and served by your own
   API, and so is the Commons photograph on a species: the server fetches it once and stores it, so
   no visitor's browser ever contacts Wikimedia. (Gravatar used to be an option here, disclosing a
   hash of every signed-in user's email address and their IP to Automattic on every page. It is gone,

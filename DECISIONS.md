@@ -232,6 +232,34 @@ There is a second copy of this cost recorded next door: the web mirrors `GOOGLE_
 own environment and consequently cannot learn that the API is missing the matching secret, which is
 why the API refuses to boot in that state. One mirror is enough.
 
+## Object storage is documented here, not bundled
+
+The API can keep uploads in an S3-compatible bucket. This bundle gains no MinIO service, no `s3`
+compose profile and no new required variable for it, and that is the decision rather than an
+omission.
+
+The bundle's whole proposition is one machine with one disk: a named volume is already the simplest
+correct answer there, needs no credentials, and is backed up by a `tar` an operator can read. Adding
+a bundled object store would put a second stateful service into every install that does not want
+one, and would quietly reframe the volume as the legacy path — which it is not. `s3` is for the
+deployment this file is not for: a platform whose disk attaches to one service at a time, while both
+the API and the worker need the same files. An operator on one of those already has a bucket and the
+credentials for it; what they needed from this repository was the variable names, the fact that both
+containers need the credentials, and the copy command — so what they get is
+`docs/configuration.md`, `docs/backup-restore.md` and a commented block in `example.env`.
+
+**The `files-data` mount stays on both services under `s3`**, unused. Compose can express a
+conditional mount only through profiles, and a profile is a thing an operator has to know to set —
+on a file they downloaded once and will not download again. An unused mount costs a directory; the
+alternative costs a foot-gun on every switch back, which is otherwise one variable and a restart.
+
+**The mount on `worker` is load-bearing on `local`, and the comment on it was wrong.** It said the
+worker touched no stored file. The worker is what runs the account purge, so it deletes them — and
+because the image creates `/data/files` owned by uid 1000, an unmounted worker has a perfectly
+writable directory in its own layer, passes its own startup check, and reports successful erasures
+that erased nothing. Nothing but that line prevents it. `opendiving-api`'s development compose
+carries the same correction for the same reason; both were written when the purge did not exist yet.
+
 ## `/admin` is the web app's, and the panel has to move
 
 The bundled `Caddyfile` used to send `/admin*` to `api:8000`, because the only admin surface was

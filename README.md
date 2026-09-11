@@ -53,7 +53,7 @@ what you need, what the six values are, and what the seven containers do.
 | [Install](docs/install.md)                         | The script, the four commands, what you need   |
 | [Configuration](docs/configuration.md)             | Every setting, grouped — and which six matter  |
 | [Reverse proxy](docs/reverse-proxy.md)             | Bring your own, or run on a LAN with no domain |
-| [Backup & restore](docs/backup-restore.md)         | The dump, the files volume, and the drill      |
+| [Backup & restore](docs/backup-restore.md)         | The dump, the uploaded files, and the drill    |
 | [Upgrade](docs/upgrade.md)                         | Pull, up, done — and the stance on downgrades  |
 | [Troubleshooting](docs/troubleshooting.md)         | Certificates, mail, rate limits, starting over |
 

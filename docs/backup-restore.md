@@ -1,6 +1,6 @@
 # Backup and restore
 
-**A backup is two artifacts: a `pg_dump` and a copy of the files volume.** The database holds every
+**A backup is two artifacts: a `pg_dump` and a copy of the uploaded files.** The database holds every
 dive, dive site, trip and certification record; the `files-data` volume holds the uploaded
 dive-computer exports, c-card images and profile pictures themselves, one ordinary file each —
 along with the species photographs the API fetched from Wikimedia Commons, which are stored rather
@@ -16,6 +16,11 @@ rather than "one dangling row in the unlucky case", stop the stack first.
 Nothing else in the stack holds anything durable: Redis is cache, open rate-limit windows and
 passkey challenges that expire in minutes, and Caddy's volume holds certificates that re-issue
 themselves.
+
+**If you switched the API to object storage**, the second artifact is a copy of your bucket rather
+than of the volume — everything said here about the files applies to it unchanged, and
+[If the files are in a bucket](#if-the-files-are-in-a-bucket) has the commands. A `pg_dump` alone is
+no more of a backup there than it is here.
 
 **A backup outlives an erasure, and restoring one brings the erased account back.** When a diver
 deletes their account the purge job destroys the rows and unlinks their files
@@ -84,6 +89,28 @@ folder included, encrypt it before it leaves.
 Worth copying alongside them: your `.env`. It is not secret from you, it is short, and without
 `SECRET_KEY` and `POSTGRES_PASSWORD` a restore is a stranger's database.
 
+### If the files are in a bucket
+
+On `FILE_STORAGE_BACKEND=s3` ([configuration.md](configuration.md#object-storage)) there is no
+volume to tar, and the `docker run` recipe above has nothing to mount. The second artifact is a copy
+of the bucket, taken with whichever tool your store gives you — `rclone sync`, `aws s3 sync`,
+`mc mirror`. Database first, same order, for the same reason:
+
+```bash
+aws --endpoint-url https://<account-id>.eu.r2.cloudflarestorage.com \
+  s3 sync s3://your-bucket /backups/opendiving-files/
+```
+
+The consistency argument is unchanged: a file is written before the row that references it and is
+never modified in place, so a copy taken after the dump is a superset of what the dump points at.
+
+**Two things that look like a backup of a bucket and are not.** Your store's own replication and
+versioning protect you from its hardware, not from yourself — a mistaken delete replicates in
+seconds, and a lifecycle rule that expires old versions eventually takes the good copy too. And a
+second bucket in the same account is one leaked credential away from the first. Keep the copy
+somewhere with different credentials, and encrypt it before it leaves if that somewhere is not
+yours; it carries every account's c-card scans exactly as the tarball does.
+
 ## Restore
 
 Into a fresh, empty stack — database first, files second, mirroring how they were taken:
@@ -110,9 +137,17 @@ docker run --rm -v opendiving_files-data:/files -v "$PWD":/in alpine \
 docker compose up -d
 ```
 
-If you start the app between the two steps, it will log a CRITICAL line saying the files volume
-looks unmounted or unrestored. That is this exact window, and it stops mattering the moment the
-untar finishes — the app keeps serving throughout, it just cannot hand out files it does not have.
+On object storage the middle step is the sync run backwards, and nothing else changes:
+
+```bash
+aws --endpoint-url https://<account-id>.eu.r2.cloudflarestorage.com \
+  s3 sync /backups/opendiving-files/ s3://your-bucket
+```
+
+If you start the app between the two steps, it will log a CRITICAL line saying the database has
+stored file rows but the store it was told to use is empty — naming the volume, or the bucket,
+whichever you are on. That is this exact window, and it stops mattering the moment the files land —
+the app keeps serving throughout, it just cannot hand out files it does not have.
 
 The restored dump carries the schema *and* the `alembic_version` row that says which migration it is
 at, so a restore into a newer version of the app is migrated forward on the next start like any
@@ -138,10 +173,16 @@ Then sign in and open a dive that has an uploaded original attached, and a certi
 image. If both download byte-for-byte, the backup covers everything — and it is now proving two
 artifacts rather than one, which is exactly why the drill is worth doing again after this change.
 
+On object storage, `down -v` destroys the database and leaves the bucket exactly where it was, so
+that run proves half of what it looks like it proved. Drill the other half against an empty bucket —
+point `S3_BUCKET` at a scratch one, restore into that, and check the same two downloads.
+
 ## Moving to another machine
 
 Copy the dump, the files archive and `.env`, install per [install.md](install.md), restore both
-before the first sign-in. Nothing is tied to the old host: no absolute paths, no machine-bound keys.
+before the first sign-in. On object storage the files need no moving at all — the new instance
+points at the same bucket, and only the dump travels. Nothing is tied to the old host either way: no
+absolute paths, no machine-bound keys.
 If the domain changes, change `DOMAIN` too — sessions survive, but emailed links point at whatever
 it says.
 
