@@ -304,18 +304,25 @@ docker compose exec api python -m src.scripts.sweep_orphaned_files --delete
 ```
 
 **Switching between the two backends is a copy, not a migration** — the key a row carries is the same
-string on both, which is why nothing in the database has to change. Set the `S3_*` group and leave
-`FILE_STORAGE_BACKEND` naming the backend you are moving *away* from, so both are configured at once,
-then:
+string on both, which is why nothing in the database has to change. Put the `S3_*` group in `.env`
+and leave `FILE_STORAGE_BACKEND` naming the backend you are moving *away* from, so that both are
+configured at once. Then recreate the containers, and copy:
 
 ```bash
+docker compose up -d
 docker compose exec api python -m src.scripts.migrate_blobs --to s3
 ```
+
+That `up -d` is doing real work, and skipping it fails in a confusing way. `exec` runs a process
+inside a container that still holds the environment it was *created* with, so on the container
+started before you edited `.env` the copy refuses, saying the `S3_*` group is unset — while you are
+looking at it in `.env`. It is the trap the top of this page warns about, met in the one procedure
+here that reaches into a running container rather than restarting it.
 
 `--to local` copies the other way. It never deletes from the source, and it is resumable: every key
 ends in the sha256 of its own content, so an object already sitting under that key cannot hold
 different bytes and is skipped rather than re-sent. Interrupt it and run it again. When it reports no
-failures, set `FILE_STORAGE_BACKEND=s3` in `.env` and `docker compose up -d`.
+failures, set `FILE_STORAGE_BACKEND=s3` in `.env` and `docker compose up -d` once more.
 
 Run it against a quiet instance. Anything uploaded after the copy has walked past its key stays on
 the old backend, and its row will point at bytes the new one does not have — a second run after the

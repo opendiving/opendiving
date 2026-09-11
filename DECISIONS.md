@@ -260,6 +260,31 @@ writable directory in its own layer, passes its own startup check, and reports s
 that erased nothing. Nothing but that line prevents it. `opendiving-api`'s development compose
 carries the same correction for the same reason; both were written when the purge did not exist yet.
 
+## The operator commands are `python -m src.scripts.…`, and they do run in the shipped image
+
+`docs/configuration.md` hands an operator `docker compose exec api python -m src.scripts.migrate_blobs`
+and the orphan sweep beside it. Reading `opendiving-api`'s `Dockerfile`, that looks wrong: the
+runtime stage copies only `src/app` to `/code/app`, plus the migrations and `alembic.ini`, so there
+is no `src` tree under the working directory and the natural conclusion is `ModuleNotFoundError`.
+
+The conclusion is wrong, and it has already been drawn once in review. The scripts arrive by the
+other route: `pyproject.toml` declares `packages = ["src"]` for the wheel, the builder stage runs
+`uv sync --locked --no-editable` — a real install of the project, not just its dependencies — and the
+runtime stage copies the whole `/app/.venv` across. `src`, `src.app` and `src.scripts` are all in
+`site-packages`, independent of anything under `/code`. Checked against the published image rather
+than reasoned about:
+
+```bash
+docker compose exec api python -c "import src.scripts, sys; print(src.scripts.__file__)"
+```
+
+`opendiving-api`'s own `DECISIONS.md` generalises the opposite way, from an `admin_init` failure, to
+"anything reached as `src.scripts.*` is a development tool by construction". That sentence does not
+survive the command above — one of the three scripts it names runs from `site-packages` in the
+published image with no bind mount. Re-run it before believing either entry; it is the only thing
+that settles the question, and it is why an operator-facing command in a `src.scripts.*` shape is
+worth a second look but not an automatic bug.
+
 ## `/admin` is the web app's, and the panel has to move
 
 The bundled `Caddyfile` used to send `/admin*` to `api:8000`, because the only admin surface was
