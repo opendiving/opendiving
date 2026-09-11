@@ -80,7 +80,9 @@ asks for relay credentials instead of bundling Postfix.
   two GB is comfortable.
 - **Disk grows with the files you upload**, which live on their own Docker volume rather than in the
   database — a dive-computer export is tens of kilobytes, a c-card photo up to 10 MB. A thousand
-  dives with photographed cards is still comfortably inside a few GB.
+  dives with photographed cards is still comfortably inside a few GB. If you switched the API to
+  object storage ([configuration.md](configuration.md#object-storage)) that growth is the bucket's
+  instead, and only the floor above applies.
 - **amd64 and arm64 both**. Every release publishes both architectures, so a Raspberry Pi 4/5, an
   Ampere VPS or an Apple-silicon box runs the same images as an x86 server.
 
@@ -111,9 +113,11 @@ Seven containers, of which exactly one publishes a port:
 runs itself — reports in.
 
 **The uploaded files are not in Postgres.** Dive-computer exports, c-card images, profile pictures
-and the species photographs are ordinary files on the `files-data` volume, one per row that
-references them — which is why a backup of this instance is *two* artifacts and a `pg_dump` alone is
-not one. Restoring the dump by itself gives you a logbook whose every file download fails.
+and the species photographs are ordinary files on the `files-data` volume — or objects in your
+bucket, if you switched the API to object storage
+([configuration.md](configuration.md#object-storage)) — one per row that references them, which is
+why a backup of this instance is *two* artifacts and a `pg_dump` alone is not one. Restoring the
+dump by itself gives you a logbook whose every file download fails.
 [backup-restore.md](backup-restore.md) has both recipes and the order to take them in.
 
 ## Pin a version once you care about it
@@ -132,6 +136,6 @@ lists the full set of tags a released version carries.
 
 - [configuration.md](configuration.md) — every setting, grouped
 - [reverse-proxy.md](reverse-proxy.md) — bring your own proxy, or run on a LAN with no domain
-- [backup-restore.md](backup-restore.md) — the dump and the files volume, both
+- [backup-restore.md](backup-restore.md) — the dump and the uploaded files, both
 - [upgrade.md](upgrade.md) — pull, up, done
 - [troubleshooting.md](troubleshooting.md) — when it doesn't go like that
