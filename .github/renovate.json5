@@ -8,11 +8,16 @@
   // grows a CVE weeks after it shipped, with no PR in flight, and no bot that reads a
   // repository's files can see that. The two are not substitutes.
   //
-  // **This file is inert until Renovate is enabled on the repository** - it is
-  // configuration for a bot that has to be running somewhere. The Mend-hosted Renovate
-  // GitHub App is installed on the `opendiving` org; a repository added after that
-  // install has to be added to it too, and until it is, the digests below are frozen and
-  // nothing says so.
+  // **This file is configuration, not a scheduler** - something has to be running to act
+  // on it. The Mend-hosted Renovate GitHub App is installed on the `opendiving` org and
+  // this repository is inside that installation, so it runs here: `dependencyDashboard`
+  // below opens an issue titled "Dependency Dashboard", and that issue is where Renovate
+  // reports what it has seen, what it has raised and what it is holding back.
+  //
+  // The installation names its repositories one at a time rather than covering the org
+  // wholesale, so **a repository added to the org later has to be added to the
+  // installation too** - and until it is, a `renovate.json5` sitting in it does nothing,
+  // its digests are frozen, and nothing anywhere says so.
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
 
   "extends": [

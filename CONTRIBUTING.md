@@ -9,6 +9,10 @@ The application lives in [opendiving-api](https://github.com/opendiving/opendivi
 [opendiving-web](https://github.com/opendiving/opendiving-web), each with its own `CONTRIBUTING.md`
 covering setup, checks and house rules. If your change is to the app, it belongs there.
 
+Taking part here — an issue, a PR, a Discussions thread — means agreeing to the
+[Code of Conduct](CODE_OF_CONDUCT.md). It is the Contributor Covenant, and reports go to
+conduct@opendiving.app.
+
 ## What a change here looks like
 
 - **The docs.** The bar is that an operator can follow them verbatim on a fresh machine. Every
@@ -68,6 +72,49 @@ docker compose config >/dev/null
 
 That `diff` is the check worth keeping: line for line, the `.env` it writes has to be the template
 with values replaced. Any difference at all means a comment went missing.
+
+## Retaking the README screenshots
+
+The three images in `docs/screenshots/` are the README's product tour, and **nothing in this
+repository can take them** — they are pictures of the web app, which lives next door. They are
+byte-for-byte copies of the files of the same names in
+[opendiving-web](https://github.com/opendiving/opendiving-web/tree/main/docs/screenshots), generated
+by that repository's `scripts/screenshots.mjs`, and retaking one means running that script over
+there and committing what it drops in here.
+
+You need a clone of `opendiving-web`, a clone of
+[opendiving-api](https://github.com/opendiving/opendiving-api), and a local stack: the API up with
+`docker compose up` in the api clone, and the web dev server on `http://localhost:3000`. Then, from
+the web clone:
+
+```bash
+npm run screenshots -- you@example.com             # all three
+npm run screenshots -- you@example.com dashboard   # just the named ones
+```
+
+The account you name has to have a populated logbook behind it — enough dives to draw the dashboard
+charts, one with a dive-computer recording, and a gear item. The script signs in as that account by
+requesting a magic link and reading the token back out of the API container's log, which is why it
+only works against a local stack whose logs you can read.
+
+**How the copies reach this repository is one environment variable.** The script writes its own
+`docs/screenshots/` and then writes this repository's, taking the path from `PRODUCT_DIR`, which
+defaults to `../opendiving` relative to the web checkout — so a clone of this repository sitting
+beside `opendiving-web` is picked up with nothing set. Anywhere else, name it:
+
+```bash
+PRODUCT_DIR=~/src/opendiving npm run screenshots -- you@example.com
+```
+
+With no clone at that path the script prints a note and writes only the web copies, which is what a
+contributor with one checkout gets — not an error.
+
+**Committing them here is a second, manual step, and it is yours.** The script deliberately makes no
+commit in a repository it does not live in, so after the run the new PNGs are sitting unstaged in
+this checkout; the change lands as its own PR here, alongside the one next door. Take all three
+together unless you are copying a single image unchanged from a set already shot against the same
+account: the invariant is that the tour is one logbook, and `DECISIONS.md` says what goes wrong when
+it is not.
 
 ## Cutting a release
 
