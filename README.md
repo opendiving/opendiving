@@ -4,7 +4,7 @@
 formats out, everything in one click. Yours to self-host, and this repository is the install.**
 
 OpenDiving is an open-source logbook for scuba divers, recreational and technical: log dives with
-multi-tank gas mixtures, import them straight from your dive computer's export file — full
+multi-tank gas mixtures, import them straight from your dive computer's export files — full
 depth/temperature/tank-pressure profile, deco ceiling and dive events included — group them into
 trips, and keep your gear service history and c-cards in one place.
 
@@ -67,8 +67,13 @@ what you need, what the six values are, and what the seven containers do.
   **CNS/OTU** oxygen exposure and surface pressure are kept from imports, per-cylinder ppO₂ limits
   and gas roles included.
 - **Dive-computer import** — upload a FIT file (Garmin Descent, Suunto Ocean/D5) or a Suunto
-  XML/JSON export and the form pre-fills itself. The original file is stored with the dive and can
-  be re-downloaded any time; the per-sample profile is extracted and charted.
+  XML/JSON export and the form pre-fills itself. Each file lands on a **recording**, one per device
+  that recorded the dive: two computers on one dive are two recordings, and one computer's JSON
+  beside its FIT is two files of one recording, each filling what the other left blank. Every file
+  you upload stays with the recording it came from and can be re-downloaded any time, and the
+  per-sample profile is extracted and charted per recording, with a switcher when a dive has more
+  than one. A computer that chopped one dive in half logs it as two dives, and **Merge** folds them
+  back into one.
 - **Air consumption** — SAC and RMV derived automatically, including a per-tank breakdown across
   recorded gas switches, with a consumption trend on the dashboard.
 - **Trips, dive sites, species** — group dives into a liveaboard or a holiday week; keep your own
@@ -84,27 +89,29 @@ what you need, what the six values are, and what the seven containers do.
   both sides of every c-card. A data-ownership log without an exit door is a contradiction.
 - **Logbook import** — and the door swings both ways: bring a whole logbook in from a **DiveJSON**
   document, a full archive, a **UDDF** file, a Subsurface **`.ssrf`**, a **FIT** file, a **Suunto
-  app JSON** export, or a zip whose files are all one of those — a watch that writes one file per
-  dive arrives as a single upload. You see a preview of exactly what will be created, linked or
-  restored before anything is written, and anything a conversion could not carry is listed rather
-  than quietly dropped. Converting a logbook brings the dives across, not the files behind them; it
-  is the full archive that restores the uploads too, and a deleted dive with them, under the
-  identifier it had. An exit door you cannot walk back through is only half of owning your data.
+  app JSON** export, a **Suunto DM5 XML** export, or a zip whose files are all one of those — a
+  watch that writes one file per dive arrives as a single upload. You see a preview of exactly what
+  will be created, linked or restored before anything is written, and anything a conversion could
+  not carry is listed rather than quietly dropped. Converting a logbook brings the dives across, not
+  the files behind them; it is the full archive that restores the uploads too, and a deleted dive
+  with them, under the identifier it had. An exit door you cannot walk back through is only half of
+  owning your data.
 - **Passwordless sign-in** — email magic links, a six-digit code, passkeys, or Google. No passwords
   stored, ever.
 - **Dark mode and responsive** — works on the boat, in the dive shop, and on your desk.
 
 |                                                                                                     |                                                                                      |
 | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| ![A dive, with the profile charted from its dive-computer export](docs/screenshots/dive-detail.png) | ![A gear item with its service schedule and history](docs/screenshots/gear-item.png) |
+| ![A dive, with the profile charted from its dive-computer recording](docs/screenshots/dive-detail.png) | ![A gear item with its service schedule and history](docs/screenshots/gear-item.png) |
 
 ## Planned
 
 Roughly in priority order — contributions welcome:
 
-- **More importers** — Shearwater Cloud's whole-database export, once a database is in hand to
-  build the reader against. Longer term, [libdivecomputer](https://www.libdivecomputer.org/) for
-  direct hardware support.
+- **More importers** — Shearwater Cloud's whole-database export, which keeps each dive's samples in
+  the computer's own binary log rather than in readable rows, so it needs a dive-computer parser
+  rather than a format adapter; Shearwater Cloud's UDDF export of the same dives already imports.
+  Longer term, [libdivecomputer](https://www.libdivecomputer.org/) for direct hardware support.
 - **Statistics** — depth and time records, dives per year, a sites map.
 - **Sharing** — a public link to a dive or a trip.
 - **iOS companion app** — parked until the server story is done.
