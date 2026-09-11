@@ -330,3 +330,38 @@ identity*, which listed the file promise among the things the software offers ev
 it runs. That sentence is shared rather than local: `opendiving-web` carries it at its own
 `README.md` and twice in the page metadata, so a replacement has to survive being adopted verbatim,
 with nothing front-door-specific in it.
+
+## The screenshots are copied from `opendiving-web`, never taken here
+
+The three images in `docs/screenshots/` are byte-for-byte copies of the files of the same names in
+[`opendiving-web`](https://github.com/opendiving/opendiving-web/tree/main/docs/screenshots). That
+repository's `scripts/screenshots.mjs` generates them and, in the same shutter press, writes this
+repository's copies too when a clone sits beside it — but it deliberately commits nothing in a
+checkout it does not live in, so the commit is a separate act over here. Retaking an image therefore
+means running the script next door and committing what lands, not photographing the app from this
+side. There is nothing here that could: the app these are of is over there.
+
+**All three are one product tour, from one account's logbook.** That is the invariant, and it is
+about the *account* rather than the run: a retake against whatever account happened to have data in
+it is how a README stitched from two different divers' logs gets in, which is the failure both
+repositories are guarding against rather than one either has shipped. Every change here until this
+one moved all three files together; this one moves a single image, which is allowed only because it
+is copied unchanged from a set shot against the same account as its neighbours. A change that
+reaches *all* three — a palette, a nav rewrite — is still a single run of the script next door, so
+the three cannot half-move.
+
+**The dive shot being much taller than the other two is accepted, not a defect.** It is close to
+twice the height of the gear shot, so the two-image row under `## Features` renders visibly uneven,
+with the gear image floating in the middle of a cell sized for its neighbour. The script cuts each
+page at the end of a card rather than at a shared number, and on the dive page the two columns only
+finish together below the *Recordings* card; `opendiving-web`'s `DECISIONS.md` has already weighed
+that against the three shots agreeing and ruled for the card boundary. Cropping the dive image here
+to even the row out would break both the byte-for-byte copy and the rule behind it.
+
+**The dive image's alt text is singular on purpose.** The app charts a profile per recording and
+shows a switcher when a dive has more than one, but the dive in this set has a single recording, so
+the caption says "its dive-computer recording" and promises no switcher. A dive with two charted
+recordings is not reachable without shooting a different account, which the paragraph above rules
+out. The caption is the half of this that drifts silently: it was rewritten to describe a recording
+while the image still showed the pre-recordings page, and a picture disagreeing with its own caption
+is invisible to every check in this repository.
