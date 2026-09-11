@@ -260,9 +260,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-opendiving}
     volumes:
       # Every dive, every dive site, every certification record - the whole logbook except
-      # the uploaded files themselves, which live on `files-data` below. A backup is those
-      # two artifacts, dump first and files second; neither is complete alone
-      # (docs/backup-restore.md).
+      # the uploaded files themselves, which live on `files-data` below - or in your
+      # bucket, on FILE_STORAGE_BACKEND=s3. A backup is those two artifacts, dump first
+      # and files second; neither is complete alone (docs/backup-restore.md).
       #
       # Postgres 18+ images store the cluster in a version-specific PGDATA
       # (/var/lib/postgresql/18/docker) under this mount, so the volume goes one level up
