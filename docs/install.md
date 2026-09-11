@@ -103,12 +103,18 @@ Seven containers, of which exactly one publishes a port:
 | `api`        | The FastAPI backend                                               |
 | `worker`     | Scheduled jobs and the gear-service reminder digest               |
 | `admin_init` | One-shot; exits immediately unless the admin panel is switched on |
-| `db`         | PostgreSQL 18 — **every dive and every uploaded file is in here** |
+| `db`         | PostgreSQL 18 — **every dive, site, trip and certification**      |
 | `redis`      | Cache and job queue; nothing durable                              |
 
 `docker compose ps` should show them all `healthy` within a minute or so of the images being pulled.
 `docker compose logs -f api` is where the API's startup — including `alembic upgrade head`, which
 runs itself — reports in.
+
+**The uploaded files are not in Postgres.** Dive-computer exports, c-card images, profile pictures
+and the species photographs are ordinary files on the `files-data` volume, one per row that
+references them — which is why a backup of this instance is *two* artifacts and a `pg_dump` alone is
+not one. Restoring the dump by itself gives you a logbook whose every file download fails.
+[backup-restore.md](backup-restore.md) has both recipes and the order to take them in.
 
 ## Pin a version once you care about it
 
@@ -116,6 +122,11 @@ The compose file follows `latest` unless you say otherwise. As soon as this inst
 you'd miss, set `OPENDIVING_VERSION` in `.env` to the current version and move it deliberately,
 after reading the release notes. The api and web images always carry the same version number — they
 are released together.
+
+There is a middle setting between the two. Every release also publishes an `X.Y` alias — `0.4` for
+`0.4.0`, moved on by `0.4.1` — so `OPENDIVING_VERSION=0.4` takes patch fixes on a pull and never a
+minor version, which is where the breaking changes are allowed to live. [upgrade.md](upgrade.md)
+lists the full set of tags a released version carries.
 
 ## Next
 
