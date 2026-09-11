@@ -175,12 +175,15 @@ builds the object handed to the client field by field, and `basemap` — the key
 the two fields in it.
 
 So the docs say to use a key the provider has restricted to your own domain, rather than saying to
-keep it safe, which is advice nothing can act on. This is written down because the instinct on
-reading "API key" in a server-side `.env` is that the server is where it stays: every other secret in
-that file does, the variable is set the same way, and nothing in the file's shape distinguishes it.
-The rule for changing this text is that the claim is about a *function next door* — if
-`publicConfig()` ever stops carrying `basemap`, this section and both passages in
-`configuration.md` are wrong together.
+keep it safe, which is advice nothing can act on. It is said in three places — `example.env` beside
+the setting, and twice in `configuration.md`, in the variable table and in *Third-party calls* —
+because an operator reads whichever one they happen to open, and the instinct on meeting "API key"
+in a server-side `.env` is that the server is where it stays. Every other secret in that file does.
+
+The rule for changing any of the three is that the claim is about a *function next door*:
+`opendiving-web`'s `publicConfig()` decides what reaches the browser, and if it ever stops carrying
+`basemap` all three passages become wrong at once. Derive them with
+`git grep -n MAP_TILE_API_KEY` rather than from this list.
 
 ## Self-hosting is a capability, not the product's identity
 
@@ -292,9 +295,15 @@ and the only one of the three whose subject is the *whole* product rather than o
 implementation. The rejected alternative was `opendiving-api`, which is merely the oldest of the
 three — a question about a chart would then be asked in the backend repository, and "ask in api,
 report in web" is precisely the split the paragraph above exists to spare people. One space, at the
-front door, is the version of this with nothing to get wrong. It follows that the issue-template
-`config.yml` in each of the three repositories names this repository's Discussions, so a question
-asked from any of them lands in the same place.
+front door, is the version of this with nothing to get wrong.
+
+This repository's `.github/ISSUE_TEMPLATE/config.yml` is the first to say so. The other two still
+send questions to `opendiving-api/discussions`, from before the decision and from before Discussions
+were switched on here — a tab that is not enabled over there, so those links currently resolve to
+nothing. They are changed in their own repositories, which is why this paragraph describes where the
+space lives rather than claiming all three configs already agree: the claim would be the sort that
+is written once and never re-checked. `gh repo view opendiving/<repo> --json hasDiscussionsEnabled`
+is what settles it for any of the three.
 
 ## The README names the import formats, and `## Planned` keeps Shearwater
 
