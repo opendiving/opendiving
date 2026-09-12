@@ -75,7 +75,7 @@ with values replaced. Any difference at all means a comment went missing.
 
 ## Retaking the README screenshots
 
-The three images in `docs/screenshots/` are the README's product tour, and **nothing in this
+The four images in `docs/screenshots/` are the README's product tour, and **nothing in this
 repository can take them** — they are pictures of the web app, which lives next door. They are
 byte-for-byte copies of the files of the same names in
 [opendiving-web](https://github.com/opendiving/opendiving-web/tree/main/docs/screenshots), generated
@@ -88,14 +88,19 @@ You need a clone of `opendiving-web`, a clone of
 the web clone:
 
 ```bash
-npm run screenshots -- you@example.com             # all three
+npm run screenshots -- you@example.com             # all four
 npm run screenshots -- you@example.com dashboard   # just the named ones
 ```
 
 The account you name has to have a populated logbook behind it — enough dives to draw the dashboard
-charts, one with a dive-computer recording, and a gear item. The script signs in as that account by
-requesting a magic link and reading the token back out of the API container's log, which is why it
-only works against a local stack whose logs you can read.
+charts, one with a dive-computer recording, a gear item, and **a dive site with coordinates on it**.
+Coordinates are the one hard requirement of the four: the site shot exists for its map, and the map
+draws nothing for an unplaced site, so a logbook whose sites are all unplaced fails the run outright
+rather than producing a poorer picture. Everything else is a preference the script ranks on — it
+photographs the placed site with the most dives logged at it, and falls back to the first placed one
+it finds. The script signs in as that account by requesting a magic link and reading the token back
+out of the API container's log, which is why it only works against a local stack whose logs you can
+read.
 
 **How the copies reach this repository is one environment variable.** The script writes its own
 `docs/screenshots/` and then writes this repository's, taking the path from `PRODUCT_DIR`, which
@@ -107,14 +112,16 @@ PRODUCT_DIR=~/src/opendiving npm run screenshots -- you@example.com
 ```
 
 With no clone at that path the script prints a note and writes only the web copies, which is what a
-contributor with one checkout gets — not an error.
+contributor with one checkout gets — not an error. It is also how the two repositories drift apart
+without anyone noticing, so treat a mirror as a comparison against `opendiving-web`'s `main` rather
+than as something the last run can be trusted to have done: hash the files on both sides.
 
 **Committing them here is a second, manual step, and it is yours.** The script deliberately makes no
 commit in a repository it does not live in, so after the run the new PNGs are sitting unstaged in
-this checkout; the change lands as its own PR here, alongside the one next door. Take all three
-together unless you are copying a single image unchanged from a set already shot against the same
-account: the invariant is that the tour is one logbook, and `DECISIONS.md` says what goes wrong when
-it is not.
+this checkout; the change lands as its own PR here, alongside the one next door. Take all four
+together unless the images you are copying come across unchanged from a set already shot against the
+same account: the invariant is that the tour is one logbook, and `DECISIONS.md` says what goes wrong
+when it is not.
 
 ## Cutting a release
 
