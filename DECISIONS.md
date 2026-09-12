@@ -216,9 +216,10 @@ as many words that this is where "the instance this project runs itself is named
 *Why a product repository at all* above, applied to an address instead of an install: a component
 repository publishing the product's front door would be the second front door the first one exists
 to replace, and two of them drift the moment the address moves. `git grep -n opendiving.app` across
-the three repositories is what checks that, with one thing to know before reading the hits — the
-same domain is the mail domain in `SECURITY.md` and `CODE_OF_CONDUCT.md`, and a `security@` address
-is not a claim about where an instance is named.
+the three repositories is what derives that rather than trusting this paragraph, and its hits want
+reading rather than counting: most of them are not this claim at all — the domain also carries the
+project's mail addresses, an API origin and URL literals in tests — so the question to ask of each
+is whether the prose around it sends a *reader* to the instance.
 
 **One sentence on how the two relate is the whole of it**: the same code at the same release, with
 the project as that instance's operator instead of you. It is deliberately not a pitch. This
