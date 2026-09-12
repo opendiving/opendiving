@@ -207,6 +207,44 @@ still says run it, change it, self-host it freely. The change is register, not r
 documentation, every page here is addressed to an operator on purpose, and none of that is what the
 distinction is about — it is between describing this repository's job and defining the product.
 
+## The hosted instance is named at the front door
+
+The project operates one instance of its own software, at <https://opendiving.app> — invite-only, a
+closed beta with a waitlist. `README.md` is where that URL is published, and the component
+repositories send a reader here for it rather than repeating it; `opendiving-web`'s README says in
+as many words that this is where "the instance this project runs itself is named". The reasoning is
+*Why a product repository at all* above, applied to an address instead of an install: a component
+repository publishing the product's front door would be the second front door the first one exists
+to replace, and two of them drift the moment the address moves. `git grep -n opendiving.app` across
+the three repositories is what checks that, with one thing to know before reading the hits — the
+same domain is the mail domain in `SECURITY.md` and `CODE_OF_CONDUCT.md`, and a `security@` address
+is not a claim about where an instance is named.
+
+**One sentence on how the two relate is the whole of it**: the same code at the same release, with
+the project as that instance's operator instead of you. It is deliberately not a pitch. This
+repository is the install bundle, every page in it is addressed to somebody running their own copy,
+and a hosted instance sold hard at the top of its README would be reading the room backwards. The
+section above draws the same line from the other side: what the software promises is the same
+wherever it runs, and who operates a copy is a fact about the copy.
+
+`SECURITY.md` carries the consequence that is not cosmetic. "Test against a copy you run yourself"
+was unambiguous while no instance was the project's; now that one is, the policy has to say out loud
+that the project's own instance is not the exception — otherwise the most obvious target for a
+well-meaning researcher is the one the maintainers answer for. The wording is `opendiving-api`'s,
+matched rather than reinvented, so the two policies read as one.
+
+**`PROJECT_OPERATED` gets no row in `docs/configuration.md`, and that is a ruling rather than an
+oversight.** It is the API setting behind `project_operated` on `GET /api/v1/config`, and all it
+selects is which voice the app's own copy speaks in — the project's, which says "join the waitlist",
+rather than a generic operator's. A self-hoster has no use for it: switching it on makes their
+instance speak as this project about a waitlist this project runs. Listing a setting in the operator
+reference is an invitation to set it, so the reference stays silent and the absence is recorded here
+instead — otherwise the next sweep for settings the reference is missing puts the row back, and the
+sweep would be right to, because nothing else says why it is not there. Leaving it out costs the
+file nothing it claims: `docs/configuration.md` opens by saying the API has more settings than it
+lists and pointing at `opendiving-api`'s own annotated file for the full set, so the reference has
+never been the exhaustive one.
+
 ## The template's registration line is `REGISTRATION_MODE=open`
 
 A commented-out line in `example.env` is whatever the operator would actually type, and for a
@@ -350,13 +388,14 @@ three — a question about a chart would then be asked in the backend repository
 report in web" is precisely the split the paragraph above exists to spare people. One space, at the
 front door, is the version of this with nothing to get wrong.
 
-This repository's `.github/ISSUE_TEMPLATE/config.yml` is the first to say so. The other two still
-send questions to `opendiving-api/discussions`, from before the decision and from before Discussions
-were switched on here — a tab that is not enabled over there, so those links currently resolve to
-nothing. They are changed in their own repositories, which is why this paragraph describes where the
-space lives rather than claiming all three configs already agree: the claim would be the sort that
-is written once and never re-checked. `gh repo view opendiving/<repo> --json hasDiscussionsEnabled`
-is what settles it for any of the three.
+This repository's `.github/ISSUE_TEMPLATE/config.yml` said it first, and `README.md`'s
+**Contributing** section says it from the repository the space actually lives in — the one place
+that can name it without pointing across a boundary. The other two configs were repointed here in
+their own repositories, each in its own change, because a PR in one of the three cannot touch the
+other two. Whether they still agree is not a thing to take this paragraph's word for:
+`gh repo view opendiving/<repo> --json hasDiscussionsEnabled` says where the tab is enabled, and
+`git grep -n discussions .github/ISSUE_TEMPLATE/config.yml` in each says where its links point. A
+sentence claiming the three agree is written once and never re-checked; the two commands are.
 
 ## The README names the import formats, and `## Planned` keeps Shearwater
 

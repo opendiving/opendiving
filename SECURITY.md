@@ -1,8 +1,15 @@
 # Security Policy
 
 OpenDiving is yours to self-host, and this repository is what you install: every instance run from
-it is somebody's own server, holding their own dive log. A defect in what we ship reaches all of
-them at once, so we would much rather hear about one privately than read about it in a public issue.
+it is somebody's own server, holding their own dive log. Where that operator is not this project —
+which is most instances — its maintainers have no access to the instance and no way to reach its
+users, so a misconfigured deployment or a stale image on somebody's box is a report for whoever runs
+that server. A defect in what we ship is ours, and it reaches every instance at once, so we would
+much rather hear about one privately than read about it in a public issue.
+
+**No running instance is a target for testing, and the one this project operates is not an
+exception.** Test against a copy you run yourself and report what you find here; the code is what
+this policy covers.
 
 This project is [AGPL-3.0](LICENSE) and run by a single maintainer in their spare time. There is no
 bug bounty and no money behind any of this — what we can offer is a prompt reply, a fix in the next
