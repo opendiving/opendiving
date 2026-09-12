@@ -519,3 +519,43 @@ recordings is not reachable without shooting a different account, which the para
 out. The caption is the half of this that drifts silently: it was rewritten to describe a recording
 while the image still showed the pre-recordings page, and a picture disagreeing with its own caption
 is invisible to every check in this repository.
+
+## `## Features` describes the app, and is allowed to run ahead of the picture
+
+The feature bullets and the screenshots answer the same question — what you get — and they move on
+different clocks. Prose here is one edit; an image is a capture run next door, and the section above
+is the whole story of why. When the app gains something the hero shot does not yet show, the prose
+takes it first and the picture catches up later. The alternative is holding a true sentence back so
+that it agrees with a stale PNG, which trades the thing a stranger actually reads for the thing they
+glance at.
+
+**That is not hypothetical, and `docs/screenshots/dive-detail.png` is currently the older half.** The
+profile chart gained a panel under the depth plot carrying the readouts the computer itself computed
+— no-deco time, time to surface, ppO₂, CNS and both gradient factors — and the recordings card
+gained a line naming the mode the device ran in and the decompression model behind those numbers.
+*Technical diving* and the opening paragraph say so; the committed image predates all of it and
+shows the deco ceiling, which is an older channel, and none of the six. So **no sentence here may
+claim the picture shows a readout**, and the alt text stays as general as it is — the two facts that
+keep the disagreement from spreading.
+
+**The retake is held rather than merely outstanding**, which is why "later" is not soon:
+`opendiving-web`'s `DECISIONS.md`, under *It arrived without a retake, deliberately*, records a
+capture against a dive whose `gradient_factor` series runs to five figures and reads as implausible
+across much of its length, and an open question about what that field means on a Suunto. The chart
+draws the number the computer wrote and is right to; a README hero is the wrong place to park the
+question. Nothing is owed on this side until that settles, and in particular nothing here should be
+"fixed" to close the gap: cropping an image would break the byte-for-byte copy the section above
+requires, and rolling the prose back to match the PNG would make the README wrong about the app to
+make it agree with a photograph.
+
+**Nothing catches this, in either direction.** These bullets describe a UI that lives in another
+repository, no CI here reads them, and a PR next door cannot touch this file — the same
+two-repository shape *The README names the import formats* records for the converter pin, with the
+same fix: the change that ships the feature is not finished until a change here has named it. The
+sweep that finds the stale sentences is a squeezed grep over every `*.md` here for the vocabulary of
+a dive page — `profile`, `ceiling`, `CNS`, `OTU`, `deco`, `decompression`, `freedive`, `gauge` — run
+against a newline-flattened file so that a sentence broken across two lines is still one string. Two
+things about it are worth keeping: the enumerations are the hits that matter, because a list is what
+goes short when the app grows, and the app's own spellings vary — `depth/temperature/tank-pressure`
+in one sentence and `depth, temperature and tank pressure` in the next — so a pattern anchored on
+one punctuation of it silently reports a clean repository.
