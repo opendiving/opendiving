@@ -57,10 +57,11 @@ jobs:
           echo "tag=$SOURCE_REF" >> "$GITHUB_OUTPUT"
           echo "version=${SOURCE_REF#v}" >> "$GITHUB_OUTPUT"
 
-      # Anonymous pulls are enough once both packages are public. While they are private,
-      # this repository has to be granted access to each package (package settings ->
-      # Manage Actions access) or every run fails here with a manifest-unknown that reads
-      # exactly like a missing image.
+      # Both packages are public, so the inspect below would resolve without this. The login
+      # stays for the day either one is made private again: in that state this repository also
+      # has to be granted access to the package (package settings -> Manage Actions access),
+      # and without the grant the inspect fails with a manifest-unknown - which the step below
+      # reports as "does not exist", the one wrong answer this guard can give.
       - name: Log in to GHCR
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
