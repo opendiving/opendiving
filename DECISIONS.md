@@ -41,6 +41,20 @@ tag that resolves perfectly well, and the first person to discover otherwise is 
 on a Raspberry Pi — roughly half this project's audience. A half-published manifest is worse than a
 missing one, because it fails for a subset of people and looks fine to everyone testing it.
 
+## The GHCR login outlives the reason it was added
+
+The release workflow logs in to GHCR before inspecting the two images. That step was load-bearing
+while `opendiving-api` and `opendiving-web` published private packages; both are public now, the
+inspect resolves anonymously, and the step reads as dead code to anybody sweeping for leftovers from
+the flip. It is kept anyway, because the failure it protects against is the one this guard cannot
+report honestly: a package made private again — during an embargoed security fix, say — is invisible
+to a workflow that has not been granted access to it, and `imagetools inspect` answers with a
+manifest-unknown that is indistinguishable from the image not being there. The step's own error then
+says "does not exist" and sends whoever reads it to re-run a publish that already succeeded.
+
+Leaving it in costs one round trip and keeps `packages: read` honest in the permissions block. Taking
+it out saves nothing and buys a wrong answer on the day it matters.
+
 ## No version manifest here
 
 `opendiving-api` guards its tag against `pyproject.toml` and `opendiving-web` against
