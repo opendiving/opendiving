@@ -494,18 +494,23 @@ single run of the script next door, so they cannot half-move.
 **The row under `## Features` stacks rather than adding a third column, and it is not levelled.**
 The dive shot is much the tallest image in the set, and a two-image row left a visible hole under
 the short one beside it; a third image *beside* those two would only narrow all three. Stacking the
-two short shots in the right cell fills that hole. It does not close it exactly, and the residue is
-accepted rather than corrected: the script cuts each page at the end of a card rather than at a
-shared number, `opendiving-web`'s `DECISIONS.md` has already weighed that against the shots agreeing
-and ruled for the card boundary, and cropping an image here to even the row out would break both the
-byte-for-byte copy and the rule behind it.
+two short shots in the right cell fills that hole. It does not close it exactly, and the remainder
+is **deferred rather than settled** — the distinction matters, because a reader who takes it for
+settled will not go looking for the work that is already specified. Closing it means changing the
+gear shot's frame height next door, the one frame in `screenshots.mjs` written down rather than
+measured, and the height to pick is set by the dive shot beside it, which is itself owed a retake.
+`opendiving-web`'s `DECISIONS.md` has that measured and waiting, under *The gear frame is the lever
+under the README row, and it is not pulled here* — including the finding that no single committed
+height comes level for every reader, since the stacked pair scales with the column while the leading
+between the two images does not. None of that is this repository's to act on, and cropping an image
+here to even the row out would break both the byte-for-byte copy and the rule behind it.
 
 **So the row's markup encodes no image's height, and must not start to.** Every one of these is
 retaken when the page behind it changes, and a retake moves heights — a dive page that gains a panel
-is taller, a shot recut at a different card is shorter. A plain two-column table with a `<br>`
-between the stacked pair survives all of that, because nothing in it is derived from a dimension.
-Markup tuned to today's numbers would need re-tuning by whoever retakes an image next, and nothing
-in this repository would tell them: there is no check here that can even open a PNG.
+is taller, a frame deliberately recut is shorter. A plain two-column table with a `<br>` between the
+stacked pair survives all of that, because nothing in it is derived from a dimension. Markup tuned
+to today's numbers would need re-tuning by whoever retakes an image next, and nothing in this
+repository would tell them: there is no check here that can even open a PNG.
 
 **The dive image's alt text is singular on purpose.** The app charts a profile per recording and
 shows a switcher when a dive has more than one, but the dive in this set has a single recording, so

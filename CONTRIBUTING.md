@@ -93,8 +93,12 @@ npm run screenshots -- you@example.com dashboard   # just the named ones
 ```
 
 The account you name has to have a populated logbook behind it — enough dives to draw the dashboard
-charts, one with a dive-computer recording, a gear item, and a dive site with several dives logged
-at it. The script signs in as that account by requesting a magic link and reading the token back
+charts, one with a dive-computer recording, a gear item, and **a dive site with coordinates on it**.
+Coordinates are the one hard requirement of the four: the site shot exists for its map, and the map
+draws nothing for an unplaced site, so a logbook whose sites are all unplaced fails the run outright
+rather than producing a poorer picture. Everything else is a preference the script ranks on — it
+photographs the placed site with the most dives logged at it, and falls back to the first placed one
+it finds. The script signs in as that account by requesting a magic link and reading the token back
 out of the API container's log, which is why it only works against a local stack whose logs you can
 read.
 
