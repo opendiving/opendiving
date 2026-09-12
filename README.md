@@ -106,9 +106,9 @@ what you need, what the six values are, and what the seven containers do.
   stored, ever.
 - **Dark mode and responsive** — works on the boat, in the dive shop, and on your desk.
 
-|                                                                                                     |                                                                                      |
-| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| ![A dive, with the profile charted from its dive-computer recording](docs/screenshots/dive-detail.png) | ![A gear item with its service schedule and history](docs/screenshots/gear-item.png) |
+|                                                                                                        |                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ![A dive, with the profile charted from its dive-computer recording](docs/screenshots/dive-detail.png) | ![A gear item with its service schedule and history](docs/screenshots/gear-item.png)<br>![A dive site on the map, with every dive logged there beside it](docs/screenshots/dive-site.png) |
 
 ## Planned
 

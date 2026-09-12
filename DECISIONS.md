@@ -465,7 +465,7 @@ with nothing front-door-specific in it.
 
 ## The screenshots are copied from `opendiving-web`, never taken here
 
-The three images in `docs/screenshots/` are byte-for-byte copies of the files of the same names in
+The four images in `docs/screenshots/` are byte-for-byte copies of the files of the same names in
 [`opendiving-web`](https://github.com/opendiving/opendiving-web/tree/main/docs/screenshots). That
 repository's `scripts/screenshots.mjs` generates them and, in the same shutter press, writes this
 repository's copies too when a clone sits beside it — but it deliberately commits nothing in a
@@ -473,22 +473,39 @@ checkout it does not live in, so the commit is a separate act over here. Retakin
 means running the script next door and committing what lands, not photographing the app from this
 side. There is nothing here that could: the app these are of is over there.
 
-**All three are one product tour, from one account's logbook.** That is the invariant, and it is
+**That second write is the half that silently does not happen, so the copies drift.** The path it
+uses defaults to a sibling of the web checkout, and a capture run from a worktree over there
+resolves it to nothing — the script says so, writes only its own copies, and exits fine. Nothing on
+this side notices: the README goes on rendering the older PNG, and the divergence is invisible until
+somebody compares the files. `dashboard.png` sat a whole capture behind `opendiving-web` that way.
+So mirroring is a comparison rather than a copy taken on trust. Read each blob out of
+`opendiving-web`'s `origin/main` — `git show origin/main:docs/screenshots/<name>.png` — rather than
+out of a working tree, which may be sitting on any branch at all, and hash both sides afterwards.
+
+**All four are one product tour, from one account's logbook.** That is the invariant, and it is
 about the *account* rather than the run: a retake against whatever account happened to have data in
 it is how a README stitched from two different divers' logs gets in, which is the failure both
-repositories are guarding against rather than one either has shipped. Every change here until this
-one moved all three files together; this one moves a single image, which is allowed only because it
-is copied unchanged from a set shot against the same account as its neighbours. A change that
-reaches *all* three — a palette, a nav rewrite — is still a single run of the script next door, so
-the three cannot half-move.
+repositories are guarding against rather than one either has shipped. A change that moves fewer than
+all of them is allowed exactly when the files it carries come across unchanged from a set already
+shot against the same account as the ones staying put — a single new capture next door looks like
+that from over here. A change that reaches *all* of them — a palette, a nav rewrite — is still a
+single run of the script next door, so they cannot half-move.
 
-**The dive shot being much taller than the other two is accepted, not a defect.** It is close to
-twice the height of the gear shot, so the two-image row under `## Features` renders visibly uneven,
-with the gear image floating in the middle of a cell sized for its neighbour. The script cuts each
-page at the end of a card rather than at a shared number, and on the dive page the two columns only
-finish together below the *Recordings* card; `opendiving-web`'s `DECISIONS.md` has already weighed
-that against the three shots agreeing and ruled for the card boundary. Cropping the dive image here
-to even the row out would break both the byte-for-byte copy and the rule behind it.
+**The row under `## Features` stacks rather than adding a third column, and it is not levelled.**
+The dive shot is much the tallest image in the set, and a two-image row left a visible hole under
+the short one beside it; a third image *beside* those two would only narrow all three. Stacking the
+two short shots in the right cell fills that hole. It does not close it exactly, and the residue is
+accepted rather than corrected: the script cuts each page at the end of a card rather than at a
+shared number, `opendiving-web`'s `DECISIONS.md` has already weighed that against the shots agreeing
+and ruled for the card boundary, and cropping an image here to even the row out would break both the
+byte-for-byte copy and the rule behind it.
+
+**So the row's markup encodes no image's height, and must not start to.** Every one of these is
+retaken when the page behind it changes, and a retake moves heights — a dive page that gains a panel
+is taller, a shot recut at a different card is shorter. A plain two-column table with a `<br>`
+between the stacked pair survives all of that, because nothing in it is derived from a dimension.
+Markup tuned to today's numbers would need re-tuning by whoever retakes an image next, and nothing
+in this repository would tell them: there is no check here that can even open a PNG.
 
 **The dive image's alt text is singular on purpose.** The app charts a profile per recording and
 shows a switcher when a dive has more than one, but the dive in this set has a single recording, so
