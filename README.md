@@ -15,6 +15,11 @@ takes everything out in open formats. Self-hosting is what turns that from a pro
 guarantee — the whole stack is yours to run, on your own machine and your own Postgres, so no
 shutdown, acquisition, or paywall can ever take your logbook with it.
 
+**One instance is run by the project itself: [opendiving.app](https://opendiving.app), a closed beta
+with a waitlist.** It is the same code at the same release as an install from this repository — the
+difference is only who operates it, and running your own copy is still the version of this with
+nobody to trust but yourself.
+
 ![Dashboard](docs/screenshots/dashboard.png)
 
 ## Install
