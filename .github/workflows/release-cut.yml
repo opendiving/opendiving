@@ -316,6 +316,14 @@ jobs:
           # are not worth telling apart: every call retried here is either safe to repeat or
           # guarded by the check above it, so retrying a permanent failure costs half a
           # minute and then reports the same error.
+          #
+          # Deliberately not `pr-title.yml`'s `gh_retry`, which this is not a drifted copy
+          # of. That one folds stderr into the value it returns and recognises an expected
+          # failure by matching its text; here the value is a sha the next call is built
+          # from, so stderr must stay out of it, and the one expected failure - a tag ref
+          # that already exists - is answered by asking what the ref names rather than by
+          # reading the error, because a 422 says the same thing whether or not this run's
+          # own earlier attempt was what created it.
           retry() {
             local attempt out
             for attempt in $(seq 6); do
