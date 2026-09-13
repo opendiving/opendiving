@@ -199,9 +199,14 @@ is the tag, which is why the coordinator writes to two repositories and tags thr
 **Finish the draft.** The workflow leaves a draft release here with generated notes and the four
 install files attached. Write the headline paragraph and confirm the **Breaking** section — say
 "None" in so many words when it is empty, because generated notes simply omit an empty category and
-silence is not an answer somebody deciding whether to upgrade can use. Then publish. The component
-releases in api and web belong to those repositories; each says in its own `CONTRIBUTING.md` what,
-if anything, it still wants from a person.
+silence is not an answer somebody deciding whether to upgrade can use. Then publish.
+
+**Nothing in api or web is bumped or tagged by hand** — the coordinator did both, and doing either
+again would put a second bump in the window this release was computed from. Each of them opens its
+own component release off the tag it was given; whether that release arrives published or as a
+draft somebody finishes is that repository's own business, and its releases page says which. Any
+instruction anywhere to bump a manifest and push a `v` tag yourself describes the ritual this
+replaced.
 
 **Recovery, and what the guard does not cover.** By the time this repository is tagged both images
 are already out — `0.4.0`, `0.4`, `latest` and `sha-<12>` were pushed by each component's own
