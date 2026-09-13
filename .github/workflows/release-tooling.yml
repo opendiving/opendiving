@@ -1,0 +1,62 @@
+name: Release tooling
+
+# The first test runner in this repository. `scripts/release_version.py` decides what
+# version the next release carries and writes it into the manifests and lockfiles of
+# `opendiving-api` and `opendiving-web` - a string that a tag is then pushed against,
+# before anything is built. There is no un-pushing a tag here: the `tags` ruleset blocks
+# deletion on `refs/tags/v*` for everyone but an organisation admin. So this suite runs
+# on every pull request and is meant to be a required check.
+#
+# **The job id below is the check name, and a ruleset will name it.** The `main` ruleset
+# requires `semantic-title` and `shellcheck` today and `release-tooling` is to be added
+# beside them, so the id is a contract before it is enforced. Two shapes would break it,
+# and both fail the same silent way - a pull request waiting on a status that is never
+# going to arrive:
+#
+#   - A matrix job. Its check run carries the matrix value in its name, so a job with a
+#     one-value matrix reports as `release-tooling (<value>)` and never as
+#     `release-tooling`. `opendiving-web`'s `ci.yml` carries the scar; DECISIONS.md has
+#     the longer version.
+#   - A `paths:` filter. A filtered workflow that skips produces no check run at all,
+#     and most pull requests here are docs-only. Required plus filtered is a permanent
+#     "Expected - waiting for status" on the merge box.
+#
+# Renaming the job renames the check. The ruleset lives in repository settings and
+# nothing in this tree references it, so nothing here would object.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Reads the checkout and nothing else. No token is needed to run a test suite, and the
+# suite executes whatever it is handed - which is why saying so is worth a line.
+permissions:
+  contents: read
+
+jobs:
+  release-tooling:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # The runner's own `python3` and `node`, not a pinned pair, and deliberately:
+      # `opendiving-api`'s publish workflow reads `pyproject.toml` with the runner's
+      # `python3 -c 'import tomllib...'` and `opendiving-web`'s reads `package.json`
+      # with the runner's `node -p`. The script reads both the same way, so that what a
+      # bump writes and what a tag is checked against cannot come from different
+      # parsers. Printed rather than assumed, the way `shellcheck.yml` prints its
+      # linter's version: when this suite fails on an interpreter and not on a change,
+      # the log should say which interpreter.
+      - name: Versions
+        run: |
+          python3 --version
+          node --version
+
+      # Standard library only - there is nothing to install. `-t .` puts the repository
+      # root on the path, which is what makes `from scripts import release_version`
+      # resolve; `tests/__init__.py` is what lets discovery start in `tests/`.
+      - name: Run the tests
+        run: python3 -m unittest discover -s tests -t . --verbose

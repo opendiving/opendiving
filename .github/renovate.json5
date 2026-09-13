@@ -1,7 +1,11 @@
 {
   // What tells anyone a dependency here has moved. "Here" is three third-party image
-  // digests in `docker-compose.yml` and the actions in `.github/workflows/` - this
-  // repository ships no code of its own.
+  // digests in `docker-compose.yml` and the actions in `.github/workflows/`. The release
+  // tooling under `scripts/` is standard library only - no manifest, no lockfile, and so
+  // nothing for Renovate to watch. Adding a dependency to it would change that silently:
+  // there would be a `pyproject.toml` here for the first time, and Renovate would start
+  // raising pull requests against a repository whose whole premise is that nothing in it
+  // is built.
   //
   // The other half of the story lives in `opendiving-api` and `opendiving-web`, whose
   // scheduled Trivy scans watch the images that are *already published*: a base image
