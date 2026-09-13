@@ -1,0 +1,874 @@
+name: Cut the release
+
+# One dispatch cuts the product release across all three repositories: it works out the
+# version, writes it into every file in `opendiving-api` and `opendiving-web` that declares
+# one, lands both through a pull request, tags both, waits for both images to publish, and
+# then tags this repository - which is what `release.yml` opens the draft release from.
+#
+# `scripts/release_version.py` is the half with the decisions in it and it has a suite.
+# This file is the half that has to touch GitHub, and everything awkward below is one of
+# the following.
+#
+# **A GitHub App token, never `GITHUB_TOKEN`.** GitHub starts no workflow run from an event
+# created with the default token - `workflow_dispatch`, `repository_dispatch` and three
+# `pull_request` activity types are the documented exceptions, and a tag push is not among
+# them. A tag pushed with `GITHUB_TOKEN` would publish nothing and say nothing was wrong:
+# no error, no run, no image, no release, just three tags sitting there.
+#
+# **The bump commits are made through the API.** The `signatures` ruleset on all three
+# repositories reads `~ALL` with `refs/heads/main` as its only exemption, so the release
+# branch this pushes is squarely inside the rule and a runner's `git commit` is signed by
+# nobody. GraphQL's `createCommitOnBranch` is the path that adds neither a signing key in CI
+# nor a hole in a ruleset: a commit it creates is signed by GitHub itself.
+#
+# **Through a pull request, and this App is not a bypass actor.** Not because bypass is
+# ruleset-wide - `bypass_mode: pull_request` is per-actor and rulesets aggregate, so a
+# second ruleset carrying `pull_request` with the App on its bypass list would work. It is
+# because that second ruleset is a second place `main`'s protection is described, and the
+# pull request costs nothing to keep: `required_approving_review_count` is 0 on all three
+# `main` rulesets, so this opens one and squash-merges it in the same run with no rule
+# relaxed and no human in the loop. DECISIONS.md carries the longer version.
+#
+# **Each tag goes on the squash commit.** Squash-merging writes a *new* commit on `main`;
+# the branch's own commit never lands there, and a tag on it would name a release nothing
+# on `main` can be traced to. Squash is also the only merge method these repositories allow.
+#
+# **Everything after a merge asks what is already there before creating anything.** Between
+# a merge and its tag the repository is a version bumped on `main` that nothing published,
+# and a step under `bash -e` ends on the first API call that answers `502`. So the calls
+# after a merge retry, and the tag call distinguishes "GitHub never saw it" from "GitHub did
+# it and the answer did not come back" - two states that are one exit status.
+#
+# **Every call names its repository.** The implementation this is modelled on reaches for
+# `GITHUB_REPOSITORY` throughout because it has one; here every branch, commit, pull
+# request, merge, poll and tag names one of three, and a single unparameterised call is a
+# coordinator quietly operating on the front door instead of on api.
+#
+# **It cannot be re-dispatched into a half-finished release, which is why it prints a
+# recipe.** Once either bump has merged, `decide` refuses - the five version-bearing entries
+# disagree, or a repository's newest tag is not what its manifests declare - so a second
+# dispatch stops cleanly and changes nothing. Every way this run can stop after the first
+# merge therefore ends by writing the commands that finish the release by hand into the job
+# summary, and the last step does it for the failures nothing anticipated.
+#
+# ## What this needs from outside the repository
+#
+# A GitHub App owned by the `opendiving` organisation and installed on all three product
+# repositories, with two repository permissions and nothing else: **Contents: read and
+# write** (the branches, the commits, the tags) and **Pull requests: read and write**
+# (opening them, merging them). No organisation permissions, no webhook. Then, on this
+# repository:
+#
+#   RELEASE_BOT_CLIENT_ID    a repository **variable** - the App's Client ID
+#   RELEASE_BOT_PRIVATE_KEY  a repository **secret**   - the App's private key, whole .pem
+#
+# The Client ID is a variable rather than a secret on purpose. It is not a secret, and
+# secrets are masked in every log line, which would turn each failure here into `***`.
+#
+# One private key now reaches three repositories rather than one, which is a real widening
+# of what a leak would cost and is accepted rather than overlooked: those two permissions
+# are the mitigation, and the `tags` ruleset means even a leaked key cannot delete a
+# published tag.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. 0.2.0. Computed from the three commit windows when blank."
+        required: false
+        type: string
+      dry_run:
+        description: "Report the version and the diffs, and push nothing."
+        required: false
+        default: false
+        type: boolean
+
+# Two dispatches would otherwise both read the same three `main` branches, compute the same
+# version and race to create the same branches. Queued rather than cancelled: a run
+# cancelled between a merge and its tag leaves a bump on `main` that nothing published, and
+# a run cancelled between the two tags leaves half a lockstep release.
+concurrency:
+  group: release-cut
+  cancel-in-progress: false
+
+jobs:
+  cut:
+    name: Cut the product release across all three repositories
+    runs-on: ubuntu-latest
+
+    # Comfortably above the two waits below (20 minutes per bump pull request, 45 for the
+    # pair of image builds, so 85 at worst) plus the calls between them. It has to stay
+    # above them: those waits end by printing what finishes the release by hand, and a job
+    # killed by this limit ends in the same state saying nothing.
+    timeout-minutes: 120
+
+    # `packages: read` is what the GHCR inspect below needs, and the whole of what the
+    # default token is used for: every write goes through the App's token, and even the
+    # checkouts use it, so `contents` is deliberately not granted here.
+    permissions:
+      packages: read
+
+    env:
+      API_REPO: ${{ github.repository_owner }}/opendiving-api
+      WEB_REPO: ${{ github.repository_owner }}/opendiving-web
+      MERGE_WAIT_SECONDS: "1200"
+      IMAGE_WAIT_SECONDS: "2700"
+
+    steps:
+      - name: A release is cut with the workflow that is on `main`
+        if: ${{ !inputs.dry_run && github.ref != 'refs/heads/main' }}
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          echo "::error::dispatched from $REF, and the trees released are always the three mains - so this would be a branch's machinery against trees it has not merged into. Dispatch from main, or use dry_run to try a branch's copy."
+          exit 1
+
+      - name: The release app's credentials are configured
+        env:
+          CLIENT_ID: ${{ vars.RELEASE_BOT_CLIENT_ID }}
+          PRIVATE_KEY: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+        run: |
+          missing=""
+          [ -n "$CLIENT_ID" ] || missing="$missing RELEASE_BOT_CLIENT_ID (repository variable)"
+          [ -n "$PRIVATE_KEY" ] || missing="$missing RELEASE_BOT_PRIVATE_KEY (repository secret)"
+          if [ -n "$missing" ]; then
+            echo "::error::not configured:$missing - the header of this workflow says what the App is and what it needs"
+            exit 1
+          fi
+
+      # `repositories` is what scopes the token to the three, and the front door is first on
+      # purpose: the action resolves the *installation* from the first entry and then asks
+      # for a token covering the whole list, so a first entry the App is not installed on
+      # fails at that lookup rather than where the mistake was made. This repository is the
+      # one that certainly has it - its variable and secret are the App's.
+      - name: Mint a token for the release app
+        id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.RELEASE_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            ${{ github.event.repository.name }}
+            opendiving-api
+            opendiving-web
+
+      # Three checkouts, and every one of them needs `fetch-depth: 0`. `decide` reads
+      # `git tag --list 'v*'` *and* `git log v<current>..HEAD` in each, so tags fetched into
+      # a shallow clone leave the window truncated rather than empty - which is a wrong
+      # version rather than a refusal, and the only failure here that would publish quietly.
+      #
+      # `ref: main` whatever branch the dispatch names: the trees a release is cut from are
+      # not a dispatcher's choice, and a dry run from a branch is then that branch's
+      # machinery measured against the trees it would really release.
+      #
+      # Nothing below pushes with git - every commit, pull request and tag goes through the
+      # API - so no token has a reason to be left behind in a `.git/config`.
+      - name: Check out the front door
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+          path: product
+          token: ${{ steps.app.outputs.token }}
+          persist-credentials: false
+
+      - name: Check out opendiving-api
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ env.API_REPO }}
+          ref: main
+          fetch-depth: 0
+          path: api
+          token: ${{ steps.app.outputs.token }}
+          persist-credentials: false
+
+      - name: Check out opendiving-web
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ env.WEB_REPO }}
+          ref: main
+          fetch-depth: 0
+          path: web
+          token: ${{ steps.app.outputs.token }}
+          persist-credentials: false
+
+      # The runner's own `python3` and `node` rather than a pinned pair, for the reason
+      # `release-tooling.yml` gives at greater length: api's publish workflow reads
+      # `pyproject.toml` with the runner's `python3`, web's reads `package.json` with the
+      # runner's `node`, and the script reads both the same way so that what a bump writes
+      # and what a tag is checked against cannot come from different parsers. Printed rather
+      # than assumed: when this fails on an interpreter and not on a change, the log should
+      # say which interpreter.
+      - name: Versions
+        run: |
+          python3 --version
+          node --version
+
+      - name: Work out the product version
+        id: decide
+        env:
+          # Through the environment rather than interpolated into the script: a
+          # `${{ inputs.version }}` written inside `run:` is substituted before bash parses
+          # the line, so a dispatcher could put `$(...)` in the box and have it run.
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          STATE="$RUNNER_TEMP/release"
+          mkdir -p "$STATE"
+
+          # Passed only when the box was filled in. `--version ""` is an explicit empty
+          # version, which the script refuses outright; a blank box means "compute it".
+          args=(decide --product product --api api --web web)
+          [ -z "$REQUESTED_VERSION" ] || args+=(--version "$REQUESTED_VERSION")
+
+          # Exit 3 is a refusal - something a person settles in a minute, reported here as
+          # what it is rather than as a broken run. 2 is argparse, which can only mean this
+          # workflow called the script wrongly. Anything else is a crash.
+          status=0
+          decision="$(python3 product/scripts/release_version.py "${args[@]}")" || status=$?
+          case "$status" in
+            0) ;;
+            3)
+              echo "::error::refused before anything was pushed: no branch, no commit, no pull request, no tag and no release, in any of the three repositories. The reason is printed above; settle it and dispatch again."
+              exit 1
+              ;;
+            2)
+              echo "::error::release_version.py rejected its own arguments, which is a defect in this workflow rather than in the release. Nothing was pushed."
+              exit 1
+              ;;
+            *)
+              echo "::error::release_version.py exited $status without refusing, so it did not get as far as a decision. Nothing was pushed."
+              exit 1
+              ;;
+          esac
+
+          version="$(printf '%s' "$decision" | jq -r .version)"
+          printf '%s' "$version" > "$STATE/version"
+          git -C product rev-parse HEAD > "$STATE/product.sha"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## \`v$version\`"
+            echo
+            echo '```json'
+            printf '%s\n' "$decision"
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Write it into every file that declares a version
+        env:
+          VERSION: ${{ steps.decide.outputs.version }}
+        run: |
+          set -euo pipefail
+          # The same three exits, and the same reason for telling them apart: `rewrite`
+          # locates, splices and checks every file before writing any of them, so a refusal
+          # here has changed nothing in either checkout and pushed nothing anywhere.
+          status=0
+          python3 product/scripts/release_version.py rewrite --api api --web web --version "$VERSION" || status=$?
+          case "$status" in
+            0) ;;
+            3)
+              echo "::error::the rewrite refused. Nothing was pushed, and both checkouts are as they were found."
+              exit 1
+              ;;
+            *)
+              echo "::error::the rewrite exited $status. Nothing was pushed."
+              exit 1
+              ;;
+          esac
+
+          {
+            echo
+            echo "### What the release changes"
+            echo
+            echo '```diff'
+            git -C api diff
+            git -C web diff
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Stop here - this was a dry run
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "::notice::dry run - nothing was branched, committed, merged, tagged or published in any of the three repositories"
+
+      # Written to a file rather than repeated in each step that needs it. The idempotent
+      # tag is the same operation in three repositories, and the recipe that finishes a
+      # release by hand is read by whoever is holding the pieces - a second copy of either
+      # is a second thing to get wrong.
+      - name: The shell the steps below share
+        if: ${{ !inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          STATE="$RUNNER_TEMP/release"
+
+          cat > "$STATE/lib.sh" <<'SH'
+          STATE="$RUNNER_TEMP/release"
+          VERSION="$(cat "$STATE/version")"
+          PRODUCT_SHA="$(cat "$STATE/product.sha")"
+
+          # The two code repositories, each as `<checkout directory>:<owner/name>`. Every
+          # loop below walks this, and every call inside one names the repository it is
+          # about - which is the whole difference between this and a workflow with one.
+          REPOS=("api:$API_REPO" "web:$WEB_REPO")
+
+          # `gh api` exits 1 for a bad gateway exactly as it does for a refusal, and the two
+          # are not worth telling apart: every call retried here is either safe to repeat or
+          # guarded by the check above it, so retrying a permanent failure costs half a
+          # minute and then reports the same error.
+          retry() {
+            local attempt out
+            for attempt in $(seq 6); do
+              [ "$attempt" = 1 ] || sleep 5
+              if out="$("$@")"; then
+                printf '%s\n' "$out"
+                return 0
+              fi
+              # To stderr, because this function's stdout is the call's answer.
+              echo "attempt $attempt of 6 failed: $*" >&2
+            done
+            return 1
+          }
+
+          # The commit `v$VERSION` names in $1, empty when there is no such tag - which is
+          # what lets an attempt after a lost answer tell "GitHub never saw it" from "GitHub
+          # did it and the answer did not come back". `matching-refs` rather than
+          # `git/ref/tags/...` because it answers 200 with an empty list for a tag that is
+          # absent, where a 404 would be indistinguishable from the failure this is all here
+          # to survive; it matches by prefix, so the exact ref is selected out of what comes
+          # back. The version is digits and dots, so it cannot end the string it is written
+          # into.
+          tagged_commit() {
+            local slug="$1" found sha type
+            found="$(retry gh api "repos/$slug/git/matching-refs/tags/v$VERSION" \
+              --jq ".[] | select(.ref == \"refs/tags/v$VERSION\") | .object.sha + \" \" + .object.type")" || return 1
+            [ -n "$found" ] || return 0
+            sha="${found%% *}"
+            type="${found##* }"
+            # A tag ref points at the annotated tag object, so which commit it names is a
+            # second call. `commit` is answered too, for a lightweight tag someone made.
+            if [ "$type" = tag ]; then
+              retry gh api "repos/$slug/git/tags/$sha" --jq .object.sha
+            else
+              printf '%s\n' "$sha"
+            fi
+          }
+
+          # Annotated, like every tag these repositories already carry, which takes two
+          # calls: the object, then the ref that points at it. Creating the ref is the push,
+          # and it is the App's token that makes it - which is the whole reason the App
+          # exists, since no downstream workflow would run off `GITHUB_TOKEN`'s.
+          #
+          # The message is the bare `vX.Y.Z` and nothing more, so that a release finished by
+          # hand from the recipe below is indistinguishable from one this finished.
+          #
+          # 0: tagged, or already correctly tagged. 2: a tag naming another commit, which is
+          # a person's problem and not a transient failure. 1: everything else.
+          create_version_tag() {
+            local slug="$1" commit="$2" existing object attempt landed
+            existing="$(tagged_commit "$slug")" || return 1
+            if [ -n "$existing" ] && [ "$existing" != "$commit" ]; then
+              echo "::error::$slug already carries v$VERSION naming $existing, but this run released $commit. Nothing was retagged: a tag on the wrong commit is not a transient failure, and the tags ruleset blocks deleting one for everybody but an organisation admin. Work out which commit the release is before moving anything."
+              return 2
+            fi
+            if [ -n "$existing" ]; then
+              echo "::notice::$slug: v$VERSION already names $commit - an earlier attempt got that far"
+              return 0
+            fi
+            # Repeating this one is harmless: two tag objects for one tag differ only in
+            # their tagger date, and the one no ref points at is unreachable.
+            object="$(retry gh api "repos/$slug/git/tags" \
+              -f "tag=v$VERSION" -f "message=v$VERSION" \
+              -f "object=$commit" -f "type=commit" --jq .sha)" || return 1
+
+            # The ref is the one call that must not be repeated blindly - it is the push,
+            # and a second one is refused with 422 "Reference already exists" whether or not
+            # the first landed. So a failed attempt asks the ref what happened instead of
+            # reading the error, and a ref naming some other commit stops the run rather
+            # than being mistaken for a success.
+            for attempt in $(seq 6); do
+              [ "$attempt" = 1 ] || sleep 5
+              if gh api "repos/$slug/git/refs" \
+                   -f "ref=refs/tags/v$VERSION" -f "sha=$object" >/dev/null; then
+                return 0
+              fi
+              landed="$(tagged_commit "$slug")" || landed=""
+              if [ "$landed" = "$commit" ]; then
+                echo "$slug: refs/tags/v$VERSION is there - the attempt that reported a failure had landed"
+                return 0
+              fi
+              if [ -n "$landed" ]; then
+                echo "::error::$slug: refs/tags/v$VERSION appeared naming $landed while this run was tagging $commit. Nothing was changed."
+                return 2
+              fi
+              echo "$slug: creating refs/tags/v$VERSION failed on attempt $attempt of 6, and the ref is not there" >&2
+            done
+            return 1
+          }
+
+          # What is left to do, derived from how far this run got rather than from where it
+          # stopped: the state directory is written as each repository lands, so the answer
+          # is the same whether a wait timed out, an API call failed, or the runner went
+          # away mid-step.
+          remaining_by_hand() {
+            local pair name slug number merged landed=""
+            for pair in "${REPOS[@]}"; do
+              [ ! -f "$STATE/${pair%%:*}.merged" ] || landed=yes
+            done
+
+            if [ -z "$landed" ]; then
+              echo "Nothing merged, so nothing is published and no tag was created. Re-dispatching is the answer, once what is left over is cleared:"
+              for pair in "${REPOS[@]}"; do
+                slug="${pair#*:}"
+                echo "  - $slug: if release/v$VERSION or a pull request for it is still there, close and delete it."
+              done
+              echo "Then dispatch this workflow again. The version is recomputed, and nothing about this run has to be undone."
+              return
+            fi
+
+            echo "At least one bump merged, so a second dispatch will refuse: decide() finds the five version-bearing entries disagreeing, or a repository whose newest tag is not what its manifests declare. Finish this release by hand instead, in order:"
+            for pair in "${REPOS[@]}"; do
+              name="${pair%%:*}"
+              slug="${pair#*:}"
+              if [ ! -f "$STATE/$name.merged" ]; then
+                number="$(cat "$STATE/$name.pr" 2>/dev/null || true)"
+                if [ -n "$number" ]; then
+                  echo "  - $slug: squash-merge https://github.com/$slug/pull/$number, then tag the commit that lands:"
+                else
+                  echo "  - $slug: nothing merged here. If release/v$VERSION or a pull request for it is still there, merge it, then tag the commit that lands:"
+                fi
+                echo "      git fetch origin && git tag -a v$VERSION -m \"v$VERSION\" origin/main && git push origin v$VERSION"
+                echo "      (once that merge is the tip of origin/main, and not before)"
+                continue
+              fi
+              if [ -f "$STATE/$name.tagged" ]; then
+                echo "  - $slug: released - merged and tagged v$VERSION."
+                continue
+              fi
+              merged="$(cat "$STATE/$name.merged")"
+              if [ -n "$merged" ]; then
+                echo "  - $slug: merged as $merged, not tagged:"
+                echo "      git fetch origin && git tag -a v$VERSION -m \"v$VERSION\" $merged && git push origin v$VERSION"
+              else
+                echo "  - $slug: merged, but this run never learned which commit the squash produced:"
+                echo "      git fetch origin && git tag -a v$VERSION -m \"v$VERSION\" origin/main && git push origin v$VERSION"
+                echo "      (check that origin/main is that merge first)"
+              fi
+            done
+            echo "  - both Publish Image runs must be green at $VERSION, on amd64 and arm64, before the last tag: the front door's guard refuses otherwise."
+            if [ -f "$STATE/product.tagged" ]; then
+              echo "  - $GITHUB_REPOSITORY: tagged v$VERSION already."
+            else
+              echo "  - $GITHUB_REPOSITORY: tag the commit the version was computed from, which is not necessarily the tip:"
+              echo "      git fetch origin && git tag -a v$VERSION -m \"v$VERSION\" $PRODUCT_SHA && git push origin v$VERSION"
+            fi
+            echo "  - then finish the draft release that tag opens: the headline paragraph and the Breaking section, then publish."
+          }
+
+          # The annotation is one line because a workflow command is; the recipe goes to the
+          # log and the job summary, which is where a reader can be given several.
+          stopped_part_way() {
+            {
+              echo
+              echo "## The release stopped part-way"
+              echo
+              echo "$1"
+              echo
+              echo '```'
+              remaining_by_hand
+              echo '```'
+            } | tee -a "$GITHUB_STEP_SUMMARY"
+            touch "$STATE/reported"
+            echo "::error::$1 The job summary carries the commands that finish it."
+            exit 1
+          }
+          SH
+
+          # The commit payload, built here rather than with `jq --arg`: a single
+          # command-line argument cannot exceed 128 KiB on Linux, and `package-lock.json`
+          # alone is over 500 KiB once base64-encoded. The implementation this is modelled
+          # on commits a version module and a changelog and never meets that wall.
+          cat > "$STATE/commit_payload.py" <<'PY'
+          """Build the createCommitOnBranch payload for one repository.
+
+              commit_payload.py SLUG BRANCH EXPECTED_HEAD HEADLINE DIR
+
+          The files are whatever the rewrite changed in DIR, asked of git rather than listed
+          here: release_version.py's own set of version-bearing entries is the one that
+          decides what a bump touches, and a second copy of it in this workflow would be a
+          second thing to keep in step with it.
+          """
+
+          import base64
+          import json
+          import subprocess
+          import sys
+
+          slug, branch, expected_head, headline, directory = sys.argv[1:6]
+
+          # `status --porcelain` rather than `diff`, because it also sees a file the rewrite
+          # created: an untracked one is invisible to `diff` and would be left out of this
+          # commit without anything saying so. The checkout was clean a step ago, so every
+          # entry here is the rewrite's doing, and anything but an unstaged modification is
+          # refused - this payload carries `additions` only, and a deletion or a rename
+          # would be committed as half a change.
+          raw = subprocess.run(
+              ["git", "-C", directory, "status", "--porcelain", "-z"],
+              capture_output=True,
+              text=True,
+              check=True,
+          ).stdout
+          entries = [entry for entry in raw.split("\0") if entry]
+          if not entries:
+              sys.exit(f"{directory}: the rewrite changed nothing, so there is no bump to commit.")
+
+          additions = []
+          for entry in entries:
+              status, path = entry[:2], entry[3:]
+              if status != " M":
+                  sys.exit(f"{directory}: git status calls {path!r} {status!r}, and a bump only ever modifies a tracked file.")
+              with open(f"{directory}/{path}", "rb") as handle:
+                  contents = base64.b64encode(handle.read()).decode("ascii")
+              print(f"{directory}/{path}: {len(contents)} base64 bytes", file=sys.stderr)
+              additions.append({"path": path, "contents": contents})
+
+          query = """mutation($input: CreateCommitOnBranchInput!) {
+            createCommitOnBranch(input: $input) { commit { oid } }
+          }"""
+
+          json.dump(
+              {
+                  "query": query,
+                  "variables": {
+                      "input": {
+                          "branch": {
+                              "repositoryNameWithOwner": slug,
+                              "branchName": branch,
+                          },
+                          # The optimistic lock. On a branch just created it cannot fail,
+                          # but it is the mutation's own guard against appending to a branch
+                          # that moved and it is not optional.
+                          "expectedHeadOid": expected_head,
+                          "message": {"headline": headline},
+                          "fileChanges": {"additions": additions},
+                      }
+                  },
+              },
+              sys.stdout,
+          )
+          PY
+
+      - name: Open the bump pull request in api and web
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          set -euo pipefail
+          # shellcheck source=/dev/null
+          . "$RUNNER_TEMP/release/lib.sh"
+
+          branch="release/v$VERSION"
+          title="chore(release): v$VERSION"
+
+          # Both repositories are asked before either is touched. A leftover branch says an
+          # earlier run stopped part-way - these repositories delete a head branch on merge,
+          # so one that is still there never merged - and finding that out after api's pull
+          # request is open would create the very half-finished state the check exists to
+          # prevent.
+          for pair in "${REPOS[@]}"; do
+            slug="${pair#*:}"
+            if gh api "repos/$slug/git/ref/heads/$branch" >/dev/null 2>&1; then
+              echo "::error::$slug already has $branch, so an earlier run stopped part-way. Merge or close its pull request and delete that branch, then dispatch again. Nothing was pushed by this run."
+              exit 1
+            fi
+          done
+
+          for pair in "${REPOS[@]}"; do
+            name="${pair%%:*}"
+            slug="${pair#*:}"
+            base="$(git -C "$name" rev-parse HEAD)"
+
+            # The branch first, at the `main` this run read: `createCommitOnBranch` appends
+            # to a branch, it does not create one.
+            gh api "repos/$slug/git/refs" -f "ref=refs/heads/$branch" -f "sha=$base" >/dev/null
+
+            python3 "$STATE/commit_payload.py" "$slug" "$branch" "$base" "$title" "$name" \
+              > "$STATE/$name.commit.json"
+            commit="$(gh api graphql --input "$STATE/$name.commit.json" \
+              --jq '.data.createCommitOnBranch.commit.oid')"
+            if [ -z "$commit" ]; then
+              echo "::error::$slug: createCommitOnBranch answered without naming a commit, so $branch carries the bump or it does not and this run cannot tell. Look at that branch, delete it, and dispatch again."
+              exit 1
+            fi
+            echo "$slug: the bump is $commit on $branch"
+
+            # `printf` rather than a heredoc: a heredoc body has to start at column 1, which
+            # is outside this loop's indentation.
+            body="$(printf '%s\n' \
+              "Every entry in this repository that declares its own version now reads \`$VERSION\`." \
+              "" \
+              "Opened by \`.github/workflows/release-cut.yml\` in [$GITHUB_REPOSITORY](https://github.com/$GITHUB_REPOSITORY), which squash-merges this, tags the commit that lands, waits for both images to publish at $VERSION, and then tags the product release.")"
+            url="$(gh pr create --repo "$slug" --base main --head "$branch" \
+              --title "$title" --body "$body")"
+
+            # The number is read off the end of the URL, so it is worth one line to be sure
+            # that is what came back: every step after this one addresses the pull request by
+            # number, and the one that reports a stopped run prints it for a person to open.
+            number="${url##*/}"
+            case "$number" in
+              '' | *[!0-9]*)
+                echo "::error::$slug: gh pr create answered \"$url\", which does not end in a pull request number. The bump is on $branch and this run cannot address its pull request."
+                exit 1
+                ;;
+            esac
+
+            printf '%s' "$base" > "$STATE/$name.base"
+            printf '%s' "$number" > "$STATE/$name.pr"
+            echo "$url"
+          done
+
+      - name: Merge both bumps, and tag the commits that land
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          set -euo pipefail
+          # shellcheck source=/dev/null
+          . "$RUNNER_TEMP/release/lib.sh"
+
+          for pair in "${REPOS[@]}"; do
+            name="${pair%%:*}"
+            slug="${pair#*:}"
+            number="$(cat "$STATE/$name.pr")"
+            base="$(cat "$STATE/$name.base")"
+
+            # **CLEAN only**, which is where this departs from the implementation it is
+            # modelled on. That one accepts UNSTABLE because nothing on its `main` is a
+            # required check; these two require six each, none of them path-filtered, among
+            # them api's Postgres-backed `tests` and image-building `runtime-imports` and
+            # web's browser-driven `lint-and-build`. A freshly opened pull request is
+            # therefore BLOCKED for minutes while they run, and a poll that only waits out
+            # UNKNOWN would abort on its first evaluation with two bump pull requests open
+            # and nothing tagged.
+            #
+            # The App holds Contents and Pull requests and nothing else, so this cannot read
+            # the check runs to say *which* check is outstanding - `mergeStateStatus` is the
+            # whole of what it can see, which is why the timeout below sends a reader to the
+            # pull request rather than naming a job.
+            #
+            # DIRTY and DRAFT are refused rather than waited out: neither can become CLEAN on
+            # its own. BEHIND cannot arise while `strict_required_status_checks_policy` is
+            # false, and if it ever does the base-head guard below is the honest answer to
+            # it. HAS_HOOKS is not accepted because pre-receive hooks are a GitHub Enterprise
+            # feature and this is github.com - if it ever appeared, it would time out here
+            # rather than merge something nobody designed for.
+            echo "::group::$slug: waiting for pull request #$number to become mergeable"
+            deadline=$(( SECONDS + MERGE_WAIT_SECONDS ))
+            while true; do
+              # A call that fails is another turn of the loop rather than the end of the
+              # run: this is a twenty-minute poll, and one bad gateway in it would otherwise
+              # throw away a release that has not merged anything yet and leave two branches
+              # for somebody to delete. A failure that is not transient runs out the budget
+              # and is reported as UNREADABLE, which no real state is.
+              state="$(gh pr view "$number" --repo "$slug" --json mergeStateStatus --jq .mergeStateStatus)" || state=UNREADABLE
+              echo "$(date -u +%H:%M:%S) $slug #$number: $state"
+              [ "$state" != CLEAN ] || break
+              case "$state" in
+                DIRTY|DRAFT|BEHIND)
+                  echo "::endgroup::"
+                  stopped_part_way "$slug's bump pull request #$number is $state, which waiting cannot fix."
+                  ;;
+              esac
+              if [ "$SECONDS" -ge "$deadline" ]; then
+                echo "::endgroup::"
+                stopped_part_way "$slug's bump pull request #$number was still $state after $(( MERGE_WAIT_SECONDS / 60 )) minutes. Open it and see which check is outstanding."
+              fi
+              sleep 15
+            done
+            echo "::endgroup::"
+
+            # The version was computed from this repository's `main` at $base. If it has
+            # moved since, GitHub squashes the bump onto the new head and the tag names a
+            # tree the decision never classified - a `feat:` that arrived mid-run released as
+            # a patch, with nothing downstream able to notice.
+            head="$(retry gh api "repos/$slug/git/ref/heads/main" --jq .object.sha)" \
+              || stopped_part_way "$slug's main could not be read, so this run cannot tell whether it moved while the pull request waited. Nothing was merged in $slug."
+            if [ "$head" != "$base" ]; then
+              stopped_part_way "main in $slug moved from $base to $head while this ran, so a squash now would carry commits this version was never computed from. Nothing was merged in $slug. Read what landed: if it changes the number, close #$number and delete release/v$VERSION rather than merging it."
+            fi
+
+            # No --subject: these repositories take their squash subject from the pull
+            # request title, so the title `pr-title.yml` checked is the subject that lands on
+            # `main` - and the subject the *next* release's window will classify.
+            #
+            # A merge call that fails may still have merged - the answer is what was lost,
+            # not necessarily the merge - so the failure asks the pull request what happened
+            # rather than assuming, the same distinction the tag calls make below.
+            if ! gh pr merge "$number" --repo "$slug" --squash; then
+              merge_state="$(gh pr view "$number" --repo "$slug" --json state --jq .state)" || merge_state=UNREADABLE
+              if [ "$merge_state" != MERGED ]; then
+                stopped_part_way "$slug's bump pull request #$number could not be merged, and it is $merge_state."
+              fi
+              echo "$slug: the merge call reported a failure but #$number is MERGED - carrying on"
+            fi
+            # Written before the squash commit is known, and rewritten with it below: this
+            # file is what the recipe reads to say "merged" rather than "not merged", and
+            # the window between the two is exactly where that distinction matters.
+            : > "$STATE/$name.merged"
+
+            # The squash commit, not the branch's. GitHub names it a moment after the merge.
+            # A call that fails is one lost attempt rather than the end of the step: the
+            # merge has already happened, so from here on a bad gateway must cost a few
+            # seconds and not the release.
+            merged=""
+            for _ in $(seq 30); do
+              merged="$(gh pr view "$number" --repo "$slug" --json mergeCommit --jq '.mergeCommit.oid // empty')" || merged=""
+              [ -z "$merged" ] || break
+              sleep 2
+            done
+            if [ -z "$merged" ]; then
+              stopped_part_way "$slug merged #$number, but GitHub has not named the squash commit, so this run does not know which commit to tag."
+            fi
+            printf '%s' "$merged" > "$STATE/$name.merged"
+
+            status=0
+            create_version_tag "$slug" "$merged" || status=$?
+            case "$status" in
+              0) touch "$STATE/$name.tagged" ;;
+              2) exit 1 ;;
+              *)
+                stopped_part_way "$slug merged as $merged, but v$VERSION could not be tagged there. Its image is not building and nothing is published: Publish Image runs off the tag."
+                ;;
+            esac
+            echo "::notice::$slug: v$VERSION tagged at $merged"
+          done
+
+      # Both packages are public, so the inspect below would resolve without this. The login
+      # stays for the same reason `release.yml` keeps its own, which DECISIONS.md records: a
+      # package made private again is invisible to a workflow that has not been granted
+      # access to it, and `imagetools inspect` then answers with a manifest-unknown that this
+      # step would report as "not published yet" - and wait out the whole budget.
+      - name: Log in to GHCR
+        if: ${{ !inputs.dry_run }}
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # The third kind of wait, and the one the implementation this is modelled on never
+      # needed: a sibling repository's Publish Image run reaching green at this version. The
+      # question is the front door guard's own - do both images exist, each carrying both
+      # architectures - asked early because something has to sequence three repositories, and
+      # `release.yml` asks it again at the end.
+      #
+      # One budget for the pair rather than one each: the two builds start on their own tag
+      # pushes and run at the same time, so waiting 45 minutes for the second after 45 for
+      # the first would be waiting twice for one thing.
+      - name: Wait for both images at this version, on both architectures
+        if: ${{ !inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          # shellcheck source=/dev/null
+          . "$RUNNER_TEMP/release/lib.sh"
+
+          deadline=$(( SECONDS + IMAGE_WAIT_SECONDS ))
+          for pair in "${REPOS[@]}"; do
+            slug="${pair#*:}"
+            ref="ghcr.io/$slug:$VERSION"
+            echo "::group::waiting for $ref"
+            while true; do
+              note=""
+              if raw="$(docker buildx imagetools inspect "$ref" --raw 2>&1)"; then
+                # The same grep the front door's guard uses, deliberately: two readers of
+                # one manifest are two answers waiting to disagree.
+                for arch in amd64 arm64; do
+                  grep -q "\"architecture\": *\"$arch\"" <<<"$raw" || note="$note linux/$arch"
+                done
+                [ -n "$note" ] || break
+                note="published, but carries no$note"
+              else
+                note="not published yet"
+              fi
+              echo "$(date -u +%H:%M:%S) $ref: $note"
+              if [ "$SECONDS" -ge "$deadline" ]; then
+                echo "::endgroup::"
+                stopped_part_way "$ref is still \"$note\" after $(( IMAGE_WAIT_SECONDS / 60 )) minutes. Look at that repository's Publish Image run for v$VERSION: the tag is pushed, so the run exists."
+              fi
+              sleep 30
+            done
+            echo "::endgroup::"
+            echo "ok: $ref"
+          done
+
+      # Last, which is what makes the front door's guard a question about the present tense
+      # rather than about the future - and at the commit the version was computed from
+      # rather than at whatever `main` points to by now, because `release.yml` uploads the
+      # install bundle from the tag and the bundle released has to be the one the decision
+      # read.
+      - name: Tag the front door
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          set -euo pipefail
+          # shellcheck source=/dev/null
+          . "$RUNNER_TEMP/release/lib.sh"
+
+          status=0
+          create_version_tag "$GITHUB_REPOSITORY" "$PRODUCT_SHA" || status=$?
+          case "$status" in
+            0) touch "$STATE/product.tagged" ;;
+            2) exit 1 ;;
+            *)
+              stopped_part_way "api and web are released at v$VERSION and both images are published, but the product tag could not be pushed - so no release was opened here."
+              ;;
+          esac
+          echo "::notice::$GITHUB_REPOSITORY: v$VERSION tagged at $PRODUCT_SHA"
+
+      - name: Summarise
+        if: ${{ !inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          # shellcheck source=/dev/null
+          . "$RUNNER_TEMP/release/lib.sh"
+          {
+            echo
+            echo "### Released"
+            echo
+            for pair in "${REPOS[@]}"; do
+              slug="${pair#*:}"
+              echo "- \`$slug\` v$VERSION, image published at \`$VERSION\` on amd64 and arm64"
+            done
+            echo "- \`$GITHUB_REPOSITORY\` v$VERSION at \`$PRODUCT_SHA\`"
+            echo
+            echo "The product release is a **draft**: write the headline paragraph and the Breaking section - say \"None\" in so many words when it is empty - then publish."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # The designed failures report themselves, and this one is for the rest: a runner that
+      # goes away, a cancel, an error nobody anticipated. The invariant is that this
+      # workflow never leaves a version bumped on `main` that nothing published *without
+      # saying so*, and that has to hold for the failures nobody wrote a message for.
+      - name: What this run left behind
+        if: ${{ always() && !inputs.dry_run && job.status != 'success' }}
+        run: |
+          set -euo pipefail
+          STATE="$RUNNER_TEMP/release"
+          if [ ! -f "$STATE/lib.sh" ]; then
+            echo "This run stopped before it pushed anything: no branch, no commit, no pull request, no tag."
+            exit 0
+          fi
+          if [ -f "$STATE/reported" ]; then
+            echo "The step that stopped has already reported what is left; see the job summary."
+            exit 0
+          fi
+          # shellcheck source=/dev/null
+          . "$STATE/lib.sh"
+          {
+            echo
+            echo "## The release stopped part-way"
+            echo
+            echo '```'
+            remaining_by_hand
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
