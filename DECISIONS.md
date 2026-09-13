@@ -742,3 +742,177 @@ own copy of it, and this fix landed in all of them together — which is the onl
 can be read as describing a solved problem. Nothing checks that the copies agree, so a later change
 that lands in one and not the rest leaves the others with whatever this section is about. Diff the
 labelling step across them before assuming otherwise.
+
+## Cutting a release is one dispatch, and its token reaches all three repositories
+
+`release-cut.yml` works out the version, writes it into `opendiving-api` and `opendiving-web`,
+lands both through a pull request, tags both, waits for both images, and tags this repository. The
+alternative was a `release-bump.yml` in each code repository with a person sequencing them, which
+keeps each token scoped to one repository and keeps the ordering a human judgement — and leaves the
+ritual a supervised sequence of waits, which is the thing being replaced. Automating only the two
+bump pull requests was rejected for the same reason from the other end: it removes the step most
+likely to go wrong and leaves three of the four standing.
+
+**What that costs is one private key that can write to three repositories rather than one**, which
+is a genuine widening of what a leak would reach and is accepted rather than overlooked. The
+mitigation is the App's own permissions — Contents and Pull requests, no organisation permissions,
+no webhook, nothing else — and the `tags` ruleset, which blocks deletion and force-pushes on
+`refs/tags/v*` for everybody but an organisation admin. A leaked key could cut a release nobody
+asked for; it could not delete the evidence, and it could not rewrite `main` without opening a pull
+request that the same rules gate.
+
+## The bump goes through a pull request rather than a bypass actor
+
+The implementation this is modelled on argues that GitHub's bypass is ruleset-wide, so an entry for
+the App would also let it force-push and delete `main`. That reasoning does not survive reading the
+documentation: `bypass_mode: pull_request` grants an actor bypass only through a pull request, and
+rulesets targeting the same ref aggregate — so `pull_request` in its own ruleset with the App on its
+bypass list, while `deletion` and `non_fast_forward` sit in another with none, gives exactly the
+per-rule selectivity that argument calls impossible.
+
+**The conclusion holds on different grounds.** That arrangement doubles the number of places `main`'s
+protection is described, and a second ruleset goes unnoticed — the leftover disabled `main` ruleset
+found on `opendiving-api` and replaced in place is this project's own evidence for that. Against
+which the pull request costs nothing: `required_approving_review_count` is 0 on all three `main`
+rulesets, so the coordinator opens one and squash-merges it in the same run with no rule relaxed and
+no human in the loop. Saving that is a few seconds of a ritual that runs every one to four weeks.
+
+## The bump commit is made by GitHub, because the branch it lands on requires signatures
+
+The `signatures` ruleset on all three repositories reads `include: ["~ALL"]` with
+`exclude: ["refs/heads/main"]` and an empty bypass list. `main` is the *only* exempt ref, so the
+`release/vX.Y.Z` branch the coordinator pushes is squarely inside the rule, and a runner's
+`git commit` — signed by nobody — is rejected at push time, before a pull request exists. GraphQL's
+`createCommitOnBranch` is the path that adds neither a signing key in CI nor a hole in a ruleset: a
+commit it creates is signed by GitHub itself.
+
+Two consequences worth knowing before extending it. The payload carries whole files, base64-encoded,
+and `opendiving-web/package-lock.json` is over 500 KiB once encoded — past the 128 KiB a single
+command-line argument can carry on Linux, which is why the payload is built by a small Python
+program reading the files rather than by `jq --arg`. And the App holds no `workflows` permission, so
+a commit touching anything under `.github/workflows/` would be refused: if a file that declares the
+project's version ever lands there, this stops working and the fix is the App's permissions rather
+than the workflow.
+
+## The coordinator rests on `required_approving_review_count` staying zero
+
+All three `main` rulesets carry `require_extra_approval_for_unattributed_changes: true`, and a pull
+request an App opens under its own identity is what GitHub calls unattributed. The rule adds *one
+more approval than the number configured*, and GitHub states plainly that it has no effect when the
+ruleset requires zero — which is the state all three are in. So the bump merges with no human.
+
+**Raising that count to one would stop releases**, and not obviously: it would require an approval
+and trip the unattributed rule for a second one. Nothing in this tree would object, because a
+ruleset lives in repository settings. `release-cut.yml` says so in a comment at the merge step,
+where the dependency actually lives. The recovery, if the count ever moves, is a person approving
+the bump pull request: whether a non-Copilot App may approve a pull request it opened itself is
+documented nowhere, and every piece of GitHub's prose about this rule is about Copilot while the API
+field name is not.
+
+## The coordinator polls with a timeout, and *The release runs last* still stands
+
+That section says asking "will these exist?" needs polling, a timeout and a decision about what to
+do when it expires, while asking last needs one `imagetools inspect` — and it is still the reason
+`release.yml` is the workflow that guards the product release. Nothing about it has moved:
+`release.yml` still runs last and still only looks.
+
+The coordinator is the thing that *makes* it last, and it cannot also be last. Something has to
+sequence three repositories — tag api and web, then wait for their images, then tag here — and a
+human doing it was the polling, just done by eye. So the coordinator pays exactly the cost that
+section describes, deliberately and in two places: it waits for **both** bump pull requests to
+reach `CLEAN`, and then for both images at the new version on both architectures, each with a
+budget.
+
+**Both, before either merges, and that ordering is the point.** A wait inside the merge loop would
+release api — merged, tagged, image publishing, `latest` moved — and only then look at web's pull
+request for the first time, so any web-side stall would strand the product half-released for the
+length of a check suite. Waiting both out first costs nothing, because both pull requests are
+already open and their checks are already running, and it means a wait that runs out always runs
+out with nothing merged anywhere — the one state a second dispatch can still recover.
+
+The same applies to every check that can *abort*, which is why the re-read of each repository's
+`main` head is hoisted too: an abort that fires after api is tagged does not prevent the
+half-released state, it is that state. With both of them out of the loop, what is left between the
+last check and the release is the merge and tag calls themselves. That is the floor rather than a
+choice — GitHub's merge takes the head commit to expect and never the base, so two repositories
+cannot be merged as one operation, and a run that dies between the two merges is what the by-hand
+recipe is for.
+
+**Waiting for `CLEAN` rather than for "mergeable" is where this departs from the implementation it
+is modelled on**, which accepts `UNSTABLE` because nothing on its `main` is a required check. Six
+are required on each of api and web, none path-filtered, so a freshly opened bump sits at `BLOCKED`
+for minutes and a poll that only waits out `UNKNOWN` would abort on its first evaluation. The App
+holds Contents and Pull requests and nothing else, so the run cannot read check runs to say *which*
+check is outstanding — `mergeStateStatus` is the whole of what it can see, which is why a timeout
+sends a reader to the pull request rather than naming a job.
+
+**The budgets are bounded by the token as well as by patience**, which is the trap a polling
+workflow walks into: a GitHub App installation token lives an hour and cannot be extended, while the
+waits above are allowed 20 minutes for the two bump pull requests together and 45 for the pair of
+image builds. A token minted once at the top would therefore be expired by the last write of a slow but
+perfectly successful run, and a release nobody needed to finish would be reported as one that has
+to be. So `release-cut.yml` mints a fresh token immediately before each phase that writes — the
+pull requests, the merges and tags, the product tag — rather than budgeting the waits to fit inside
+an hour, because the waits are sized by what api's image build and web's browser tests actually
+take and the hour has nothing to do with either.
+
+**The test to apply when lengthening one is wall clock, not structure.** "No token spans two
+phases" is true by construction and would stay true however large a budget got, so it guards
+nothing: the binding constraint is that no single phase may outlive the hour. The merges-and-tags
+phase is the one with room to break it — its 20-minute wait covers both pull requests at once, and
+then both merges, both squash-commit polls and both tags run under the same token, each with a
+retry ladder behind it. That is comfortable at 20 and would not be at 45.
+
+**What happens when a budget expires is the other half of the decision.** The run prints the
+commands that finish the release by hand, into the job summary, derived from how far it got rather
+than from where it stopped — and a final step does the same for a failure nobody anticipated, so
+that "never leaves a version bumped on `main` that nothing published *without saying so*" holds for
+the unplanned failures too. That recipe is not a convenience: **a second dispatch cannot recover a
+half-finished release.** Once either bump has merged, `decide` refuses — the five version-bearing
+entries disagree, or a repository's newest tag is not what its manifests declare — so re-dispatching
+stops cleanly and changes nothing. Every path out of this workflow therefore ends either in a
+release or in instructions.
+
+## The tag's build is not the merge's build, which is why the tag is pushed straight away
+
+`opendiving-api` and `opendiving-web` split `publish-image` into two concurrency groups, `edge` for
+a push to `main` and `release` for everything else, and their own decision records say why: one
+shared group holds a running run and a single pending one, so a `v*` tag pushed straight after a
+bump merges would queue behind that merge's edge build and be cancelled outright by the next merge
+to land — no `X.Y.Z`, no `X.Y`, no `latest`, no release, and a check that reads as cancelled rather
+than failed.
+
+That split is what makes it safe for the coordinator to tag immediately, and it is why this workflow
+does *not* wait for the bump's own edge build first. The point is worth stating rather than
+inferring, because the reasoning changes with the reader: a human cutting a release is slow enough
+to be safe by accident, and a coordinator that tags seconds after the merge is not. Adding a third
+trigger to either publish workflow, or merging those two groups back into one, re-arms a bug someone
+already paid to find.
+
+## What did not port from the implementation this is modelled on
+
+`divejson/divejson-py`'s `release-bump.yml` is where the shape of `release-cut.yml` comes from, and
+most of it ported unchanged: the App token, the API commit, the pull request, the tag on the squash
+commit, the `concurrency` group queued rather than cancelled, the refusal when the release branch
+already exists, and the idempotent tag that asks what a ref names instead of reading an error. Its
+re-read of `main` ported as a guard and not as a position — there it sits immediately before the one
+merge, here both heads are read before either, for the reason the hoisting paragraph above gives.
+Three more things did not port at all, and each is here so that the next reader comparing the two
+files does not conclude something was forgotten.
+
+**A pinned interpreter.** That workflow installs Python 3.12 with `actions/setup-python`. This one
+uses the runner's own `python3` and `node` for the reason the section above on the release tooling
+gives: those are the interpreters api's and web's publish workflows read their manifests with, and a
+bump written by a different parser than the one the tag is checked against is a second answer
+waiting to happen.
+
+**Accepting `UNSTABLE` at the merge.** Covered above: that premise is false here.
+
+**Building the commit payload with `jq --arg`.** A single command-line argument cannot exceed 128
+KiB on Linux, and the two lockfiles are hundreds of kilobytes before base64 adds a third. The
+reference commits a version module and a changelog and never meets that wall.
+
+**And the list above is a floor rather than a census.** Two independent readings of that file found
+guards this one had dropped — the base-head re-read, the `concurrency` group, the branch-exists
+refusal — each time after the port had been called complete. Whoever next changes `release-cut.yml`
+should read it against that file whole rather than against this section.

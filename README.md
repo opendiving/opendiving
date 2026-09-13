@@ -149,8 +149,9 @@ The install, and the documentation for running it. Three files —
 line above fetches, and a release here is the product's release: the version that both images are
 tagged with, verified to exist for both architectures before the notes are ever written.
 
-`scripts/` holds the release tooling — what picks the one version all three repositories are tagged
-with. It is machinery rather than anything an install downloads.
+`scripts/` and `.github/workflows/` hold the release machinery — what picks the one version all
+three repositories are tagged with, and the single dispatch that cuts the release across them. It is
+machinery rather than anything an install downloads.
 
 The application itself lives next door:
 

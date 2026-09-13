@@ -9,6 +9,11 @@ name: Release
 # can simply look. That check used to be a line in a plan telling a human to eyeball GHCR
 # before publishing, because a per-repo workflow cannot see its sibling - the one failure
 # mode a lockstep release has that neither repo can catch alone.
+#
+# The tag it runs off is normally pushed by `release-cut.yml`, the coordinator that cuts
+# the whole release from one dispatch - which is also what waits for both images before
+# pushing it. This still asks, rather than trusting that: a tag anybody pushes by hand
+# reaches here too, and the guard is the same guard either way.
 on:
   push:
     tags: ["v*"]

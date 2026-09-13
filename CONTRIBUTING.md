@@ -1,10 +1,11 @@
 # Contributing
 
 This repository is the install bundle and the operator documentation — three files, the script that
-downloads them, and a `docs/` directory — plus the release tooling under `scripts/`, which works out
-what version the next release carries. No image is built here, so contributing is mostly prose and
-YAML, with one shell script that `shellcheck` has an opinion about and one Python script with a test
-suite behind it.
+downloads them, and a `docs/` directory — plus the release machinery: a script under `scripts/` that
+works out what version the next release carries, and the workflow that cuts the release with it
+across all three repositories. No image is built here, so contributing is mostly prose and YAML,
+with one shell script that `shellcheck` has an opinion about and one Python script with a test suite
+behind it.
 
 The application lives in [opendiving-api](https://github.com/opendiving/opendiving-api) and
 [opendiving-web](https://github.com/opendiving/opendiving-web), each with its own `CONTRIBUTING.md`
@@ -151,9 +152,11 @@ trains people onto `latest`, the tag you least want somebody following.
 
 Versions move in lockstep across all three repositories: one product version, so
 `opendiving-api:0.4.0`, `opendiving-web:0.4.0` and release `v0.4.0` here are always a matched set.
-That is also why no release tool runs anywhere — semantic-release and release-please both compute a
-version per repository from that repository's own commits, which drifts apart on the first api-only
-fix and then has to be forced back by hand at every release afterwards.
+That is also why the only release tool that runs is this repository's own — semantic-release and
+release-please both compute a version per repository from that repository's own commits, which
+drifts apart on the first api-only fix and then has to be forced back by hand at every release
+afterwards. Neither is used here: one coordinator that reads all three windows and writes one
+number is what replaces them.
 
 **Pick the number** by looking at all three windows together:
 
@@ -170,33 +173,57 @@ behaviour they depended on. **A change to the bundle that an existing install ha
 required variable, a new service — is breaking in exactly this sense, because `docker compose pull`
 does not update the compose file.
 
-Then, in order:
+**Then run
+[Cut the release](https://github.com/opendiving/opendiving/actions/workflows/release-cut.yml)** from
+this repository's Actions tab, on `main`. It takes two boxes, both optional:
 
-1. **Bump the manifests** in the two code repositories — `pyproject.toml` in api, `package.json` in
-   web. One small PR each, titled `chore: release v0.4.0`. Nothing in *this* repository carries a
-   version number, deliberately: see DECISIONS.md.
+- **Version** — blank takes the number computed from the three commit windows; typing `0.4.0`
+  overrules it. The table above is a judgement about the operator's experience and no script can
+  make it, so the computed number is a proposal and this is how you decline it.
+- **Dry run** — reports the version it would cut and the diff it would commit, and pushes nothing:
+  no branch, no pull request, no tag and no release, in any of the three repositories.
 
-2. **Tag api and web** on their bump commits and push the tags. Each runs its own **Publish Image**,
-   which builds amd64 and arm64 on native runners and pushes `0.4.0`, `0.4`, `latest` and
-   `sha-<12>`. Watch both go green.
+One run does the rest. It opens a `chore(release): v0.4.0` pull request in `opendiving-api` and
+`opendiving-web` writing the version into every manifest and lockfile entry that declares one, waits
+for each repository's required checks, squash-merges both, tags the two commits that land, waits for
+both **Publish Image** runs to publish `0.4.0`, `0.4`, `latest` and `sha-<12>` on amd64 and arm64,
+and then tags this repository — which runs **Release**, the guard that checks
+`ghcr.io/opendiving/opendiving-api:0.4.0` and `ghcr.io/opendiving/opendiving-web:0.4.0` both exist
+with both architectures and refuses to publish anything if either is missing or half-published. That
+is the check no per-repository workflow can make, and tagging here last is what makes it possible at
+all.
 
-3. **Tag this repository last.**
+Nothing in *this* repository carries a version number, deliberately: see DECISIONS.md. Its version
+is the tag, which is why the coordinator writes to two repositories and tags three.
 
-   ```bash
-   git tag v0.4.0 && git push origin v0.4.0
-   ```
+**Finish the draft.** The workflow leaves a draft release here with generated notes and the four
+install files attached. Write the headline paragraph and confirm the **Breaking** section — say
+"None" in so many words when it is empty, because generated notes simply omit an empty category and
+silence is not an answer somebody deciding whether to upgrade can use. Then publish.
 
-   **Release** then checks that `ghcr.io/opendiving/opendiving-api:0.4.0` and
-   `ghcr.io/opendiving/opendiving-web:0.4.0` both exist and both carry both architectures, and
-   refuses to publish anything if either is missing or half-published. This is the check that no
-   per-repository workflow can make, and running it last is what makes it possible at all.
+**Nothing in api or web is bumped or tagged by hand** — the coordinator did both, and doing either
+again is how the *next* release gets stuck rather than this one: the decision refuses when the
+entries that declare a version disagree, or when a repository's newest tag is not what its manifests
+say, and a hand bump or a stray tag produces exactly that. Each of them opens its own component
+release off the tag it was given; whether that release arrives published or as a draft somebody
+finishes is that repository's own business, and its releases page says which. Any instruction
+anywhere to bump a manifest and push a `v` tag yourself describes the ritual this replaced.
 
-4. **Finish the draft.** The workflow opens a draft release with generated notes and the four
-   install files attached. Write the headline paragraph and confirm the **Breaking** section — say
-   "None" in so many words when it is empty, because generated notes simply omit an empty category
-   and silence is not an answer somebody deciding whether to upgrade can use. Then publish.
+**Recovery, and what the guard does not cover.** By the time this repository is tagged both images
+are already out — `0.4.0`, `0.4`, `latest` and `sha-<12>` were pushed by each component's own
+**Publish Image** run minutes earlier — so what the guard here protects is the product release and
+the install assets, and not the images. If one repository's publish had failed while the other
+succeeded, its `latest` has already moved and somebody pulling `latest` gets a mismatched pair. The
+genuinely free-to-delete guard is the tag↔manifest check inside each `publish-image.yml`, which runs
+before anything is built: a tag whose build failed there published nothing.
 
-**Recovery.** Nothing is published until step 3 passes, so a tag that fails its guard has cost
-nothing: delete it, fix what was missing, re-cut it. A version tag that has been *published*, on the
-other hand, is never repointed — a bad release gets a successor. `latest` and `X.Y` are moving
-aliases and do get repointed, which is what makes a base-image CVE rebuild reach people.
+A tag that has published something is never repointed — a bad release gets a successor — and it
+cannot be deleted either: the `tags` ruleset blocks deletion and force-pushes on `refs/tags/v*` for
+everybody but an organisation admin, so re-cutting one is an owner's operation rather than a step in
+this ritual. `latest` and `X.Y` are moving aliases and do get repointed, which is what makes a
+base-image CVE rebuild reach people.
+
+**If the run stops part-way it says so**, and writes the commands that finish the release by hand
+into its job summary — the honest answer for a coordinator that cannot un-tag anything. Dispatching
+it again is not the recovery: once either bump has merged, the version decision refuses, because the
+entries that declare a version no longer agree. Read the summary and finish it.
