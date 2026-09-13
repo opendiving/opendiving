@@ -1,10 +1,10 @@
 name: Shell
 
-# `install.sh` is the only executable thing in this repository, and it runs once, on
-# somebody else's machine, before anything it installs exists. There is no fixture for "a
-# fresh VPS with Docker, a domain and a mail relay", so a linter is the whole test suite it
-# can have - which makes it worth running on every PR rather than only when the script
-# changes.
+# `install.sh` runs once, on somebody else's machine, before anything it installs exists.
+# There is no fixture for "a fresh VPS with Docker, a domain and a mail relay", so a
+# linter is the whole test suite it can have - which makes it worth running on every PR
+# rather than only when the script changes. The other executable thing here,
+# `scripts/release_version.py`, has a real suite instead: `release-tooling.yml`.
 #
 # Not path-filtered on purpose, for the same reason `pr-title.yml` runs on `synchronize`: a
 # required check has to have passed on the PR's latest head SHA, and a filtered workflow

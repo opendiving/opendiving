@@ -573,3 +573,97 @@ things about it are worth keeping: the enumerations are the hits that matter, be
 goes short when the app grows, and the app's own spellings vary — `depth/temperature/tank-pressure`
 in one sentence and `depth, temperature and tank pressure` in the next — so a pattern anchored on
 one punctuation of it silently reports a clean repository.
+
+## The test job's name is a contract, and two ordinary shapes would break it
+
+`release-tooling.yml` runs the suite behind `scripts/release_version.py`, and the `main` ruleset on
+this repository names that job as a required status check. The name it names is the **job id**,
+because a job with no `name:` of its own reports under its id — which is how `semantic-title` and
+`shellcheck` are already named in the same list.
+
+Two shapes that look harmless would make the ruleset match nothing, and they fail identically and
+silently: the pull request sits at "Expected — waiting for status" with no red X to explain it, for
+good.
+
+The first is a **matrix**. A matrix job's check run carries the matrix value in its name, so a job
+with even a one-value matrix reports as `release-tooling (<value>)` and never as `release-tooling`.
+`opendiving-web`'s `ci.yml` carries this scar in its own header: `lint-and-build` had a one-value
+matrix expressing a variation that did not exist, and reported under a name no ruleset could ask
+for.
+
+The second is a **`paths:` filter**. A workflow filtered to `scripts/**` would not merely skip on a
+docs-only pull request — it would produce no check run at all, and a required check with no run is
+indistinguishable from one that has not started. Most traffic here is documentation, so that state
+would be the normal state. `shellcheck.yml` reaches the same conclusion from the same direction and
+says so in its own header.
+
+Neither the job id nor the ruleset knows about the other. The ruleset lives in repository settings
+and nothing in this tree references it, so renaming the job renames the check and nothing here
+objects. If the job is ever renamed, the ruleset has to be edited in the same breath.
+
+## The release tooling is standard library only, and reads each manifest the way its guard does
+
+`scripts/release_version.py` imports nothing that is not in Python's standard library, and there is
+no `pyproject.toml`, no lockfile and no install step — CI runs `python3 -m unittest` against the
+runner's own interpreter.
+
+The alternative was a test framework and a manifest to pin it in, which buys nicer test syntax and
+costs: a dependency stream Renovate would raise pull requests for, a version to keep current, and an
+install step on every docs-only pull request in a repository that ships no package and builds no
+image. `.github/renovate.json5` describes what a dependency here even means, and a Python manifest
+would quietly widen it.
+
+The same restraint decides how the two manifests are **read**, and that one is not about weight at
+all. `opendiving-api`'s `publish-image.yml` reads `pyproject.toml` with
+`python3 -c 'import tomllib...'`; `opendiving-web`'s reads `package.json` with `node -p`. Each
+compares its answer against the tag that has already been pushed, and refuses the build if the two
+disagree. So this script reads both exactly the same way — `tomllib` for one, a `node -p`
+subprocess for the other — and reads every file back through that same reader after writing it. A
+second, different parser is a second answer waiting to happen, and the place it would surface is a
+tag that cannot be deleted.
+
+The cost is that `node` is a hard requirement of the test suite rather than an optional extra. It is
+on every GitHub runner and on any machine that can work on `opendiving-web`, and a suite that
+skipped itself when it was missing would report green for a script that cannot run.
+
+## A version literal is found by where it sits, never by what its line says
+
+`opendiving-web/package-lock.json` declares the project's own version twice — once in the root
+object and once in `packages[""]` — and `packages[""]`'s line is **byte-identical** to
+`node_modules/yocto-queue`'s, indentation included, because that dependency happens to be at
+`0.1.0` too. A substitution anchored on the line's text rewrites both. `npm ci` does not object: it
+tolerates a version that disagrees with `package.json`, and it certainly tolerates a dependency
+whose declared version no longer matches the tarball URL and integrity hash sitting beside it. The
+first sign of trouble is somebody installing, long after the tag went out.
+
+So the two lock entries, `package.json`'s version, `pyproject.toml`'s `[project].version` and
+`uv.lock`'s `[[package]] name = "opendiving-api"` block are all located by **position in the
+document**: a path-aware JSON scan that reports byte offsets, and a TOML block scan that finds the
+right `[[package]]` by its `name` among the hundred-odd others. `tomllib` and `json` cannot do this
+job — they read and discard the offsets, and `tomllib` cannot write at all, while `json.dumps` over
+`package.json` would reformat the entire file and fight both prettier and the lockfile.
+
+Locating by position is an intention until something checks it, so the script checks itself: after
+splicing, it compares the set of lines that actually changed against the set of lines the locators
+said the literals were on, and refuses if they differ. A rewrite that changed the number of lines —
+the shape a version with a stray newline takes — is refused by the same guard.
+
+## What the version decision refuses, and the one thing it deliberately does not
+
+The script proposes a number; it does not decide a release. Everything it refuses over is something
+a person settles in a minute, and `--version` overrides the computation outright — which is the
+honest answer to CONTRIBUTING.md's own rule that "breaking" is about the operator's experience
+rather than the code's, and therefore not something any script can read off a commit log.
+
+It refuses when the five version-bearing entries disagree, because there is then no current version
+to bump from; when a repository's newest `vX.Y.Z` tag is not the version its manifests declare,
+which is what a bump that merged with no tag pushed looks like, and bumping again from there would
+skip a version nothing ever published; when a commit subject in the window is not a conventional
+commit subject, since the alternative is silently reading it as a patch; and when nothing at all has
+landed in any of the three repositories.
+
+**An empty window in one repository is not a refusal**, and that is the deliberate departure. It is
+the natural rule for a per-repository release tool and the wrong one here: three repositories carry
+one number, so a repository with nothing to say still takes the product version. Refusing there
+would mean a release in which `opendiving-api` reads `0.2.0` and `opendiving-web` reads `0.1.0` —
+which the front door's guard would then refuse, correctly, after both images had been pushed.

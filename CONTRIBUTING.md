@@ -1,9 +1,10 @@
 # Contributing
 
 This repository is the install bundle and the operator documentation — three files, the script that
-downloads them, and a `docs/` directory. Nothing is built and there is no test suite, so
-contributing is mostly prose and YAML, with one shell script that `shellcheck` has an opinion
-about.
+downloads them, and a `docs/` directory — plus the release tooling under `scripts/`, which works out
+what version the next release carries. No image is built here, so contributing is mostly prose and
+YAML, with one shell script that `shellcheck` has an opinion about and one Python script with a test
+suite behind it.
 
 The application lives in [opendiving-api](https://github.com/opendiving/opendiving-api) and
 [opendiving-web](https://github.com/opendiving/opendiving-web), each with its own `CONTRIBUTING.md`
@@ -30,6 +31,13 @@ conduct@opendiving.app.
   here is built — an operator pulls, so a floating tag would hand them whatever upstream published
   today. Renovate raises a PR when one moves. Don't unpin them, and don't bump one by hand without
   saying what you tested it against.
+- **`scripts/release_version.py`.** The version half of cutting a release: it reads the three
+  repositories' commit windows since the last tag, proposes one product version, and writes that
+  version into every manifest and lockfile entry that declares one in `opendiving-api` and
+  `opendiving-web`. It refuses rather than guesses — a window it cannot classify, entries that
+  disagree, a tag that is behind its manifest — and each refusal has a test. Standard library only:
+  there is nothing to install and nothing to pin. `DECISIONS.md` has the reasoning behind all three
+  of those choices.
 
 Use semantic **PR titles** — `<type>[(scope)][!]: <description>`, where type is one of `feat`, `fix`,
 `refactor`, `docs`, `test`, `chore`, `perf`, `ci`, `build`, `revert`. PRs are squash-merged, so the
@@ -72,6 +80,17 @@ docker compose config >/dev/null
 
 That `diff` is the check worth keeping: line for line, the `.env` it writes has to be the template
 with values replaced. Any difference at all means a comment went missing.
+
+The release tooling has a real suite, and it is the other thing CI runs on every PR:
+
+```bash
+python3 -m unittest discover -s tests -t .
+```
+
+Run it from the repository root — `-t .` is what puts `scripts/` on the import path. It needs
+Python 3.11 or newer for `tomllib`, and `node` on `PATH`: `package.json` is read here the way
+`opendiving-web`'s publish workflow reads it, rather than by a second parser that could reach a
+different answer. Nothing else is needed, and there is nothing to install.
 
 ## Retaking the README screenshots
 
