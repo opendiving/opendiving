@@ -505,19 +505,29 @@ shot against the same account as the ones staying put — a single new capture n
 that from over here. A change that reaches *all* of them — a palette, a nav rewrite — is still a
 single run of the script next door, so they cannot half-move.
 
-**The row under `## Features` stacks rather than adding a third column, and it is not levelled.**
+**The row under `## Features` stacks rather than adding a third column, and it is levelled now.**
 The dive shot is much the tallest image in the set, and a two-image row left a visible hole under
 the short one beside it; a third image *beside* those two would only narrow all three. Stacking the
-two short shots in the right cell fills that hole. It does not close it exactly, and the remainder
-is **deferred rather than settled** — the distinction matters, because a reader who takes it for
-settled will not go looking for the work that is already specified. Closing it means changing the
-gear shot's frame height next door, the one frame in `screenshots.mjs` written down rather than
-measured, and the height to pick is set by the dive shot beside it, which is itself owed a retake.
-`opendiving-web`'s `DECISIONS.md` has that measured and waiting, under *The gear frame is the lever
-under the README row, and it is not pulled here* — including the finding that no single committed
-height comes level for every reader, since the stacked pair scales with the column while the leading
-between the two images does not. None of that is this repository's to act on, and cropping an image
-here to even the row out would break both the byte-for-byte copy and the rule behind it.
+two short shots in the right cell fills that hole, and closing the remainder was deferred here for
+as long as the height that would close it was unknown — it is set by the dive shot beside the pair,
+and that shot was itself owed a retake.
+
+**Both were taken together next door, which is why this repository's copies move in one commit.**
+`opendiving-web` retook the dive shot and re-cut the gear frame against it in the same change, and
+the row now reads level to within about 3 rendered px per edge at every container width from 480 up.
+What changed is less the best case than the spread: the set committed here before ran 9.84 px per
+edge at a 1012px container down to 2.70 at 480, so how level it looked depended on how wide the
+reader's window was, and it is now 2.75 to 2.89 across that whole range — marginally larger at 480
+than it was, and a third of what it was at 1012. The reasoning is `opendiving-web`'s `DECISIONS.md`,
+under *The gear frame is the lever under the README row, and it has now been pulled* — including the
+part that still governs this side: no single committed height is level for *every* reader, because
+the stacked pair scales with the column while the leading between the two images does not, so
+"levelled" means a residual small enough to stop reading as a defect rather than a zero.
+
+None of that was or is this repository's to act on. Cropping an image here to even the row out would
+break both the byte-for-byte copy and the rule behind it, and that stays true of a row that is level
+— the next retake next door will move a height again, and the answer over here is still to copy what
+lands rather than to compensate for it.
 
 **So the row's markup encodes no image's height, and must not start to.** Every one of these is
 retaken when the page behind it changes, and a retake moves heights — a dive page that gains a panel
@@ -543,24 +553,37 @@ takes it first and the picture catches up later. The alternative is holding a tr
 that it agrees with a stale PNG, which trades the thing a stranger actually reads for the thing they
 glance at.
 
-**That is not hypothetical, and `docs/screenshots/dive-detail.png` is currently the older half.** The
-profile chart gained a panel under the depth plot carrying the readouts the computer itself computed
-— no-deco time, time to surface, ppO₂, CNS and both gradient factors — and the recordings card
-gained a line naming the mode the device ran in and the decompression model behind those numbers.
-*Technical diving* and the opening paragraph say so; the committed image predates all of it and
-shows the deco ceiling, which is an older channel, and none of the six. So **no sentence here may
-claim the picture shows a readout**, and the alt text stays as general as it is — the two facts that
-keep the disagreement from spreading.
+**That is not hypothetical, and the deco readouts are the worked example — now closed.** The profile
+chart gained a panel under the depth plot carrying the readouts the computer itself computed —
+no-deco time, time to surface, ppO₂, CNS and both gradient factors — and the recordings card gained
+a line naming the mode the device ran in and the decompression model behind those numbers.
+*Technical diving* and the opening paragraph said so for a while before any picture did, because the
+retake was **held rather than merely outstanding**: `opendiving-web`'s `DECISIONS.md`, under *It
+arrived without a retake, deliberately*, records a capture against a dive whose `gradient_factor`
+series runs to five figures and reads as implausible across much of its length, and an open question
+about what that field means on a Suunto. The chart drew the number the computer wrote and was right
+to; a README hero was the wrong place to park the question.
 
-**The retake is held rather than merely outstanding**, which is why "later" is not soon:
-`opendiving-web`'s `DECISIONS.md`, under *It arrived without a retake, deliberately*, records a
-capture against a dive whose `gradient_factor` series runs to five figures and reads as implausible
-across much of its length, and an open question about what that field means on a Suunto. The chart
-draws the number the computer wrote and is right to; a README hero is the wrong place to park the
-question. Nothing is owed on this side until that settles, and in particular nothing here should be
-"fixed" to close the gap: cropping an image would break the byte-for-byte copy the section above
-requires, and rolling the prose back to match the PNG would make the README wrong about the app to
-make it agree with a photograph.
+**It settled, and the picture has caught up** — that is what the mirrored `dive-detail.png` above
+carries. The axis that readout is drawn against is bounded now, so the retake shipped against the
+same dive, and the committed image's chart legend names no-deco time, time to surface and both
+gradient factors, with the deco ceiling still beside them.
+
+**Four of the six, not six**, and the shortfall is the account's rather than the app's: that
+recording carries no ppO₂ series and no CNS series, so the panel has nothing to draw for either.
+(The *Exposure & Pressure* card in the same image does show a CNS figure; that is the dive's own
+record, not a channel off the computer, and the two are not the same claim.) **The recordings card
+shows neither half of the mode-and-model line**, for the same reason. It names the _device_ — Suunto
+Ocean, with its serial and the diver's name for it — then the gradient factors and the firmware, and
+its settings line reads a bare `GF 50/85`: next door, `decoModelLabel` prefixes those numbers with a
+model name or an algorithm label whenever the recording carries one, so a bare pair is that field
+being empty. So a sentence here may now claim the picture shows a readout, and must not claim it
+shows all six, the mode, or a decompression model — the alt text stays as general as it is, which is
+what keeps it true through the next retake.
+
+Nothing here should ever be "fixed" to close a gap of this kind while one is open: cropping an image
+would break the byte-for-byte copy the section above requires, and rolling the prose back to match
+the PNG would make the README wrong about the app to make it agree with a photograph.
 
 **Nothing catches this, in either direction.** These bullets describe a UI that lives in another
 repository, no CI here reads them, and a PR next door cannot touch this file — the same
