@@ -916,3 +916,55 @@ reference commits a version module and a changelog and never meets that wall.
 guards this one had dropped — the base-head re-read, the `concurrency` group, the branch-exists
 refusal — each time after the port had been called complete. Whoever next changes `release-cut.yml`
 should read it against that file whole rather than against this section.
+
+## The release notes name the component releases, and the links are built, never looked up
+
+Generated notes are generated from *this* repository's pull requests, and no application code lives
+here. `v0.2.0` is what that produces unaided: six entries, every one of them this repository's own
+release machinery, documentation or CI, while what a self-hoster was actually being handed was two
+repositories' worth of dive-log changes that appear nowhere in it. The notes were not wrong. They
+were complete, and about the wrong repository — *Why a product repository at all* working exactly as
+intended. What was missing was any sentence saying where the substance is.
+
+So `release.yml` composes a short body and hands it to the `gh release create` that was already
+there, through `--notes`: a paragraph, both component releases linked at this version with the image
+each one publishes, and a line saying that what follows is this repository's own.
+
+**At creation, and that is not a matter of taste.** `gh release edit --notes` replaces the entire
+body, so prose added to a release that already exists takes the generated notes with it unless the
+caller re-supplies them. `--notes` alongside `--generate-notes` is the composition GitHub supports:
+the body is pre-pended to what it generates, and one call does both.
+
+**Both URLs are built out of the version string this workflow has already parsed**, and nothing is
+looked up. Both sibling repositories are public, so a lookup would in fact resolve on the
+`GITHUB_TOKEN` this workflow runs on — the objection is not that it is forbidden but that it is a
+question whose answer has to be waited for, and one that stops resolving on the day either
+repository is made private, the way *The GHCR login outlives the reason it was added* records for
+the packages. The consequence is accepted rather than engineered around: the sibling's release is
+opened by a job that waits on the same manifest the coordinator waits on, so it can still be queued
+while this runs, and `/releases/tag/vX.Y.Z` resolves to the tag page until it lands. That is a less
+useful page for a few minutes rather than a broken link, and this release is a draft somebody
+publishes later anyway.
+
+**None of this weakens the ordering argument** in *The release runs last, and that is what makes the
+guard possible* or *The coordinator polls with a timeout*. Both say this workflow only looks, and
+both are arguments about not asking a question whose answer has to be waited for. Composing two URLs
+out of a version already in hand asks nobody anything: no poll, no timeout, no decision about what to
+do when one expires. Checking that those releases exist before linking them is what would break it,
+and that is precisely what is not done.
+
+**The re-run branch is left alone, deliberately.** The step short-circuits when the release already
+exists — it refreshes the install bundle with `--clobber` and stops — so a release cut before this
+was added never gains the links, and a `workflow_dispatch` re-run does not retrofit them. By then the
+body has usually been finished by hand, and rewriting it to insert two links would take that person's
+headline with it. The next reader to notice the asymmetry should read it as a decision rather than as
+a bug.
+
+**Two things about the body are easy to get wrong by writing markdown the way markdown is usually
+written.** A release body renders with line breaks on — `POST /markdown` with `mode=gfm` turns a
+single newline into a `<br>` — so a paragraph wrapped across source lines arrives wrapped on the
+page; each paragraph in that heredoc is deliberately one long line. And the separator GitHub puts
+between a supplied body and the notes it generates is undocumented, so the body ends on a `---`,
+which reads as the same divider whether the join turns out to be one newline or two. Both halves were
+checked without creating anything: `POST /repos/{owner}/{repo}/releases/generate-notes` returns the
+generated half and saves nothing, and `POST /markdown` renders the join.

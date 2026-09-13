@@ -196,10 +196,14 @@ all.
 Nothing in *this* repository carries a version number, deliberately: see DECISIONS.md. Its version
 is the tag, which is why the coordinator writes to two repositories and tags three.
 
-**Finish the draft.** The workflow leaves a draft release here with generated notes and the four
-install files attached. Write the headline paragraph and confirm the **Breaking** section — say
-"None" in so many words when it is empty, because generated notes simply omit an empty category and
-silence is not an answer somebody deciding whether to upgrade can use. Then publish.
+**Finish the draft.** The workflow leaves a draft release here with the four install files attached
+and a body that opens by linking both component releases at this version, above the notes GitHub
+generates from this repository's own pull requests. Those two links are built out of the version
+rather than looked up, so one of them can land on a tag page rather than a release when that
+repository's publish run is still queued — it catches up on its own, and there is nothing to fix
+here. Write the headline paragraph and confirm the **Breaking** section — say "None" in so many words
+when it is empty, because generated notes simply omit an empty category and silence is not an answer
+somebody deciding whether to upgrade can use. Then publish.
 
 **Nothing in api or web is bumped or tagged by hand** — the coordinator did both, and doing either
 again is how the *next* release gets stuck rather than this one: the decision refuses when the
