@@ -572,11 +572,14 @@ gradient factors, with the deco ceiling still beside them.
 **Four of the six, not six**, and the shortfall is the account's rather than the app's: that
 recording carries no ppO₂ series and no CNS series, so the panel has nothing to draw for either.
 (The *Exposure & Pressure* card in the same image does show a CNS figure; that is the dive's own
-record, not a channel off the computer, and the two are not the same claim.) The recordings card
-names the model, the gradient factors and the firmware, and not the mode, which that recording does
-not carry either. So a sentence here may now claim the picture shows a readout, and must not claim
-it shows all six — the alt text stays as general as it is, which is what keeps it true through the
-next retake.
+record, not a channel off the computer, and the two are not the same claim.) **The recordings card
+shows neither half of the mode-and-model line**, for the same reason. It names the _device_ — Suunto
+Ocean, with its serial and the diver's name for it — then the gradient factors and the firmware, and
+its settings line reads a bare `GF 50/85`: next door, `decoModelLabel` prefixes those numbers with a
+model name or an algorithm label whenever the recording carries one, so a bare pair is that field
+being empty. So a sentence here may now claim the picture shows a readout, and must not claim it
+shows all six, the mode, or a decompression model — the alt text stays as general as it is, which is
+what keeps it true through the next retake.
 
 Nothing here should ever be "fixed" to close a gap of this kind while one is open: cropping an image
 would break the byte-for-byte copy the section above requires, and rolling the prose back to match
