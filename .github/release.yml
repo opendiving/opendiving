@@ -2,9 +2,10 @@
 # release (`gh release create --draft --generate-notes`). PRs are squash-merged with the
 # title as the subject, and `pr-title.yml` puts a label on each one from that title's
 # conventional-commit type - which is the only reason these categories have anything to
-# match on. They shape the lower half of the body: `release.yml` prepends a paragraph of its
-# own linking the component releases, and what these categories organise is everything under
-# it - this repository's own pull requests, which is all the generated notes can ever see.
+# match on. They shape the lower half of the body: `.github/workflows/release.yml` prepends a
+# paragraph of its own linking the component releases, and what these categories organise is
+# everything under it - this repository's own pull requests, which is all the generated notes
+# can ever see.
 #
 # Order is load-bearing: a PR lands in the *first* category whose labels it carries, so
 # `breaking` has to come before `feat`, or a `feat!:` change would be filed as a feature

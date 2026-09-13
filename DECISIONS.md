@@ -935,14 +935,16 @@ body, so prose added to a release that already exists takes the generated notes 
 caller re-supplies them. `--notes` alongside `--generate-notes` is the composition GitHub supports:
 the body is pre-pended to what it generates, and one call does both.
 
-**Both URLs are built out of the version string this workflow has already parsed.** It runs on
-`GITHUB_TOKEN` with `contents: write` and `packages: read`, scoped to this repository, and cannot
-read a sibling's releases — nor should it be handed a token that can, for a string it can spell
-itself. The consequence is accepted rather than engineered around: the sibling's release is opened by
-a job that waits on the same manifest the coordinator waits on, so it can still be queued while this
-runs, and `/releases/tag/vX.Y.Z` resolves to the tag page until it lands. That is a less useful page
-for a few minutes rather than a broken link, and this release is a draft somebody publishes later
-anyway.
+**Both URLs are built out of the version string this workflow has already parsed**, and nothing is
+looked up. Both sibling repositories are public, so a lookup would in fact resolve on the
+`GITHUB_TOKEN` this workflow runs on — the objection is not that it is forbidden but that it is a
+question whose answer has to be waited for, and one that stops resolving on the day either
+repository is made private, the way *The GHCR login outlives the reason it was added* records for
+the packages. The consequence is accepted rather than engineered around: the sibling's release is
+opened by a job that waits on the same manifest the coordinator waits on, so it can still be queued
+while this runs, and `/releases/tag/vX.Y.Z` resolves to the tag page until it lands. That is a less
+useful page for a few minutes rather than a broken link, and this release is a draft somebody
+publishes later anyway.
 
 **None of this weakens the ordering argument** in *The release runs last, and that is what makes the
 guard possible* or *The coordinator polls with a timeout*. Both say this workflow only looks, and

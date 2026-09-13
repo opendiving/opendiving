@@ -133,13 +133,14 @@ jobs:
       # at creation rather than edited in afterwards - `gh release edit --notes` replaces the
       # whole body, generated notes included.
       #
-      # Both URLs are built out of the version. Nothing is fetched: this workflow runs on
-      # `GITHUB_TOKEN` scoped to this repository and cannot read a sibling's releases anyway.
-      # The sibling's release may not exist yet when this runs - it is opened by a job that
-      # waits on the same manifest the coordinator waits on, so it can still be queued at
-      # this point - and a `/releases/tag/vX.Y.Z` URL resolves to the tag page until it does.
-      # Asking first would mean a poll, a timeout and a decision about what to do when it
-      # expires, which is the cost this repository being tagged last exists to avoid.
+      # Both URLs are built out of the version, and nothing is looked up. The sibling's release
+      # may not exist yet when this runs - it is opened by a job that waits on the same manifest
+      # the coordinator waits on, so it can still be queued at this point - and a
+      # `/releases/tag/vX.Y.Z` URL resolves to the tag page until it does. Asking first would
+      # mean a poll, a timeout and a decision about what to do when it expires, which is the
+      # cost this repository being tagged last exists to avoid. Both sibling repositories are
+      # public, so the lookup would resolve on this `GITHUB_TOKEN` - it is a wait either way,
+      # and it stops resolving at all on the day either one is made private.
       #
       # The re-run branch below deliberately does NOT retrofit the links. A release that
       # already exists may have been finished by hand, and rewriting its body to insert two
