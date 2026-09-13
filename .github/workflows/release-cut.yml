@@ -671,10 +671,11 @@ jobs:
           # rule as the branch-exists refusal in the step above and matters more here: a wait
           # inside the merge loop would release api - merged, tagged, images publishing,
           # aliases moved - and only then look at web for the first time, so any web-side
-          # stall would strand the product half-released. Hoisted, the window in which one
-          # repository is released and the other is not shrinks to the merge and tag calls
-          # themselves, and a wait that runs out now always runs out with nothing merged
-          # anywhere, which is the state a re-dispatch can recover from.
+          # stall would strand the product half-released. Hoisted, a wait that runs out always
+          # runs out with nothing merged anywhere, which is the state a re-dispatch can
+          # recover from. The base-head guard below is hoisted for the same reason, and
+          # between the two of them the window in which one repository is released and the
+          # other is not is the merge and tag calls themselves.
           #
           # It costs no wall clock. Both pull requests were opened in the step above, so both
           # repositories' check suites are already running; polling them together bounds this
@@ -751,21 +752,35 @@ jobs:
           done
           echo "::endgroup::"
 
+          # The version was computed from each repository's `main` as it stood when this run
+          # checked it out. If either has moved since, GitHub would squash the bump onto the
+          # new head and the tag would name a tree the decision never classified - a `feat:`
+          # that arrived mid-run released as a patch, with nothing downstream able to notice.
+          #
+          # **Both are asked before either merges**, for the same reason as the wait above and
+          # more sharply: this guard is an abort, so an abort that ran after api was tagged
+          # would *be* the half-released state rather than prevent it. Asked here, the only
+          # thing left between the check and the release is the merge and tag calls
+          # themselves, which is as small as this gets - GitHub's merge takes the head commit
+          # to expect, never the base.
           for pair in "${REPOS[@]}"; do
             name="${pair%%:*}"
             slug="${pair#*:}"
             number="$(cat "$STATE/$name.pr")"
             base="$(cat "$STATE/$name.base")"
 
-            # The version was computed from this repository's `main` at $base. If it has
-            # moved since, GitHub squashes the bump onto the new head and the tag names a
-            # tree the decision never classified - a `feat:` that arrived mid-run released as
-            # a patch, with nothing downstream able to notice.
             head="$(retry gh api "repos/$slug/git/ref/heads/main" --jq .object.sha)" \
-              || stopped_part_way "$slug's main could not be read, so this run cannot tell whether it moved while the pull request waited. Nothing was merged in $slug."
+              || stopped_part_way "$slug's main could not be read, so this run cannot tell whether it moved while the pull requests waited. Nothing was merged anywhere."
             if [ "$head" != "$base" ]; then
-              stopped_part_way "main in $slug moved from $base to $head while this ran, so a squash now would carry commits this version was never computed from. Nothing was merged in $slug. Read what landed: if it changes the number, close #$number and delete release/v$VERSION rather than merging it."
+              stopped_part_way "main in $slug moved from $base to $head while this ran, so a squash now would carry commits this version was never computed from. Nothing was merged anywhere. Read what landed: if it changes the number, close #$number and delete release/v$VERSION rather than merging it."
             fi
+            echo "$slug: main is still $base"
+          done
+
+          for pair in "${REPOS[@]}"; do
+            name="${pair%%:*}"
+            slug="${pair#*:}"
+            number="$(cat "$STATE/$name.pr")"
 
             # No --subject: these repositories take their squash subject from the pull
             # request title, so the title `pr-title.yml` checked is the subject that lands on

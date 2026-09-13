@@ -826,10 +826,17 @@ budget.
 **Both, before either merges, and that ordering is the point.** A wait inside the merge loop would
 release api — merged, tagged, image publishing, `latest` moved — and only then look at web's pull
 request for the first time, so any web-side stall would strand the product half-released for the
-length of a check suite. Waiting both out first shrinks that window to the merge and tag calls
-themselves and costs nothing, because both pull requests are already open and their checks are
-already running; it also means a wait that runs out always runs out with nothing merged anywhere,
-which is the one state a second dispatch can still recover.
+length of a check suite. Waiting both out first costs nothing, because both pull requests are
+already open and their checks are already running, and it means a wait that runs out always runs
+out with nothing merged anywhere — the one state a second dispatch can still recover.
+
+The same applies to every check that can *abort*, which is why the re-read of each repository's
+`main` head is hoisted too: an abort that fires after api is tagged does not prevent the
+half-released state, it is that state. With both of them out of the loop, what is left between the
+last check and the release is the merge and tag calls themselves. That is the floor rather than a
+choice — GitHub's merge takes the head commit to expect and never the base, so two repositories
+cannot be merged as one operation, and a run that dies between the two merges is what the by-hand
+recipe is for.
 
 **Waiting for `CLEAN` rather than for "mergeable" is where this departs from the implementation it
 is modelled on**, which accepts `UNSTABLE` because nothing on its `main` is a required check. Six
