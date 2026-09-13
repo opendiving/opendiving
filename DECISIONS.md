@@ -505,19 +505,26 @@ shot against the same account as the ones staying put — a single new capture n
 that from over here. A change that reaches *all* of them — a palette, a nav rewrite — is still a
 single run of the script next door, so they cannot half-move.
 
-**The row under `## Features` stacks rather than adding a third column, and it is not levelled.**
+**The row under `## Features` stacks rather than adding a third column, and it is levelled now.**
 The dive shot is much the tallest image in the set, and a two-image row left a visible hole under
 the short one beside it; a third image *beside* those two would only narrow all three. Stacking the
-two short shots in the right cell fills that hole. It does not close it exactly, and the remainder
-is **deferred rather than settled** — the distinction matters, because a reader who takes it for
-settled will not go looking for the work that is already specified. Closing it means changing the
-gear shot's frame height next door, the one frame in `screenshots.mjs` written down rather than
-measured, and the height to pick is set by the dive shot beside it, which is itself owed a retake.
-`opendiving-web`'s `DECISIONS.md` has that measured and waiting, under *The gear frame is the lever
-under the README row, and it is not pulled here* — including the finding that no single committed
-height comes level for every reader, since the stacked pair scales with the column while the leading
-between the two images does not. None of that is this repository's to act on, and cropping an image
-here to even the row out would break both the byte-for-byte copy and the rule behind it.
+two short shots in the right cell fills that hole, and closing the remainder was deferred here for
+as long as the height that would close it was unknown — it is set by the dive shot beside the pair,
+and that shot was itself owed a retake.
+
+**Both were taken together next door, which is why this repository's copies move in one commit.**
+`opendiving-web` retook the dive shot and re-cut the gear frame against it in the same change, and
+the row now reads level to within about 3 rendered px per edge at every container width from 480 up,
+against 44 at 1012 before. The reasoning is `opendiving-web`'s `DECISIONS.md`, under *The gear frame
+is the lever under the README row, and it has now been pulled* — including the part that still
+governs this side: no single committed height is level for *every* reader, because the stacked pair
+scales with the column while the leading between the two images does not, so "levelled" means a
+residual small enough to stop reading as a defect rather than a zero.
+
+None of that was or is this repository's to act on. Cropping an image here to even the row out would
+break both the byte-for-byte copy and the rule behind it, and that stays true of a row that is level
+— the next retake next door will move a height again, and the answer over here is still to copy what
+lands rather than to compensate for it.
 
 **So the row's markup encodes no image's height, and must not start to.** Every one of these is
 retaken when the page behind it changes, and a retake moves heights — a dive page that gains a panel
