@@ -894,9 +894,11 @@ already paid to find.
 `divejson/divejson-py`'s `release-bump.yml` is where the shape of `release-cut.yml` comes from, and
 most of it ported unchanged: the App token, the API commit, the pull request, the tag on the squash
 commit, the `concurrency` group queued rather than cancelled, the refusal when the release branch
-already exists, the re-read of `main` immediately before the merge, and the idempotent tag that asks
-what a ref names instead of reading an error. Three things did not, and each is here so that the
-next reader comparing the two files does not conclude something was forgotten.
+already exists, and the idempotent tag that asks what a ref names instead of reading an error. Its
+re-read of `main` ported as a guard and not as a position — there it sits immediately before the one
+merge, here both heads are read before either, for the reason the hoisting paragraph above gives.
+Three more things did not port at all, and each is here so that the next reader comparing the two
+files does not conclude something was forgotten.
 
 **A pinned interpreter.** That workflow installs Python 3.12 with `actions/setup-python`. This one
 uses the runner's own `python3` and `node` for the reason the section above on the release tooling
