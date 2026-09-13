@@ -819,8 +819,17 @@ do when it expires, while asking last needs one `imagetools inspect` — and it 
 The coordinator is the thing that *makes* it last, and it cannot also be last. Something has to
 sequence three repositories — tag api and web, then wait for their images, then tag here — and a
 human doing it was the polling, just done by eye. So the coordinator pays exactly the cost that
-section describes, deliberately and in one place: it waits for each bump pull request to reach
-`CLEAN`, and then for both images at the new version on both architectures, each with a budget.
+section describes, deliberately and in two places: it waits for **both** bump pull requests to
+reach `CLEAN`, and then for both images at the new version on both architectures, each with a
+budget.
+
+**Both, before either merges, and that ordering is the point.** A wait inside the merge loop would
+release api — merged, tagged, image publishing, `latest` moved — and only then look at web's pull
+request for the first time, so any web-side stall would strand the product half-released for the
+length of a check suite. Waiting both out first shrinks that window to the merge and tag calls
+themselves and costs nothing, because both pull requests are already open and their checks are
+already running; it also means a wait that runs out always runs out with nothing merged anywhere,
+which is the one state a second dispatch can still recover.
 
 **Waiting for `CLEAN` rather than for "mergeable" is where this departs from the implementation it
 is modelled on**, which accepts `UNSTABLE` because nothing on its `main` is a required check. Six
@@ -842,11 +851,10 @@ take and the hour has nothing to do with either.
 
 **The test to apply when lengthening one is wall clock, not structure.** "No token spans two
 phases" is true by construction and would stay true however large a budget got, so it guards
-nothing: the binding constraint is that no single phase may outlive the hour, and the merges-and-tags
-phase is the one with room to break it, because it carries *both* pull requests' waits — the step
-loops over api and then web — plus their retry ladders under one token. At 20 minutes each that is
-about 40 of the 60, which is the headroom there is; much past 25 and the second repository's tag is
-pushed with a credential that has expired, on a run where nothing else went wrong.
+nothing: the binding constraint is that no single phase may outlive the hour. The merges-and-tags
+phase is the one with room to break it — its 20-minute wait covers both pull requests at once, and
+then both merges, both squash-commit polls and both tags run under the same token, each with a
+retry ladder behind it. That is comfortable at 20 and would not be at 45.
 
 **What happens when a budget expires is the other half of the decision.** The run prints the
 commands that finish the release by hand, into the job summary, derived from how far it got rather

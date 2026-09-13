@@ -95,10 +95,11 @@ jobs:
     name: Cut the product release across all three repositories
     runs-on: ubuntu-latest
 
-    # Comfortably above the two waits below (20 minutes per bump pull request, 45 for the
-    # pair of image builds, so 85 at worst) plus the calls between them. It has to stay
-    # above them: those waits end by printing what finishes the release by hand, and a job
-    # killed by this limit ends in the same state saying nothing.
+    # Comfortably above the two waits below (20 minutes for the two bump pull requests,
+    # which are waited out together, and 45 for the pair of image builds, so 65 at worst)
+    # plus the calls between them. It has to stay above them: those waits end by printing
+    # what finishes the release by hand, and a job killed by this limit ends in the same
+    # state saying nothing.
     timeout-minutes: 120
 
     # `packages: read` is what the GHCR inspect below needs, and the whole of what the
@@ -638,12 +639,12 @@ jobs:
       # **A fresh token, because an installation token lasts an hour and the waits below can
       # spend most of one.** This is the trap in a workflow that polls: the token minted at
       # the top is fine for the checkouts and for opening the pull requests, which happen in
-      # the first minutes, and then the mergeability waits alone can run to 40 - so a slow
-      # but perfectly successful run would reach the last write with an expired credential
-      # and report a release nobody needs to finish as one that has to be. There is no way
-      # to extend a token's life, so the answer is to take a new one immediately before each
-      # phase that writes. It costs one API call, and the action revokes each of them when
-      # the job ends.
+      # the first minutes, and then this phase can spend 20 more waiting before it writes
+      # anything - so a slow but perfectly successful run would reach the last write with an
+      # expired credential and report a release nobody needs to finish as one that has to
+      # be. There is no way to extend a token's life, so the answer is to take a new one
+      # immediately before each phase that writes. It costs one API call, and the action
+      # revokes each of them when the job ends.
       - name: A fresh token for the merges and the tags
         id: app_merge
         if: ${{ !inputs.dry_run }}
@@ -666,69 +667,95 @@ jobs:
           # shellcheck source=/dev/null
           . "$RUNNER_TEMP/release/lib.sh"
 
+          # **Both pull requests are waited out before either is merged**, which is the same
+          # rule as the branch-exists refusal in the step above and matters more here: a wait
+          # inside the merge loop would release api - merged, tagged, images publishing,
+          # aliases moved - and only then look at web for the first time, so any web-side
+          # stall would strand the product half-released. Hoisted, the window in which one
+          # repository is released and the other is not shrinks to the merge and tag calls
+          # themselves, and a wait that runs out now always runs out with nothing merged
+          # anywhere, which is the state a re-dispatch can recover from.
+          #
+          # It costs no wall clock. Both pull requests were opened in the step above, so both
+          # repositories' check suites are already running; polling them together bounds this
+          # by the slower of the two rather than by their sum.
+          #
+          # **CLEAN only**, which is where this departs from the implementation it is modelled
+          # on. That one accepts UNSTABLE because nothing on its `main` is a required check;
+          # these two require six each, none of them path-filtered, among them api's
+          # Postgres-backed `tests` and image-building `runtime-imports` and web's
+          # browser-driven `lint-and-build`. A freshly opened pull request is therefore
+          # BLOCKED for minutes while they run, and a poll that only waits out UNKNOWN would
+          # abort on its first evaluation with two bump pull requests open and nothing tagged.
+          #
+          # The App holds Contents and Pull requests and nothing else, so this cannot read the
+          # check runs to say *which* check is outstanding - `mergeStateStatus` is the whole
+          # of what it can see, which is why the timeout below sends a reader to the pull
+          # request rather than naming a job.
+          #
+          # DIRTY and DRAFT are refused rather than waited out: neither can become CLEAN on
+          # its own. BEHIND cannot arise while `strict_required_status_checks_policy` is
+          # false, and if it ever does the base-head guard below is the honest answer to it.
+          # HAS_HOOKS is not accepted because pre-receive hooks are a GitHub Enterprise
+          # feature and this is github.com - if it ever appeared, it would time out here
+          # rather than merge something nobody designed for.
+          #
+          # **What reaches CLEAN without a human rests on one setting, and this is where that
+          # dependency lives.** All three `main` rulesets carry
+          # `require_extra_approval_for_unattributed_changes: true`, and a pull request an App
+          # opens under its own identity is exactly what GitHub calls unattributed - but that
+          # rule adds one *more* approval than the number configured and has no effect at
+          # zero, which is where `required_approving_review_count` sits on all three. Raise it
+          # to one and releases stop: the pull request would want an approval and the
+          # unattributed rule would want a second, and the only symptom here is this wait
+          # running out at BLOCKED. Nothing in any of these trees would object, because a
+          # ruleset lives in repository settings. The recovery is a person approving the bump
+          # - whether an App may approve a pull request it opened itself is documented
+          # nowhere.
+          echo "::group::waiting for both bump pull requests to become mergeable"
+          declare -A clean=()
+          deadline=$(( SECONDS + MERGE_WAIT_SECONDS ))
+          while true; do
+            waiting=""
+            for pair in "${REPOS[@]}"; do
+              name="${pair%%:*}"
+              slug="${pair#*:}"
+              [ -z "${clean[$name]:-}" ] || continue
+              number="$(cat "$STATE/$name.pr")"
+
+              # A call that fails is another turn of the loop rather than the end of the run:
+              # this is a twenty-minute poll, and one bad gateway in it would otherwise throw
+              # away a release that has not merged anything yet and leave two branches for
+              # somebody to delete. A failure that is not transient runs out the budget and is
+              # reported as UNREADABLE, which no real state is.
+              state="$(gh pr view "$number" --repo "$slug" --json mergeStateStatus --jq .mergeStateStatus)" || state=UNREADABLE
+              echo "$(date -u +%H:%M:%S) $slug #$number: $state"
+              if [ "$state" = CLEAN ]; then
+                clean[$name]=yes
+                continue
+              fi
+              case "$state" in
+                DIRTY|DRAFT|BEHIND)
+                  echo "::endgroup::"
+                  stopped_part_way "$slug's bump pull request #$number is $state, which waiting cannot fix. Nothing was merged anywhere."
+                  ;;
+              esac
+              waiting="$waiting $slug#$number ($state)"
+            done
+            [ -n "$waiting" ] || break
+            if [ "$SECONDS" -ge "$deadline" ]; then
+              echo "::endgroup::"
+              stopped_part_way "after $(( MERGE_WAIT_SECONDS / 60 )) minutes, still waiting on:$waiting. Nothing was merged anywhere. Open the pull request and see what it is waiting for: an outstanding check, or - if required_approving_review_count has been raised above zero - an approval this run cannot give."
+            fi
+            sleep 15
+          done
+          echo "::endgroup::"
+
           for pair in "${REPOS[@]}"; do
             name="${pair%%:*}"
             slug="${pair#*:}"
             number="$(cat "$STATE/$name.pr")"
             base="$(cat "$STATE/$name.base")"
-
-            # **CLEAN only**, which is where this departs from the implementation it is
-            # modelled on. That one accepts UNSTABLE because nothing on its `main` is a
-            # required check; these two require six each, none of them path-filtered, among
-            # them api's Postgres-backed `tests` and image-building `runtime-imports` and
-            # web's browser-driven `lint-and-build`. A freshly opened pull request is
-            # therefore BLOCKED for minutes while they run, and a poll that only waits out
-            # UNKNOWN would abort on its first evaluation with two bump pull requests open
-            # and nothing tagged.
-            #
-            # The App holds Contents and Pull requests and nothing else, so this cannot read
-            # the check runs to say *which* check is outstanding - `mergeStateStatus` is the
-            # whole of what it can see, which is why the timeout below sends a reader to the
-            # pull request rather than naming a job.
-            #
-            # DIRTY and DRAFT are refused rather than waited out: neither can become CLEAN on
-            # its own. BEHIND cannot arise while `strict_required_status_checks_policy` is
-            # false, and if it ever does the base-head guard below is the honest answer to
-            # it. HAS_HOOKS is not accepted because pre-receive hooks are a GitHub Enterprise
-            # feature and this is github.com - if it ever appeared, it would time out here
-            # rather than merge something nobody designed for.
-            #
-            # **What reaches CLEAN without a human rests on one setting, and this is where
-            # that dependency lives.** All three `main` rulesets carry
-            # `require_extra_approval_for_unattributed_changes: true`, and a pull request an
-            # App opens under its own identity is exactly what GitHub calls unattributed -
-            # but that rule adds one *more* approval than the number configured and has no
-            # effect at zero, which is where `required_approving_review_count` sits on all
-            # three. Raise it to one and releases stop: the pull request would want an
-            # approval and the unattributed rule would want a second, and the only symptom
-            # here is this wait running out at BLOCKED. Nothing in any of these trees would
-            # object, because a ruleset lives in repository settings. The recovery is a
-            # person approving the bump - whether an App may approve a pull request it opened
-            # itself is documented nowhere.
-            echo "::group::$slug: waiting for pull request #$number to become mergeable"
-            deadline=$(( SECONDS + MERGE_WAIT_SECONDS ))
-            while true; do
-              # A call that fails is another turn of the loop rather than the end of the
-              # run: this is a twenty-minute poll, and one bad gateway in it would otherwise
-              # throw away a release that has not merged anything yet and leave two branches
-              # for somebody to delete. A failure that is not transient runs out the budget
-              # and is reported as UNREADABLE, which no real state is.
-              state="$(gh pr view "$number" --repo "$slug" --json mergeStateStatus --jq .mergeStateStatus)" || state=UNREADABLE
-              echo "$(date -u +%H:%M:%S) $slug #$number: $state"
-              [ "$state" != CLEAN ] || break
-              case "$state" in
-                DIRTY|DRAFT|BEHIND)
-                  echo "::endgroup::"
-                  stopped_part_way "$slug's bump pull request #$number is $state, which waiting cannot fix."
-                  ;;
-              esac
-              if [ "$SECONDS" -ge "$deadline" ]; then
-                echo "::endgroup::"
-                stopped_part_way "$slug's bump pull request #$number was still $state after $(( MERGE_WAIT_SECONDS / 60 )) minutes. Open it and see what it is waiting for: an outstanding check, or - if required_approving_review_count has been raised above zero - an approval this run cannot give."
-              fi
-              sleep 15
-            done
-            echo "::endgroup::"
 
             # The version was computed from this repository's `main` at $base. If it has
             # moved since, GitHub squashes the bump onto the new head and the tag names a
