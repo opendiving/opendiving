@@ -7,9 +7,11 @@ name: Release tooling
 # deletion on `refs/tags/v*` for everyone but an organisation admin. So this suite runs
 # on every pull request and is meant to be a required check.
 #
-# **The job id below is the check name, and a ruleset elsewhere names it.** Two shapes
-# would break that, and both fail the same silent way - a pull request waiting on a
-# status that is never going to arrive:
+# **The job id below is the check name, and a ruleset will name it.** The `main` ruleset
+# requires `semantic-title` and `shellcheck` today and `release-tooling` is to be added
+# beside them, so the id is a contract before it is enforced. Two shapes would break it,
+# and both fail the same silent way - a pull request waiting on a status that is never
+# going to arrive:
 #
 #   - A matrix job. Its check run carries the matrix value in its name, so a job with a
 #     one-value matrix reports as `release-tooling (<value>)` and never as

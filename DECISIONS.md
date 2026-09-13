@@ -577,9 +577,10 @@ one punctuation of it silently reports a clean repository.
 ## The test job's name is a contract, and two ordinary shapes would break it
 
 `release-tooling.yml` runs the suite behind `scripts/release_version.py`, and the `main` ruleset on
-this repository names that job as a required status check. The name it names is the **job id**,
-because a job with no `name:` of its own reports under its id — which is how `semantic-title` and
-`shellcheck` are already named in the same list.
+this repository is to require that job as a status check. It requires `semantic-title` and
+`shellcheck` today; `release-tooling` joins them when somebody with ruleset rights adds it. The name
+it will be added under is the **job id**, because a job with no `name:` of its own reports under its
+id — which is how both of the others are already named in that list.
 
 Two shapes that look harmless would make the ruleset match nothing, and they fail identically and
 silently: the pull request sits at "Expected — waiting for status" with no red X to explain it, for
