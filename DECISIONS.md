@@ -841,8 +841,8 @@ sends a reader to the pull request rather than naming a job.
 
 **The budgets are bounded by the token as well as by patience**, which is the trap a polling
 workflow walks into: a GitHub App installation token lives an hour and cannot be extended, while the
-waits above are allowed 20 minutes per bump pull request and 45 for the pair of image builds. A
-token minted once at the top of the job would therefore be expired by the last write of a slow but
+waits above are allowed 20 minutes for the two bump pull requests together and 45 for the pair of
+image builds. A token minted once at the top would therefore be expired by the last write of a slow but
 perfectly successful run, and a release nobody needed to finish would be reported as one that has
 to be. So `release-cut.yml` mints a fresh token immediately before each phase that writes — the
 pull requests, the merges and tags, the product tag — rather than budgeting the waits to fit inside
