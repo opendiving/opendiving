@@ -838,8 +838,15 @@ perfectly successful run, and a release nobody needed to finish would be reporte
 to be. So `release-cut.yml` mints a fresh token immediately before each phase that writes — the
 pull requests, the merges and tags, the product tag — rather than budgeting the waits to fit inside
 an hour, because the waits are sized by what api's image build and web's browser tests actually
-take and the hour has nothing to do with either. Anyone lengthening a budget should check that no
-single token still has to cover two phases.
+take and the hour has nothing to do with either.
+
+**The test to apply when lengthening one is wall clock, not structure.** "No token spans two
+phases" is true by construction and would stay true however large a budget got, so it guards
+nothing: the binding constraint is that no single phase may outlive the hour, and the merges-and-tags
+phase is the one with room to break it, because it carries *both* pull requests' waits — the step
+loops over api and then web — plus their retry ladders under one token. At 20 minutes each that is
+about 40 of the 60, which is the headroom there is; much past 25 and the second repository's tag is
+pushed with a credential that has expired, on a run where nothing else went wrong.
 
 **What happens when a budget expires is the other half of the decision.** The run prints the
 commands that finish the release by hand, into the job summary, derived from how far it got rather

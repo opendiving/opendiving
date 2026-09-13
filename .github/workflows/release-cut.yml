@@ -844,14 +844,9 @@ jobs:
             echo "ok: $ref"
           done
 
-      # Last, which is what makes the front door's guard a question about the present tense
-      # rather than about the future - and at the commit the version was computed from
-      # rather than at whatever `main` points to by now, because `release.yml` uploads the
-      # install bundle from the tag and the bundle released has to be the one the decision
-      # read.
       # A third one, for the same reason as the second: the image wait above has just been
-      # allowed up to 45 minutes of the hour a token lives, and this is the last write in
-      # the run - the one whose failure costs a release that is otherwise complete.
+      # allowed up to 45 minutes of the hour a token lives, and what follows is the last
+      # write in the run - the one whose failure costs a release that is otherwise complete.
       - name: A fresh token for the product tag
         id: app_tag
         if: ${{ !inputs.dry_run }}
@@ -865,6 +860,11 @@ jobs:
             opendiving-api
             opendiving-web
 
+      # Last, which is what makes the front door's guard a question about the present tense
+      # rather than about the future - and at the commit the version was computed from
+      # rather than at whatever `main` points to by now, because `release.yml` uploads the
+      # install bundle from the tag and the bundle released has to be the one the decision
+      # read.
       - name: Tag the front door
         if: ${{ !inputs.dry_run }}
         env:
