@@ -24,6 +24,12 @@ own is not breaking, because it applies itself.
 
 <https://github.com/opendiving/opendiving/releases>
 
+**What changed in the app itself is one link further on.** A release here is the install bundle and
+this documentation; the API and the web app are released in their own repositories at the same
+version, and a release here opens by linking both. Follow those for the features and fixes — a
+release on this page whose own list is all install files and CI is an ordinary release, not an empty
+one.
+
 **`docker compose pull` updates images and nothing else.** `docker-compose.yml`, `Caddyfile` and the
 `.env` you made from `example.env` are files you downloaded once; they stay exactly as they are
 through every upgrade. So when a release's Breaking section names one of them, re-downloading it is

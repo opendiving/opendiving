@@ -125,11 +125,32 @@ jobs:
       # an empty category rather than saying "None". Assets go up before the notes are
       # written, so a draft sitting there waiting on its Breaking section already carries
       # the install.
+      #
+      # The body opens with the two component releases, because the generated notes under it
+      # are generated from *this* repository's pull requests and no application code lives
+      # here: left to itself the product release describes the install bundle and the release
+      # machinery, and says nothing about the product being installed. The prose is prepended
+      # at creation rather than edited in afterwards - `gh release edit --notes` replaces the
+      # whole body, generated notes included.
+      #
+      # Both URLs are built out of the version. Nothing is fetched: this workflow runs on
+      # `GITHUB_TOKEN` scoped to this repository and cannot read a sibling's releases anyway.
+      # The sibling's release may not exist yet when this runs - it is opened by a job that
+      # waits on the same manifest the coordinator waits on, so it can still be queued at
+      # this point - and a `/releases/tag/vX.Y.Z` URL resolves to the tag page until it does.
+      # Asking first would mean a poll, a timeout and a decision about what to do when it
+      # expires, which is the cost this repository being tagged last exists to avoid.
+      #
+      # The re-run branch below deliberately does NOT retrofit the links. A release that
+      # already exists may have been finished by hand, and rewriting its body to insert two
+      # links would discard that person's headline. So a release opened before this was added
+      # never gains them, and a `workflow_dispatch` re-run leaves the body alone.
       - name: Open a draft release with the install bundle attached
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
           ASSETS=(install.sh docker-compose.yml Caddyfile example.env)
@@ -138,7 +159,22 @@ jobs:
             gh release upload "$TAG" "${ASSETS[@]}" --clobber
             exit 0
           fi
-          gh release create "$TAG" --draft --generate-notes --title "$TAG" "${ASSETS[@]}"
+          # Each paragraph is one source line, because a release body renders with line breaks
+          # on: a line wrapped here arrives wrapped on the page. And it ends on a rule, because
+          # the separator GitHub puts between this body and the notes it generates is
+          # undocumented - the rule reads as the same divider whether that is one newline or two.
+          NOTES="$(cat <<EOF
+          **What changed in the application is in the component releases.** This repository is the install bundle and the operator documentation; the API and the web app are released from their own repositories at this version:
+
+          - [opendiving-api $TAG](https://github.com/opendiving/opendiving-api/releases/tag/$TAG) — \`ghcr.io/opendiving/opendiving-api:$VERSION\`
+          - [opendiving-web $TAG](https://github.com/opendiving/opendiving-web/releases/tag/$TAG) — \`ghcr.io/opendiving/opendiving-web:$VERSION\`
+
+          What follows is this repository's own: the install bundle, the documentation and the release machinery.
+
+          ---
+          EOF
+          )"
+          gh release create "$TAG" --draft --generate-notes --notes "$NOTES" --title "$TAG" "${ASSETS[@]}"
 
       - name: Summarise
         env:
@@ -149,6 +185,8 @@ jobs:
             echo "## Draft release \`$TAG\`"
             echo
             echo "Both images verified at \`$VERSION\`, amd64 + arm64."
+            echo
+            echo "Its body opens with both component releases linked, above the generated notes."
             echo
             echo "Write the headline paragraph and the **Breaking** section, then publish."
           } >> "$GITHUB_STEP_SUMMARY"
