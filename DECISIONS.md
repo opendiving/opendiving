@@ -830,6 +830,17 @@ holds Contents and Pull requests and nothing else, so the run cannot read check 
 check is outstanding — `mergeStateStatus` is the whole of what it can see, which is why a timeout
 sends a reader to the pull request rather than naming a job.
 
+**The budgets are bounded by the token as well as by patience**, which is the trap a polling
+workflow walks into: a GitHub App installation token lives an hour and cannot be extended, while the
+waits above are allowed 20 minutes per bump pull request and 45 for the pair of image builds. A
+token minted once at the top of the job would therefore be expired by the last write of a slow but
+perfectly successful run, and a release nobody needed to finish would be reported as one that has
+to be. So `release-cut.yml` mints a fresh token immediately before each phase that writes — the
+pull requests, the merges and tags, the product tag — rather than budgeting the waits to fit inside
+an hour, because the waits are sized by what api's image build and web's browser tests actually
+take and the hour has nothing to do with either. Anyone lengthening a budget should check that no
+single token still has to cover two phases.
+
 **What happens when a budget expires is the other half of the decision.** The run prints the
 commands that finish the release by hand, into the job summary, derived from how far it got rather
 than from where it stopped — and a final step does the same for a failure nobody anticipated, so

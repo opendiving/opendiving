@@ -635,10 +635,32 @@ jobs:
             echo "$url"
           done
 
+      # **A fresh token, because an installation token lasts an hour and the waits below can
+      # spend most of one.** This is the trap in a workflow that polls: the token minted at
+      # the top is fine for the checkouts and for opening the pull requests, which happen in
+      # the first minutes, and then the mergeability waits alone can run to 40 - so a slow
+      # but perfectly successful run would reach the last write with an expired credential
+      # and report a release nobody needs to finish as one that has to be. There is no way
+      # to extend a token's life, so the answer is to take a new one immediately before each
+      # phase that writes. It costs one API call, and the action revokes each of them when
+      # the job ends.
+      - name: A fresh token for the merges and the tags
+        id: app_merge
+        if: ${{ !inputs.dry_run }}
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.RELEASE_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            ${{ github.event.repository.name }}
+            opendiving-api
+            opendiving-web
+
       - name: Merge both bumps, and tag the commits that land
         if: ${{ !inputs.dry_run }}
         env:
-          GH_TOKEN: ${{ steps.app.outputs.token }}
+          GH_TOKEN: ${{ steps.app_merge.outputs.token }}
         run: |
           set -euo pipefail
           # shellcheck source=/dev/null
@@ -670,6 +692,19 @@ jobs:
             # it. HAS_HOOKS is not accepted because pre-receive hooks are a GitHub Enterprise
             # feature and this is github.com - if it ever appeared, it would time out here
             # rather than merge something nobody designed for.
+            #
+            # **What reaches CLEAN without a human rests on one setting, and this is where
+            # that dependency lives.** All three `main` rulesets carry
+            # `require_extra_approval_for_unattributed_changes: true`, and a pull request an
+            # App opens under its own identity is exactly what GitHub calls unattributed -
+            # but that rule adds one *more* approval than the number configured and has no
+            # effect at zero, which is where `required_approving_review_count` sits on all
+            # three. Raise it to one and releases stop: the pull request would want an
+            # approval and the unattributed rule would want a second, and the only symptom
+            # here is this wait running out at BLOCKED. Nothing in any of these trees would
+            # object, because a ruleset lives in repository settings. The recovery is a
+            # person approving the bump - whether an App may approve a pull request it opened
+            # itself is documented nowhere.
             echo "::group::$slug: waiting for pull request #$number to become mergeable"
             deadline=$(( SECONDS + MERGE_WAIT_SECONDS ))
             while true; do
@@ -689,7 +724,7 @@ jobs:
               esac
               if [ "$SECONDS" -ge "$deadline" ]; then
                 echo "::endgroup::"
-                stopped_part_way "$slug's bump pull request #$number was still $state after $(( MERGE_WAIT_SECONDS / 60 )) minutes. Open it and see which check is outstanding."
+                stopped_part_way "$slug's bump pull request #$number was still $state after $(( MERGE_WAIT_SECONDS / 60 )) minutes. Open it and see what it is waiting for: an outstanding check, or - if required_approving_review_count has been raised above zero - an approval this run cannot give."
               fi
               sleep 15
             done
@@ -814,10 +849,26 @@ jobs:
       # rather than at whatever `main` points to by now, because `release.yml` uploads the
       # install bundle from the tag and the bundle released has to be the one the decision
       # read.
+      # A third one, for the same reason as the second: the image wait above has just been
+      # allowed up to 45 minutes of the hour a token lives, and this is the last write in
+      # the run - the one whose failure costs a release that is otherwise complete.
+      - name: A fresh token for the product tag
+        id: app_tag
+        if: ${{ !inputs.dry_run }}
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.RELEASE_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            ${{ github.event.repository.name }}
+            opendiving-api
+            opendiving-web
+
       - name: Tag the front door
         if: ${{ !inputs.dry_run }}
         env:
-          GH_TOKEN: ${{ steps.app.outputs.token }}
+          GH_TOKEN: ${{ steps.app_tag.outputs.token }}
         run: |
           set -euo pipefail
           # shellcheck source=/dev/null
