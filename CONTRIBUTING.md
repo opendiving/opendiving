@@ -202,11 +202,12 @@ install files attached. Write the headline paragraph and confirm the **Breaking*
 silence is not an answer somebody deciding whether to upgrade can use. Then publish.
 
 **Nothing in api or web is bumped or tagged by hand** — the coordinator did both, and doing either
-again would put a second bump in the window this release was computed from. Each of them opens its
-own component release off the tag it was given; whether that release arrives published or as a
-draft somebody finishes is that repository's own business, and its releases page says which. Any
-instruction anywhere to bump a manifest and push a `v` tag yourself describes the ritual this
-replaced.
+again is how the *next* release gets stuck rather than this one: the decision refuses when the
+entries that declare a version disagree, or when a repository's newest tag is not what its manifests
+say, and a hand bump or a stray tag produces exactly that. Each of them opens its own component
+release off the tag it was given; whether that release arrives published or as a draft somebody
+finishes is that repository's own business, and its releases page says which. Any instruction
+anywhere to bump a manifest and push a `v` tag yourself describes the ritual this replaced.
 
 **Recovery, and what the guard does not cover.** By the time this repository is tagged both images
 are already out — `0.4.0`, `0.4`, `latest` and `sha-<12>` were pushed by each component's own
