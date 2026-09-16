@@ -519,10 +519,11 @@ What changed is less the best case than the spread: the set committed here befor
 edge at a 1012px container down to 2.70 at 480, so how level it looked depended on how wide the
 reader's window was, and it is now 2.75 to 2.89 across that whole range — marginally larger at 480
 than it was, and a third of what it was at 1012. The reasoning is `opendiving-web`'s `DECISIONS.md`,
-under *The gear frame is the lever under the README row, and it has now been pulled* — including the
-part that still governs this side: no single committed height is level for *every* reader, because
-the stacked pair scales with the column while the leading between the two images does not, so
-"levelled" means a residual small enough to stop reading as a defect rather than a zero.
+under *The gear frame's `HEIGHT` is the lever under the README row, written down rather than
+measured* — including the part that still governs this side: no single committed height is level for
+*every* reader, because the stacked pair scales with the column while the leading between the two
+images does not, so "levelled" means a residual small enough to stop reading as a defect rather than
+a zero.
 
 None of that was or is this repository's to act on. Cropping an image here to even the row out would
 break both the byte-for-byte copy and the rule behind it, and that stays true of a row that is level
