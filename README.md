@@ -90,6 +90,10 @@ what you need, what the six values are, and what the seven containers do.
   in one click, plus service schedules with due-soon reminders on the dashboard and by email.
 - **Certifications** — photos of your c-cards on hand at the dive shop, without digging out the
   plastic.
+- **Check-in** — the details a dive shop asks for at the desk, kept once: date of birth, phone, an
+  emergency contact and your dive insurance. One page gathers them with your c-cards, dive count,
+  max depth and last dive, and prints — your browser's save-as-PDF is the copy for a desk with no
+  signal.
 - **Full export** — one click takes _everything_ out in open formats: a
   **[DiveJSON](https://divejson.org)** document — the open dive-log interchange format this
   project publishes and implements — a **UDDF** document other programs import, a **CSV** for a
