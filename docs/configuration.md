@@ -247,7 +247,7 @@ a database that already exists under a different name).
 | `MIGRATE_ON_START`       | `true`        | Runs `alembic upgrade head` as the API starts, which is what makes an upgrade `pull` + `up -d`. Turn it off only if you'd rather run `docker compose run --rm api alembic upgrade head` yourself.                                                                                                                                                          |
 | `REDIS_PASSWORD`         | *(none)*      | For pointing the app at a managed Redis instead of the bundled one. The bundled one needs no password and is not reachable outside the compose network.                                                                                                                                                                                                    |
 | `FILE_STORAGE_BACKEND`   | `local`       | Where uploaded files are kept: `local` writes them into `FILE_STORAGE_DIR`, `s3` puts them in an S3-compatible bucket. The bundle mounts a volume for `local`, so a compose install on one machine has nothing to set here — see [Object storage](#object-storage) for the install that does. Any other value refuses to start.                             |
-| `FILE_STORAGE_DIR`       | `/data/files` | Where the `local` backend writes uploaded dive-computer exports, c-card images, profile pictures and species photographs, inside the container. The compose file mounts the `files-data` volume there, so there is nothing to set unless you replaced that volume with a bind mount — and then the host directory has to be owned by uid 1000 or the API refuses to start. Ignored entirely under `s3`. |
+| `FILE_STORAGE_DIR`       | `/data/files` | Where the `local` backend writes uploaded dive-computer exports, c-card images, profile pictures, portraits and species photographs, inside the container. The compose file mounts the `files-data` volume there, so there is nothing to set unless you replaced that volume with a bind mount — and then the host directory has to be owned by uid 1000 or the API refuses to start. Ignored entirely under `s3`. |
 
 Redis holds cache entries, open rate-limit windows and in-flight passkey challenges. Losing it costs
 a cold cache and interrupts passkey sign-in until it is back (see [Sign-in](#sign-in)); nothing
@@ -288,8 +288,8 @@ one variable.
 
 **Keep the bucket private.** Every byte is served through the API, which reads the object and hands
 it to a request it has already authorised — nothing generates a public or pre-signed URL, so a
-bucket that allows anonymous reads is not enabling anything, only exposing c-card scans to whoever
-guesses a key.
+bucket that allows anonymous reads is not enabling anything, only exposing c-card scans and
+portraits to whoever guesses a key.
 
 **Deletions land just after the job, not at the click.** What a purge destroys is unchanged, but on
 `s3` the objects go in a request the app does not wait for: the transaction commits, the rows are
@@ -460,12 +460,12 @@ this copy. Leave the panel off, as it ships, and none of this exists.
 
 Nothing here phones home. What the app can be told to contact:
 
-- **From the browser**: the basemap. Nothing else, in any configuration — profile pictures and
-  species photographs included. An avatar is stored by your own instance and served by your own
-  API, and so is the Commons photograph on a species: the server fetches it once and stores it, so
-  no visitor's browser ever contacts Wikimedia. (Gravatar used to be an option here, disclosing a
-  hash of every signed-in user's email address and their IP to Automattic on every page. It is gone,
-  along with its `GRAVATAR_ENABLED` variable.)
+- **From the browser**: the basemap. Nothing else, in any configuration — profile pictures,
+  portraits and species photographs included. A diver's profile picture and portrait are stored by
+  your own instance and served by your own API, and so is the Commons photograph on a species: the
+  server fetches it once and stores it, so no visitor's browser ever contacts Wikimedia. (Gravatar
+  used to be an option here, disclosing a hash of every signed-in user's email address and their IP
+  to Automattic on every page. It is gone, along with its `GRAVATAR_ENABLED` variable.)
 
   **The basemap** is fetched wherever a map is on screen, and each request carries only the `z/x/y`
   of the area shown. Unconfigured, that is the MapLibre vector pair the web image ships — its
