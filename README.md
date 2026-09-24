@@ -90,15 +90,16 @@ what you need, what the six values are, and what the seven containers do.
   in one click, plus service schedules with due-soon reminders on the dashboard and by email.
 - **Certifications** — photos of your c-cards on hand at the dive shop, without digging out the
   plastic.
-- **Check-in** — the details a dive shop asks for at the desk, kept once: date of birth, phone, an
-  emergency contact and your dive insurance. One page gathers them with your c-cards, dive count,
-  max depth and last dive, and prints — your browser's save-as-PDF is the copy for a desk with no
-  signal.
+- **Check-in** — the details a dive shop asks for at the desk, kept once: a portrait cropped like a
+  passport photo, date of birth, phone, an emergency contact and your dive insurance. One page
+  gathers them with your c-cards, dive count, max depth and last dive, and prints — your browser's
+  save-as-PDF is the copy for a desk with no signal.
 - **Full export** — one click takes _everything_ out in open formats: a
   **[DiveJSON](https://divejson.org)** document — the open dive-log interchange format this
   project publishes and implements — a **UDDF** document other programs import, a **CSV** for a
-  spreadsheet, or a complete archive carrying all three, every dive-computer file you uploaded and
-  every c-card image you stored. A data-ownership log without an exit door is a contradiction.
+  spreadsheet, or a complete archive carrying all three, every dive-computer file you uploaded,
+  every c-card image you stored, and your profile picture and portrait. A data-ownership log
+  without an exit door is a contradiction.
 - **Logbook import** — and the door swings both ways: bring a whole logbook in from a **DiveJSON**
   document, a full archive, a **UDDF** file, a Subsurface **`.ssrf`**, a **FIT** file, a **Suunto
   app JSON** export, a **Suunto DM5 XML** export, or a zip whose files are all one of those — a

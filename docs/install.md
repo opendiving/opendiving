@@ -112,9 +112,9 @@ Seven containers, of which exactly one publishes a port:
 `docker compose logs -f api` is where the API's startup — including `alembic upgrade head`, which
 runs itself — reports in.
 
-**The uploaded files are not in Postgres.** Dive-computer exports, c-card images, profile pictures
-and the species photographs are ordinary files on the `files-data` volume — or objects in your
-bucket, if you switched the API to object storage
+**The uploaded files are not in Postgres.** Dive-computer exports, c-card images, profile pictures,
+portraits and the species photographs are ordinary files on the `files-data` volume — or objects in
+your bucket, if you switched the API to object storage
 ([configuration.md](configuration.md#object-storage)) — one per row that references them, which is
 why a backup of this instance is *two* artifacts and a `pg_dump` alone is not one. Restoring the
 dump by itself gives you a logbook whose every file download fails.

@@ -1,11 +1,11 @@
 # Backup and restore
 
-**A backup is two artifacts: a `pg_dump` and a copy of the uploaded files.** The database holds every
-dive, dive site, trip and certification record; the `files-data` volume holds the uploaded
-dive-computer exports, c-card images and profile pictures themselves, one ordinary file each —
-along with the species photographs the API fetched from Wikimedia Commons, which are stored rather
-than hotlinked. Neither is a backup on its own — a restore of the dump alone gives you a logbook
-whose file downloads all fail.
+**A backup is two artifacts: a `pg_dump` and a copy of the uploaded files.** The database holds
+every dive, dive site, trip and certification record; the `files-data` volume holds the uploaded
+dive-computer exports, c-card images, profile pictures and portraits themselves, one ordinary file
+each — along with the species photographs the API fetched from Wikimedia Commons, which are stored
+rather than hotlinked. Neither is a backup on its own — a restore of the dump alone gives you a
+logbook whose file downloads all fail.
 
 Take them **in that order, database first**, and the pair is consistent: a file is written before
 the row that references it, and files are never modified in place, so a copy taken after the dump is
@@ -82,9 +82,10 @@ faithfully dumped every night is a corrupt database in every file you have.
 
 Somewhere private, too, and that goes for **both** artifacts. The files archive carries every
 account's c-card scans — ID-like documents with a diver's name, photo and certification number on
-them. The dump carries the names, email addresses and dive history those scans belong to, which is
-no less identifying. If either is going anywhere off hardware you control, a cloud bucket or a sync
-folder included, encrypt it before it leaves.
+them — and every portrait, a passport-style photo of a diver's face. The dump carries the names,
+email addresses and dive history those files belong to, which is no less identifying. If either is
+going anywhere off hardware you control, a cloud bucket or a sync folder included, encrypt it before
+it leaves.
 
 Worth copying alongside them: your `.env`. It is not secret from you, it is short, and without
 `SECRET_KEY` and `POSTGRES_PASSWORD` a restore is a stranger's database.
@@ -109,7 +110,7 @@ versioning protect you from its hardware, not from yourself — a mistaken delet
 seconds, and a lifecycle rule that expires old versions eventually takes the good copy too. And a
 second bucket in the same account is one leaked credential away from the first. Keep the copy
 somewhere with different credentials, and encrypt it before it leaves if that somewhere is not
-yours; it carries every account's c-card scans exactly as the tarball does.
+yours; it carries every account's c-card scans and portraits exactly as the tarball does.
 
 ## Restore
 
