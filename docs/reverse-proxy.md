@@ -29,7 +29,7 @@ expensive:
 TRUSTED_PROXY_IPS=172.29.0.0/16,10.1.2.3
 ```
 
-Every per-IP rate limit — magic-link requests, sign-in verification, the contact form, the
+Every per-IP rate limit — magic-link requests, sign-in verification, the support form, the
 request-an-invite form — is keyed on the caller's address. Behind a proxy that address arrives in
 `X-Forwarded-For`, and the API believes that header **only** from an address listed here. Get it
 wrong in either direction and something breaks quietly:
