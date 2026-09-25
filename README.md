@@ -94,6 +94,9 @@ what you need, what the six values are, and what the seven containers do.
   passport photo, date of birth, phone, an emergency contact and your dive insurance. One page
   gathers them with your c-cards, dive count, max depth and last dive, and prints — your browser's
   save-as-PDF is the copy for a desk with no signal.
+- **Contacts** — the dive centers, shops, schools, clubs and places you stayed, each kept once and
+  picked from a list rather than typed again: for a dive, a course, a c-card, a gear service or a
+  part of a trip. A UDDF file's dive bases, shops and accommodation arrive as contacts.
 - **Full export** — one click takes _everything_ out in open formats: a
   **[DiveJSON](https://divejson.org)** document — the open dive-log interchange format this
   project publishes and implements — a **UDDF** document other programs import, a **CSV** for a

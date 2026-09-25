@@ -118,7 +118,7 @@ environment the container was created with.
 
 ## Everyone shares one rate-limit bucket
 
-Symptom: one person's retries lock sign-in for everybody, or the contact form starts answering 429
+Symptom: one person's retries lock sign-in for everybody, or the support form starts answering 429
 to callers who have used it once.
 
 The API believes `X-Forwarded-For` only from an address listed in `TRUSTED_PROXY_IPS`. Unset — or
