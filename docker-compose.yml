@@ -192,7 +192,7 @@ services:
       admin_init:
         condition: service_completed_successfully
 
-  # Scheduled email (the gear-service digest) and background jobs. Same image, no HTTP.
+  # Scheduled email (the reminders and the year in review) and background jobs. Same image, no HTTP.
   worker:
     image: ghcr.io/opendiving/opendiving-api:${OPENDIVING_VERSION:-latest}
     command: arq app.core.worker.settings.WorkerSettings

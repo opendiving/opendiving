@@ -103,7 +103,7 @@ Seven containers, of which exactly one publishes a port:
 | `caddy`      | TLS and the front door — **the only one on 80/443**               |
 | `web`        | The Next.js app, and the proxy that carries `/api/v1` to the API  |
 | `api`        | The FastAPI backend                                               |
-| `worker`     | Scheduled jobs and the gear-service reminder digest               |
+| `worker`     | Scheduled jobs, including the reminder and year-in-review emails  |
 | `admin_init` | One-shot; exits immediately unless the admin panel is switched on |
 | `db`         | PostgreSQL 18 — **every dive, site, trip and certification**      |
 | `redis`      | Cache and job queue; nothing durable                              |
