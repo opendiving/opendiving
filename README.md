@@ -89,11 +89,13 @@ what you need, what the six values are, and what the seven containers do.
 - **Gear tracking** — equipment with per-item dive counts, groupable into sets you attach to a dive
   in one click, plus service schedules with due-soon reminders on the dashboard and by email.
 - **Certifications** — photos of your c-cards on hand at the dive shop, without digging out the
-  plastic.
+  plastic, and an email when a card or your dive insurance comes within 90 days of expiring, and
+  again when it does.
 - **Check-in** — the details a dive shop asks for at the desk, kept once: a portrait cropped like a
   passport photo, date of birth, phone, an emergency contact and your dive insurance. One page
   gathers them with your c-cards, dive count, max depth and last dive, and prints — your browser's
-  save-as-PDF is the copy for a desk with no signal.
+  save-as-PDF is the copy for a desk with no signal — or shares as a link and a QR code the desk
+  opens on its own phone, for a day or until you revoke it.
 - **Contacts** — the dive centers, shops, schools, clubs and places you stayed, each kept once and
   picked from a list rather than typed again: for a dive, a course, a c-card, a gear service or a
   part of a trip. A UDDF file's dive bases, shops and accommodation arrive as contacts.
@@ -112,9 +114,15 @@ what you need, what the six values are, and what the seven containers do.
   the files behind them; it is the full archive that restores the uploads too, and a deleted dive
   with them, under the identifier it had. An exit door you cannot walk back through is only half of
   owning your data.
+- **Year in review** — each January, an email with the year before in figures: dives and time
+  underwater, the deepest and longest, dive sites, and species with the ones you saw for the first
+  time.
 - **Passwordless sign-in** — email magic links, a six-digit code, passkeys, or Google. No passwords
   stored, ever.
 - **Dark mode and responsive** — works on the boat, in the dive shop, and on your desk.
+- **Installs like an app** — add it to a phone's home screen from the browser's install or share
+  menu (on iOS 16.4 and later, Safari's Share → Add to Home Screen), and it opens in its own window
+  at your dashboard.
 
 |                                                                                                        |                                                                                                                                                                                           |
 | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
