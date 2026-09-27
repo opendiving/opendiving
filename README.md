@@ -99,6 +99,12 @@ what you need, what the six values are, and what the seven containers do.
 - **Contacts** — the dive centers, shops, schools, clubs and places you stayed, each kept once and
   picked from a list rather than typed again: for a dive, a course, a c-card, a gear service or a
   part of a trip. A UDDF file's dive bases, shops and accommodation arrive as contacts.
+- **People** — who you dived, travelled and trained with: buddies, guides, instructors, fellow
+  students, whoever came along. Each is kept once and picked from a list, with the role they had on
+  that dive, trip or course, and a course's or a c-card's instructor is one of them. Link one to
+  their account on the same instance by its username, if you choose, and you see that account's
+  current username beside the name and nothing else of theirs; they are not told. A UDDF or
+  Subsurface file's buddies and dive guides arrive as people.
 - **Full export** — one click takes _everything_ out in open formats: a
   **[DiveJSON](https://divejson.org)** document — the open dive-log interchange format this
   project publishes and implements — a **UDDF** document other programs import, a **CSV** for a
