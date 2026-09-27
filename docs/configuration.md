@@ -361,9 +361,9 @@ down, or the bucket's own lifecycle rules going the other way.
 Deleting an account takes effect immediately — the app stops opening, on every device — but the data
 is not destroyed until the grace period runs out. A cron in the `worker` container runs hourly at
 :30 and issues a real `DELETE FROM "user"` for each account past its deadline, taking that diver's
-dives, dive sites, certifications, gear, trips, contacts and every uploaded file with it. Nothing
-else purges an account, and nothing decides on a user's behalf that one should go: the job only ever
-executes a request the user already made.
+dives, dive sites, certifications, gear, trips, contacts, people and every uploaded file with it.
+Nothing else purges an account, and nothing decides on a user's behalf that one should go: the job
+only ever executes a request the user already made.
 
 **Two things worth knowing before you change the number.** The bundled privacy page states that
 personal information is permanently deleted within 30 days. That sentence is true at the default and
