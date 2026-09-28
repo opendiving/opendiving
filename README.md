@@ -85,7 +85,8 @@ what you need, what the six values are, and what the seven containers do.
 - **Air consumption** — SAC and RMV derived automatically, including a per-tank breakdown across
   recorded gas switches, with a consumption trend on the dashboard.
 - **Trips, dive sites, species** — group dives into a liveaboard or a holiday week; keep your own
-  site list with every dive logged at each; track what you saw.
+  site list with every dive logged at each; track what you saw, with how many you counted and a
+  note on each.
 - **Gear tracking** — equipment with per-item dive counts, groupable into sets you attach to a dive
   in one click, plus service schedules with due-soon reminders on the dashboard and by email.
 - **Certifications** — photos of your c-cards on hand at the dive shop, without digging out the
