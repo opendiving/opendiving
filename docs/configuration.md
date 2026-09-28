@@ -319,11 +319,14 @@ started before you edited `.env` the copy refuses, saying the `S3_*` group is un
 looking at it in `.env`. It is the trap the top of this page warns about, met in the one procedure
 here that reaches into a running container rather than restarting it.
 
-The copy never deletes from the source, and it is resumable: every key ends in the sha256 of its own
-content, so an object already sitting under that key cannot hold different bytes and is skipped
-rather than re-sent. Interrupt it and run it again. When it reports no failures, set
-`FILE_STORAGE_BACKEND` to the backend you copied *into* and `docker compose up -d` once more — that
-second recreate is what actually moves the instance across.
+The copy never deletes from the source, and it is resumable: every key ends in the sha256 of the file
+as uploaded — followed by `.zst` for a dive-computer file, which is stored compressed — so an object
+already sitting under that key cannot hold a different file and is skipped rather than re-sent. What
+it does copy is checked against that digest first, a compressed object by decoding it, and one that
+does not match is reported as a failure and left behind rather than carried across. Interrupt it and
+run it again. When it reports no failures, set `FILE_STORAGE_BACKEND` to the backend you copied
+*into* and `docker compose up -d` once more — that second recreate is what actually moves the
+instance across.
 
 `--to local` runs the same procedure in the other direction, with the two backend names swapped
 throughout.
@@ -351,6 +354,33 @@ down, or the bucket's own lifecycle rules going the other way.
 | `COMMONS_API_URL`                                                                                                  | public              | Wikimedia Commons, asked for a species photo's credit metadata and the URL of one scaled copy, once Wikidata has named the file — never for anything a diver typed. This one *is* optional in the way the two above are not: `""` or an unreachable host simply means species have no photos. It configures the **metadata** call only. The image bytes are only ever fetched from `thumb.wikimedia.org` or `upload.wikimedia.org`, the two hosts one Commons reply can name; that pair is hard-coded and deliberately has no setting in front of it, because it is an SSRF fence — see [Third-party calls](#third-party-calls).                                                                                                                                                                            |
 | `SPECIES_USER_AGENT`                                                                                               | the project's       | The `User-Agent` on every species call — both registers, and Commons for the credit metadata and the image bytes. Ships as `OpenDiving (+https://github.com/opendiving/opendiving-api)`. Emptying it is **not** the graceful off switch the row above is: Wikimedia answers **403** to an empty one, on the metadata call and the byte fetch both, and the same header goes to WoRMS and Wikidata — so a blank value takes species search and resolution with it, not only the photos, and the API starts normally either way. Change it because the default identifies the *project*, not your instance: every deployment sends that one string, so one operator's runaway backfill is attributed to everyone running OpenDiving; put your own contact in — see [Third-party calls](#third-party-calls).   |
 | `SPECIES_WORMS_RATE_LIMIT_REQUESTS`, `SPECIES_WIKIDATA_RATE_LIMIT_REQUESTS`, `SPECIES_COMMONS_RATE_LIMIT_REQUESTS` | `120`, `300`, `120` | What the whole instance may spend on each upstream, over `SPECIES_WORMS_RATE_LIMIT_WINDOW_SECONDS`, `SPECIES_WIKIDATA_RATE_LIMIT_WINDOW_SECONDS` and `SPECIES_COMMONS_RATE_LIMIT_WINDOW_SECONDS` — `60` seconds each. Counted across every user and charged only to calls that actually leave, so exceeding one is never a 429: that upstream drops out and the rest still answer. Neither provider publishes a limit — WoRMS states none at all, and Wikimedia's applies to anonymous heavy use rather than to a call every few seconds — so all three are self-imposed politeness, set well above what a picker generates. Commons's is lower than Wikidata's and still ample — it is charged at most twice per *new* species, the credit call and the byte fetch, rather than once per search candidate. |
+
+### Storage limit
+
+| Variable           | Default | What it does                                                                                                                                                 |
+| ------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `STORAGE_LIMIT_MB` | `1024`  | How much one account may keep stored, in MB (1024-based). `STORAGE_LIMIT_MB=` with nothing after the `=` means no limit. A value below 1 refuses to start.   |
+
+**It is on unless you turn it off**, on a new install and on one upgraded from a version without it:
+an `.env` that does not name the setting gets the default, and so does one where the line is still
+commented out. Only the blank value means unlimited. It is one number for every account, the
+administrators' included, with no per-account override.
+
+**What counts is what the account occupies on your disk or in your bucket**: its dive-computer files
+as stored, which is compressed — a Suunto JSON export keeps about a tenth of its size, a FIT file
+about a quarter — plus its c-card scans, and its profile picture and portrait, the original and the
+resized copy of each. At those sizes the default holds a few thousand dives' worth of recordings.
+Species photographs are a catalogue the whole instance shares, and count against nobody. A
+dive-computer file stored by an earlier version stays as it was, uncompressed, and counts at its
+full size.
+
+**An upload that would take an account past it is refused**, before anything is stored, with a
+message that names both figures: "This upload would take your account past its storage limit: … of
+… used." A dive being logged is still saved, without the file; a logbook archive whose files would
+cross the limit is refused whole, with nothing imported. Nothing already stored is ever removed, so
+lowering the number below what an account holds leaves its files in place — it can still delete, and
+replace a c-card scan or a picture with a smaller one, but cannot add. Nothing locks around the check
+either: two uploads racing each other can overshoot the limit by one of them.
 
 ### Account deletion
 

@@ -4,8 +4,10 @@
 every dive, dive site, trip and certification record; the `files-data` volume holds the uploaded
 dive-computer exports, c-card images, profile pictures and portraits themselves, one ordinary file
 each — along with the species photographs the API fetched from Wikimedia Commons, which are stored
-rather than hotlinked. Neither is a backup on its own — a restore of the dump alone gives you a
-logbook whose file downloads all fail.
+rather than hotlinked. A dive-computer export is stored compressed and is still one file, named with
+a `.zst` on the end; the API decodes it when it serves it, so a download is the file as uploaded.
+Neither is a backup on its own — a restore of the dump alone gives you a logbook whose file
+downloads all fail.
 
 Take them **in that order, database first**, and the pair is consistent: a file is written before
 the row that references it, and files are never modified in place, so a copy taken after the dump is
