@@ -67,11 +67,12 @@ account is deleted and purged hands the same deal to whoever signs in next.
 
 **How you invite people.** Every member has an *Invitations* card in Settings, subject to the quota
 above. As the operator you also get an **Admin** entry in the account menu — sign in as the first
-account, open the menu, choose *Admin* — which lists the queue of addresses that used the request
-form, tells you which of them already have an account, and invites or removes them in a batch. An
-invitation is an entry against the email address rather than a code to forward: the invitee signs in
-with the address that was invited — by link, code or Google, exactly as anybody else does — so there
-is no token for them to lose and nothing extra for you to explain.
+account, open the menu, choose *Admin*. Its *Invite Queue* lists the addresses that used the request
+form, tells you which of them already have an account, and invites or removes them in a batch; its
+*Stats* screen shows daily totals of accounts created, sign-ins and active accounts. An invitation is
+an entry against the email address rather than a code to forward: the invitee signs in with the
+address that was invited — by link, code or Google, exactly as anybody else does — so there is no
+token for them to lose and nothing extra for you to explain.
 
 Somebody who is not invited still gets their sign-in email. The endpoint that sends it deliberately
 never learns whether an address is invited, or even whether it has an account, which is what keeps
