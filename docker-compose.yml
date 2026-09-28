@@ -248,7 +248,7 @@ services:
         condition: service_healthy
 
   db:
-    image: postgres:18@sha256:06cad38a5d9f5d24b4d83d86def30795d5e4b757fedbf5281172b576dedcd941
+    image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
     restart: unless-stopped
     # Not `env_file: .env`, for the same reason as `web`: this container needs three
     # values from it, not thirty. POSTGRES_PASSWORD initializes the cluster on first
