@@ -40,6 +40,10 @@ exist, a name misspelled, a key that may read but not write, or a bucket in a di
 from the credential. The message carries the endpoint and the bucket it tried. The same check runs
 in the `worker` container, so fix it once in `.env` and both come up.
 
+**`STORAGE_LIMIT_MB is 0, and a limit below 1 MB would refuse every upload`** — `0` does not mean
+unlimited here. Leave the value blank, `STORAGE_LIMIT_MB=`, for no limit, or set the MB one account
+may store — [configuration.md](configuration.md#storage-limit).
+
 **An edit to `.env` seems to have done nothing** — `docker compose restart` does *not* re-read the
 file. It restarts the process inside a container that keeps the environment it was created with.
 `docker compose up -d` recreates what changed, and that is what applies an edit.

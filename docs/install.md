@@ -79,10 +79,12 @@ asks for relay credentials instead of bundling Postfix.
 - 1 vCPU, 1 GB RAM, and 10 GB of disk is enough to start. Postgres and Redis are the memory floor;
   two GB is comfortable.
 - **Disk grows with the files you upload**, which live on their own Docker volume rather than in the
-  database — a dive-computer export is tens of kilobytes, a c-card photo up to 10 MB. A thousand
-  dives with photographed cards is still comfortably inside a few GB. If you switched the API to
-  object storage ([configuration.md](configuration.md#object-storage)) that growth is the bucket's
-  instead, and only the floor above applies.
+  database. A dive-computer export runs from tens of kilobytes for a FIT file to 1 or 2 MB for a
+  Suunto JSON, and is stored compressed — the JSON at about a tenth of that; a c-card photo is up to
+  10 MB. A thousand dives with photographed cards is still comfortably inside a few GB, and each
+  account is capped at 1 GB by default ([configuration.md](configuration.md#storage-limit)). If you
+  switched the API to object storage ([configuration.md](configuration.md#object-storage)) that
+  growth is the bucket's instead, and only the floor above applies.
 - **amd64 and arm64 both**. Every release publishes both architectures, so a Raspberry Pi 4/5, an
   Ampere VPS or an Apple-silicon box runs the same images as an x86 server.
 
