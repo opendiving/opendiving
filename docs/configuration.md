@@ -392,7 +392,8 @@ either: two uploads racing each other can overshoot the limit by one of them.
 Deleting an account takes effect immediately — the app stops opening, on every device — but the data
 is not destroyed until the grace period runs out. A cron in the `worker` container runs hourly at
 :30 and issues a real `DELETE FROM "user"` for each account past its deadline, taking that diver's
-dives, dive sites, certifications, gear, trips, contacts, people and every uploaded file with it.
+dives, dive sites, certifications, gear, trips, contacts, people, tags and every uploaded file with
+it.
 Nothing else purges an account, and nothing decides on a user's behalf that one should go: the job
 only ever executes a request the user already made.
 

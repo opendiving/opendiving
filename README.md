@@ -66,9 +66,13 @@ what you need, what the six values are, and what the seven containers do.
 
 ## Features
 
-- **Dive logging** — times, depths, duration, temperature, visibility, water type, altitude, weight,
-  notes, and any number of gas mixtures (O₂/He, start/end pressures) per dive. A dive can span
-  multiple dive sites, in order, because drift dives happen.
+- **Dive logging** — times, depths, duration, water and air temperature, visibility, water type,
+  altitude, current, waves, weather, weight, notes, and any number of gas mixtures (O₂/He,
+  start/end pressures) per dive, with whether you went in from the shore, a pier, a pool or a boat
+  and the boat's name. Say what kind of dive it was, from open circuit to freediving, rate it out
+  of five and tag it in your own words; the dive list filters by tag or type and sorts by rating,
+  and Settings renames or deletes a tag. A dive can span multiple dive sites, in order, because
+  drift dives happen.
 - **Technical diving** — trimix and nitrox mixes get derived gas names and per-mix **MOD** at your
   ppO₂ limit, plus END/EAD; the profile chart shades the **deco ceiling**, plots the computer's own
   **NDL, TTS, ppO₂, CNS and gradient factors** and marks dive events; each recording says the mode
