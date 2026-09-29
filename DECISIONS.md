@@ -422,7 +422,9 @@ install at all. It names the formats anyway, one by one, because "any format the
 tells a diver holding a `.ssrf` nothing, and telling them at a glance whether their file is one is
 the entire point of the feature. The cost is that a version bump adding a reader leaves this list
 short — a stale README rather than a wrong error message, and the fix belongs in the PR that bumps
-the pin.
+the pin. The list is written once, in the *Logbook import* bullet. The dive form reads through the
+same package, so the *Dive-computer import* bullet says it takes one dive in any format that bullet
+names, rather than keeping a second list for a bump to leave short twice.
 
 The pin is not in this repository, which is the part worth saying out loud: it is
 `opendiving-api`'s, and a PR there cannot touch this file, so "the PR that bumps the pin" is a rule

@@ -61,7 +61,7 @@ what you need, what the six values are, and what the seven containers do.
 | [Configuration](docs/configuration.md)             | Every setting, grouped — and which six matter  |
 | [Reverse proxy](docs/reverse-proxy.md)             | Bring your own, or run on a LAN with no domain |
 | [Backup & restore](docs/backup-restore.md)         | The dump, the uploaded files, and the drill    |
-| [Upgrade](docs/upgrade.md)                         | Pull, up, done — and the stance on downgrades  |
+| [Upgrade](docs/upgrade.md)                         | Pull, up, any step a release names, downgrades |
 | [Troubleshooting](docs/troubleshooting.md)         | Certificates, mail, rate limits, starting over |
 
 ## Features
@@ -74,14 +74,15 @@ what you need, what the six values are, and what the seven containers do.
   **NDL, TTS, ppO₂, CNS and gradient factors** and marks dive events; each recording says the mode
   it ran in and the **decompression model** behind those numbers; **CNS/OTU** oxygen exposure and
   surface pressure are kept from imports, per-cylinder ppO₂ limits and gas roles included.
-- **Dive-computer import** — upload a FIT file (Garmin Descent, Suunto Ocean/D5) or a Suunto
-  XML/JSON export and the form pre-fills itself. Each file lands on a **recording**, one per device
-  that recorded the dive: two computers on one dive are two recordings, and one computer's JSON
-  beside its FIT is two files of one recording, each filling what the other left blank. Every file
-  you upload stays with the recording it came from and can be re-downloaded any time, and the
-  per-sample profile is extracted and charted per recording, with a switcher when a dive has more
-  than one. A computer that chopped one dive in half logs it as two dives, and **Merge** folds them
-  back into one.
+- **Dive-computer import** — upload one dive's file in any format **Logbook import** below reads
+  and the form pre-fills itself, while a file holding several dives, or one file carrying two
+  computers' records of a dive, goes through that import instead. Each file lands on a
+  **recording**, one per device that recorded the dive: two computers on one dive are two
+  recordings, and one computer's JSON beside its FIT is two files of one recording, each filling
+  what the other left blank. Every file you upload stays with the recording it came from and can be
+  re-downloaded any time, and the per-sample profile is extracted and charted per recording, with a
+  switcher when a dive has more than one. A computer that chopped one dive in half logs it as two
+  dives, and **Merge** folds them back into one.
 - **Air consumption** — SAC and RMV derived automatically, including a per-tank breakdown across
   recorded gas switches, with a consumption trend on the dashboard.
 - **Trips, dive sites, species** — group dives into a liveaboard or a holiday week; keep your own
@@ -139,10 +140,13 @@ what you need, what the six values are, and what the seven containers do.
 
 Roughly in priority order — contributions welcome:
 
-- **More importers** — Shearwater Cloud's whole-database export, which keeps each dive's samples in
-  the computer's own binary log rather than in readable rows, so it needs a dive-computer parser
-  rather than a format adapter; Shearwater Cloud's UDDF export of the same dives already imports.
-  Longer term, [libdivecomputer](https://www.libdivecomputer.org/) for direct hardware support.
+- **More importers** — a new format is a reader in the
+  [`divejson`](https://github.com/divejson/divejson-py) package, which reads every file the dive
+  form and logbook import take. Shearwater Cloud's whole-database export is the one outstanding: it
+  keeps each dive's samples in the computer's own binary log rather than in readable rows, so its
+  reader has to decode that log rather than walk a table; Shearwater Cloud's UDDF export of the same
+  dives already imports. Longer term, [libdivecomputer](https://www.libdivecomputer.org/) for direct
+  hardware support.
 - **Statistics** — depth and time records, dives per year, a sites map.
 - **Sharing** — a public link to a dive or a trip.
 - **iOS companion app** — parked until the server story is done.

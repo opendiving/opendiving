@@ -168,10 +168,10 @@ number is what replaces them.
 
 "Breaking" is about the operator's experience, not the code's — which is why a schema change on its
 own is *not* breaking: migrations run themselves on startup. What counts is anything the operator has
-to do by hand before the new version will run: an edited `.env`, a changed config contract, a removed
-behaviour they depended on. **A change to the bundle that an existing install has to copy** — a new
-required variable, a new service — is breaking in exactly this sense, because `docker compose pull`
-does not update the compose file.
+to do by hand for the new version to run as it should: an edited `.env`, a changed config contract, a
+removed behaviour they depended on, the profile backfill a changed reader asks for. **A change to
+the bundle that an existing install has to copy** — a new required variable, a new service — is
+breaking in exactly this sense, because `docker compose pull` does not update the compose file.
 
 **Then run
 [Cut the release](https://github.com/opendiving/opendiving/actions/workflows/release-cut.yml)** from

@@ -38,10 +38,15 @@ This repository is the install bundle and the operator documentation. **A defect
 code belongs with the code**, and both component repositories have the same policy and the same
 private-reporting tab:
 
-- The API, the worker, authentication, the parsers, the admin panel —
+- The API, the worker, authentication, how an uploaded file is handled, the admin panel —
   [opendiving-api](https://github.com/opendiving/opendiving-api/security).
 - The web app, its route handlers, its headers —
   [opendiving-web](https://github.com/opendiving/opendiving-web/security).
+
+A defect in reading a file format itself — the code that turns a dive-computer file or a logbook
+into dives — belongs to neither: every format the app takes is read by the
+[`divejson`](https://github.com/divejson/divejson-py) package, which lives in its own organisation
+under [its own security policy](https://github.com/divejson/.github/blob/main/SECURITY.md).
 
 Report it here if you aren't sure, or if it is the *combination* that is unsafe rather than either
 half — that is exactly what this repository is responsible for. It will be moved if it belongs
