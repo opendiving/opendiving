@@ -139,5 +139,5 @@ lists the full set of tags a released version carries.
 - [configuration.md](configuration.md) — every setting, grouped
 - [reverse-proxy.md](reverse-proxy.md) — bring your own proxy, or run on a LAN with no domain
 - [backup-restore.md](backup-restore.md) — the dump and the uploaded files, both
-- [upgrade.md](upgrade.md) — pull, up, done
+- [upgrade.md](upgrade.md) — pull, up, and any step a release names
 - [troubleshooting.md](troubleshooting.md) — when it doesn't go like that

@@ -6,21 +6,22 @@ docker compose pull
 docker compose up -d
 ```
 
-That is the whole procedure. Database migrations run themselves: the API executes
-`alembic upgrade head` as it starts, under an advisory lock so the four workers in the container
-cannot race each other, and only then begins serving. A schema change is therefore not a manual step
-and never has been one for an installed instance.
+That is the whole procedure, unless a release's notes name a step of their own —
+[below](#read-the-release-notes) says which two kinds there are. Database migrations run themselves:
+the API executes `alembic upgrade head` as it starts, under an advisory lock so the four workers in
+the container cannot race each other, and only then begins serving. A schema change is therefore not
+a manual step and never has been one for an installed instance.
 
 Take a backup first anyway — [backup-restore.md](backup-restore.md), the database dump *and* the
-uploaded files, since neither is a backup without the other — because the one thing that is not
-automatic is going back.
+uploaded files, since neither is a backup without the other — because going back is never
+automatic.
 
 ## Read the release notes
 
 Releases are cut deliberately, not per merge, and each one carries an explicit **Breaking** section
 that says "None" in so many words when there is nothing. Breaking here means something *you* have to
-do: an edited `.env`, a changed configuration contract, a removed behaviour. A schema change on its
-own is not breaking, because it applies itself.
+do: an edited `.env`, a changed configuration contract, a removed behaviour, a command to run once
+the new version is up. A schema change on its own is not breaking, because it applies itself.
 
 <https://github.com/opendiving/opendiving/releases>
 
@@ -33,7 +34,7 @@ one.
 **`docker compose pull` updates images and nothing else.** `docker-compose.yml`, `Caddyfile` and the
 `.env` you made from `example.env` are files you downloaded once; they stay exactly as they are
 through every upgrade. So when a release's Breaking section names one of them, re-downloading it is
-the manual step, and it is the only kind of manual step this project's releases have:
+the manual step, and it is one of the two kinds of manual step this project's releases have:
 
 ```bash
 curl -LO https://github.com/opendiving/opendiving/releases/latest/download/Caddyfile
@@ -41,6 +42,24 @@ curl -LO https://github.com/opendiving/opendiving/releases/latest/download/Caddy
 
 Your `.env` is never overwritten — take new settings out of that release's `example.env` by hand,
 which is also how you get the paragraph explaining each one.
+
+**The other kind is the profile backfill**, a command run once in the api container after the
+upgrade. Each dive's per-sample profile is read out of the dive-computer files you uploaded, and a
+stored profile records which reader read it. When a release changes how that reading is done, its
+Breaking section names the backfill, with the exact command — this one, plus any flags that release
+needs:
+
+```bash
+docker compose exec api python -m src.scripts.backfill_dive_profiles
+```
+
+It re-reads each file-backed profile from its stored files, and running it twice is harmless: the
+second run finds nothing left to do. `--dry-run` reports what it would re-read and writes nothing.
+Until it runs, every profile is served as the previous reader left it — a valid profile, charted as
+before — so the instance is usable in between. A release that only moves the version of
+[`divejson`](https://github.com/divejson/divejson-py), the package that reads every dive-computer
+file, also leaves the stored profiles behind the new reader, and just as valid; there the backfill
+is optional — run it when convenient to bring them level — and not a Breaking step.
 
 ## Pin the version
 
