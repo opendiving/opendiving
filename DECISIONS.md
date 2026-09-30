@@ -844,12 +844,12 @@ cannot be merged as one operation, and a run that dies between the two merges is
 recipe is for.
 
 **Waiting for `CLEAN` rather than for "mergeable" is where this departs from the implementation it
-is modelled on**, which accepts `UNSTABLE` because nothing on its `main` is a required check. Six
-are required on each of api and web, none path-filtered, so a freshly opened bump sits at `BLOCKED`
-for minutes and a poll that only waits out `UNKNOWN` would abort on its first evaluation. The App
-holds Contents and Pull requests and nothing else, so the run cannot read check runs to say *which*
-check is outstanding — `mergeStateStatus` is the whole of what it can see, which is why a timeout
-sends a reader to the pull request rather than naming a job.
+is modelled on**, which accepts `UNSTABLE` because nothing on its `main` is a required check. Api
+and web both require checks that take minutes, none path-filtered, so a freshly opened bump sits at
+`BLOCKED` for minutes and a poll that only waits out `UNKNOWN` would abort on its first
+evaluation. The App holds Contents and Pull requests and nothing else, so the run cannot read check
+runs to say *which* check is outstanding — `mergeStateStatus` is the whole of what it can see, which
+is why a timeout sends a reader to the pull request rather than naming a job.
 
 **The budgets are bounded by the token as well as by patience**, which is the trap a polling
 workflow walks into: a GitHub App installation token lives an hour and cannot be extended, while the
