@@ -683,11 +683,12 @@ jobs:
           #
           # **CLEAN only**, which is where this departs from the implementation it is modelled
           # on. That one accepts UNSTABLE because nothing on its `main` is a required check;
-          # these two require six each, none of them path-filtered, among them api's
-          # Postgres-backed `tests` and image-building `runtime-imports` and web's
-          # browser-driven `lint-and-build`. A freshly opened pull request is therefore
-          # BLOCKED for minutes while they run, and a poll that only waits out UNKNOWN would
-          # abort on its first evaluation with two bump pull requests open and nothing tagged.
+          # these two require checks on every pull request, none of them path-filtered and
+          # some of them minutes long - api's Postgres-backed `tests` and image-building
+          # `runtime-imports` and web's browser-driven `unit-tests` shards among them. A
+          # freshly opened pull request is therefore BLOCKED for minutes while they run, and
+          # a poll that only waits out UNKNOWN would abort on its first evaluation with two
+          # bump pull requests open and nothing tagged.
           #
           # The App holds Contents and Pull requests and nothing else, so this cannot read the
           # check runs to say *which* check is outstanding - `mergeStateStatus` is the whole
