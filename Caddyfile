@@ -47,7 +47,8 @@
 	# CRUD_ADMIN_MOUNT_PATH note at the top of this file.
 	#
 	# No body-size limit is set: Caddy imposes none by default, and the app enforces its
-	# own (5 MB dive files, 10 MB card images) with an error message that explains itself.
+	# own (5 MB dive files, 10 MB card images, 500 MB across an import's files) with an
+	# error message that explains itself.
 	#
 	# No `header` block either, and that is a decision rather than an omission. These
 	# paths never touch the web container, so nothing it sets applies to them - but the

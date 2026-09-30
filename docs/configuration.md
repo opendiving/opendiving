@@ -378,11 +378,12 @@ full size.
 
 **An upload that would take an account past it is refused**, before anything is stored, with a
 message that names both figures: "This upload would take your account past its storage limit: … of
-… used." A dive being logged is still saved, without the file; a logbook archive whose files would
-cross the limit is refused whole, with nothing imported. Nothing already stored is ever removed, so
-lowering the number below what an account holds leaves its files in place — it can still delete, and
-replace a c-card scan or a picture with a smaller one, but cannot add. Nothing locks around the check
-either: two uploads racing each other can overshoot the limit by one of them.
+… used." A dive being logged is still saved, without the file; an import whose files would cross
+the limit — the files of one dive it keeps, or those a full-export archive restores — is refused
+whole, with nothing imported. Nothing already stored is ever removed, so lowering the number below
+what an account holds leaves its files in place — it can still delete, and replace a c-card scan or
+a picture with a smaller one, but cannot add. Nothing locks around the check either: two uploads
+racing each other can overshoot the limit by one of them.
 
 ### Account deletion
 

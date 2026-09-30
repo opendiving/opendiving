@@ -442,31 +442,33 @@ reads as a much smaller obstacle than the real one. The `## How it compares` ven
 keeps naming all four for the same reason it always did: it is a claim about those clouds'
 *exports*, and every one of the four has one this app reads.
 
-## "The original file is kept" is a claim about an upload to a dive, not about an import
+## "The original file is kept" is a claim about a file that is one dive, not about a logbook
 
 Three sentences in `README.md` promise the file back — the opening paragraph's data-ownership
 promise, the vendor-clouds bullet, and the *Dive-computer import* feature — and all three are
-written as a claim about a file **you upload**, because that is the only path that stores one. A
-logbook the converter reads is read once to produce DiveJSON and then discarded: the converter emits
-no files at all, and the importer creates a stored-file row only for the app's own full-export
-archive, which carries the binaries beside the document. So a diver who imports a zip of per-dive
-FIT files gets every dive and none of the FITs.
+written as a claim about a file **you upload to a dive**, because that promise needs no qualifier
+and an import's does. An import keeps a file only when it is one recording's: a file converted
+from another format that is one dive, carrying one computer's record of it and no larger than the
+5 MB a dive-computer file may be, is kept on the dive it becomes, and a computer's two exports of
+one dive are one recording holding both. A logbook of several dives is read and not kept, since a
+file belongs to one recording; so is a DiveJSON document, which is the logbook's own form; and the
+full-export archive puts back the files it carries.
 
 **A file is kept on the recording it came from, not on the dive itself**, which is what the
-*Dive-computer import* bullet now says: a dive holds one recording per device that recorded it, a
+*Dive-computer import* bullet says: a dive holds one recording per device that recorded it, a
 recording holds the files that produced it, and a diver wearing two computers — or uploading one
 computer's JSON beside its FIT — gets a second recording or a second file rather than a replaced
-one. A recording can also hold no files at all, which is what a converted logbook produces, so the
-promise stays scoped to what you *upload*. The other two sentences keep their dive-level wording on
-purpose: "a file you upload to a dive stays with it forever" is read by somebody who has met none of
-this, and it is still true, a recording belonging to exactly one dive. The word earns its place
-where the README is explaining the import itself, and nowhere else.
+one. A recording can also hold no files at all, which is what a logbook of several dives produces,
+so those three sentences stay scoped to what you *upload*. The other two keep their dive-level
+wording on purpose: "a file you upload to a dive stays with it forever" is read by somebody who has
+met none of this, and it is true, a recording belonging to exactly one dive. The word earns its
+place where the README is explaining the import itself, and nowhere else.
 
 It is worth stating because the natural way to write any of the three is the sweeping way — "every
-dive keeps the file it was imported from", which is what the opening paragraph said before the
-converter shipped and read as true only while a bare file could not be a logbook. The *Logbook
-import* bullet now says the asymmetry outright rather than leaving each of the three to imply it
-away, and that is the sentence to correct first if the importer ever does store what it converted.
+dive keeps the file it was imported from", which is false of a logbook of several dives. The
+*Logbook import* bullet says outright which imports keep their file and which do not, rather than
+leaving each of the three to imply it away, and it is the sentence to correct first when that line
+moves.
 
 **The tagline dropped the promise rather than qualifying it.** `README.md`'s first line is a fourth
 site, and the one place the qualifier does not fit: "the files you upload to a dive are kept" is
