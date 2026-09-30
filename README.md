@@ -119,13 +119,16 @@ what you need, what the six values are, and what the seven containers do.
   without an exit door is a contradiction.
 - **Logbook import** — and the door swings both ways: bring a whole logbook in from a **DiveJSON**
   document, a full archive, a **UDDF** file, a Subsurface **`.ssrf`**, a **FIT** file, a **Suunto
-  app JSON** export, a **Suunto DM5 XML** export, or a zip whose files are all one of those — a
-  watch that writes one file per dive arrives as a single upload. You see a preview of exactly what
-  will be created, linked or restored before anything is written, and anything a conversion could
-  not carry is listed rather than quietly dropped. Converting a logbook brings the dives across, not
-  the files behind them; it is the full archive that restores the uploads too, and a deleted dive
-  with them, under the identifier it had. An exit door you cannot walk back through is only half of
-  owning your data.
+  app JSON** export, a **Suunto DM5 XML** export, or a zip of any of them — any number of files at
+  once, in any mix, so a watch's whole folder of exports arrives in one go. A computer's two exports
+  of one dive become one dive with both files, and a file converted from another format that is one
+  dive is kept on the dive it becomes; a logbook of several dives, or a DiveJSON document, arrives
+  without its file. You see what each file was read as and a row for every dive it becomes — new,
+  already here, brought back from deletion, gaining a file, or skipped and why — before anything is
+  written, and anything a conversion could not carry is listed rather than quietly dropped. Records
+  you already have are matched rather than duplicated, a dive you deleted comes back under the
+  identifier it had, and the full archive restores the files it carries too. An exit door you cannot
+  walk back through is only half of owning your data.
 - **Year in review** — each January, an email with the year before in figures: dives and time
   underwater, the deepest and longest, dive sites, and species with the ones you saw for the first
   time.

@@ -114,12 +114,13 @@ server {
     # ssl_certificate ... ;
     # ssl_certificate_key ... ;
 
-    # The app accepts card images up to 10 MB and dive-computer files up to 5 MB. nginx's
-    # default is 1 MB, which would reject the larger half of those before the request ever
-    # reaches the app - so the caller gets nginx's bare 413 instead of the app's
-    # explanatory one. A little above the app's own ceiling keeps the app the thing that
-    # enforces it.
-    client_max_body_size 12m;
+    # The app accepts card images up to 10 MB, dive-computer files up to 5 MB, and an
+    # import of up to 1000 files and 500 MB in all - a folder of a watch's exports, a
+    # logbook, or a full-export archive. nginx's default is 1 MB, which would reject most
+    # of those before the request ever reaches the app - so the caller gets nginx's bare
+    # 413 instead of the app's explanatory one. A little above the app's own ceiling keeps
+    # the app the thing that enforces it.
+    client_max_body_size 512m;
 
     # No `add_header` here, deliberately - see step 6. Both upstreams set their own
     # security headers, and nginx's `add_header` appends rather than replaces: a second
@@ -163,10 +164,11 @@ entrypoint is not configured to strip forwarded headers.
 Add a Proxy Host: domain `dives.example.com`, scheme `http`, forward hostname `web`, forward port
 `3000`, *Websockets support* on, and request a certificate on the SSL tab. NPM sets the forwarded
 headers for you. Its container's address goes in `TRUSTED_PROXY_IPS`, and NPM's own default body
-limit (1 MB) needs raising in *Advanced* for card uploads:
+limit (1 MB) needs raising in *Advanced* for card uploads and imports, to the same figure as the
+nginx snippet above and for the same reason:
 
 ```nginx
-client_max_body_size 12m;
+client_max_body_size 512m;
 ```
 
 Leave the *HSTS* toggles on the SSL tab off unless you also set `WEB_HSTS=off`, and keep any
