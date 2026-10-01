@@ -503,16 +503,22 @@ Nothing here phones home. What the app can be told to contact:
 
   **The basemap** is fetched wherever a map is on screen, and each request carries only the `z/x/y`
   of the area shown. Unconfigured, that is the MapLibre vector pair the web image ships — its
-  tiles, its label glyphs and a low-zoom raster underlay, all from `tiles.openfreemap.org`. Five
-  surfaces draw a map: the form to add or edit a dive site, a dive site's own page, the form to add
-  or edit a trip, a trip with places on it, and the page of a dive that has a position — from the
-  site it was logged at, or from the GPS reading in the file it was imported from. The two forms
-  load a map as soon as they open; the other three load none when there is nothing to show. Whoever
-  serves the basemap therefore sees a visitor's IP address and roughly where they dive, and nothing
-  else — not their account, their dive log, or the name of anything on the map.
+  tiles, its label glyphs and a low-zoom raster underlay, all from `tiles.openfreemap.org`. A map
+  is drawn on the form to add or edit a dive site, a dive site's own page, the form to add or edit a
+  trip, a trip with places on it, every trip card — in the list of trips and the dashboard's recent
+  trips — and a dive that has a position: on its own page, and on its card wherever a list of dives
+  shows it, which is the list of dives, the dashboard's recent dives, and the dives listed on the
+  page of a dive site, a trip, a piece of gear, a species, a course or a person. A dive has a
+  position from the site it was logged at, from the GPS reading in the file it was imported from, or
+  from a logbook file that carried the position itself. A list draws each card's map as the card
+  nears the screen, so scrolling one fetches tiles for every card it reaches. The two forms load a
+  map as soon as they open, and a trip card shows the whole world until the trip has a place;
+  anywhere else, nothing to show loads no map. Whoever serves the basemap therefore sees a
+  visitor's IP address and roughly where they dive, and nothing else — not their account, their
+  dive log, or the name of anything on the map.
 
-  **Removing the third party takes one variable.** All five surfaces draw through MapLibre, so a
-  single setting reaches every one of them: `MAP_STYLE_URL` for a vector style you serve, or
+  **Removing the third party takes one variable.** Every one of those maps draws through MapLibre,
+  so a single setting reaches all of them: `MAP_STYLE_URL` for a vector style you serve, or
   `MAP_TILE_URL` for a raster tile server you run. The two are alternatives rather than layers — a
   style set alongside the raster group leaves it inert — so there is no second fetch to close off
   separately. The shipped default contacts one host, `tiles.openfreemap.org`, and pointing either
