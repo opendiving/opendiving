@@ -509,25 +509,21 @@ shot against the same account as the ones staying put — a single new capture n
 that from over here. A change that reaches *all* of them — a palette, a nav rewrite — is still a
 single run of the script next door, so they cannot half-move.
 
-**The row under `## Features` stacks rather than adding a third column, and it is levelled now.**
-The dive shot is much the tallest image in the set, and a two-image row left a visible hole under
-the short one beside it; a third image *beside* those two would only narrow all three. Stacking the
-two short shots in the right cell fills that hole, and closing the remainder was deferred here for
-as long as the height that would close it was unknown — it is set by the dive shot beside the pair,
-and that shot was itself owed a retake.
+**The row under `## Features` stacks rather than adding a third column.** The dive shot is much the
+tallest image in the set, and a two-image row left a visible hole under the short one beside it; a
+third image *beside* those two would only narrow all three. Stacking the two short shots in the
+right cell fills that hole, and the gear shot's frame closes the rest: its height is cut next door
+against both the dive shot beside the pair and the site shot under it.
 
-**Both were taken together next door, which is why this repository's copies move in one commit.**
-`opendiving-web` retook the dive shot and re-cut the gear frame against it in the same change, and
-the row now reads level to within about 3 rendered px per edge at every container width from 480 up.
-What changed is less the best case than the spread: the set committed here before ran 9.84 px per
-edge at a 1012px container down to 2.70 at 480, so how level it looked depended on how wide the
-reader's window was, and it is now 2.75 to 2.89 across that whole range — marginally larger at 480
-than it was, and a third of what it was at 1012. The reasoning is `opendiving-web`'s `DECISIONS.md`,
-under *The gear frame's `HEIGHT` is the lever under the README row, written down rather than
-measured* — including the part that still governs this side: no single committed height is level for
-*every* reader, because the stacked pair scales with the column while the leading between the two
-images does not, so "levelled" means a residual small enough to stop reading as a defect rather than
-a zero.
+**So the stacked pair moves together, which is why this repository's copies move in one commit.**
+Re-framing the site shot leaves the gear frame's height stale until it is re-cut against it, and
+copying one of the two without the other leaves the row uneven. How level the row reads, and across
+which container widths, is measured in `opendiving-web` and recorded in its `DECISIONS.md` under
+*The gear frame's `HEIGHT` is the lever under the README row, written down rather than measured*;
+the figures stay there, because every retake moves them. One part of it governs this side too: no
+single committed height is level for *every* reader, because the stacked pair scales with the column
+while the leading between the two images does not, so "level" means a residual small enough to stop
+reading as a defect rather than a zero.
 
 None of that was or is this repository's to act on. Cropping an image here to even the row out would
 break both the byte-for-byte copy and the rule behind it, and that stays true of a row that is level
