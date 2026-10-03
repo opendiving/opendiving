@@ -333,6 +333,17 @@ writable directory in its own layer, passes its own startup check, and reports s
 that erased nothing. Nothing but that line prevents it. `opendiving-api`'s development compose
 carries the same correction for the same reason; both were written when the purge did not exist yet.
 
+## The map renderer is opt-in
+
+The cards' maps are drawn by `map-renderer`, behind a compose profile of its own, and the API uses
+it only once `MAP_RENDERER_URL` names it. A default install does without it, and its cards show
+water. The renderer peaks at roughly 270 MB, and on by default that would break the 1 vCPU, 1 GB
+floor `docs/install.md` promises and run on Raspberry Pis whose draw time nobody has measured.
+Rejected: running it by default, and keeping it to the project's own instance.
+
+Two lines rather than one because compose cannot set a variable from a profile: the profile starts
+the service, and only the API's own setting tells it to ask.
+
 ## The operator commands are `python -m src.scripts.…`, and they do run in the shipped image
 
 `docs/configuration.md` hands an operator `docker compose exec api python -m src.scripts.migrate_blobs`

@@ -61,6 +61,24 @@ before — so the instance is usable in between. A release that only moves the v
 file, also leaves the stored profiles behind the new reader, and just as valid; there the backfill
 is optional — run it when convenient to bring them level — and not a Breaking step.
 
+## The cards' maps need the map renderer
+
+From the release after 0.3.0, the maps behind the dive, trip and dive site cards are drawn by this
+stack rather than by the browser — by a `map-renderer` service that is off unless you switch it on.
+Upgrade without it and every card shows water where its map was; the pages of a dive, a trip and a
+dive site still draw theirs. Switching it on is three steps, because the service is defined in a
+file you downloaded once:
+
+```bash
+curl -LO https://github.com/opendiving/opendiving/releases/latest/download/docker-compose.yml
+```
+
+then the two lines in `.env` that [configuration.md](configuration.md#card-maps) gives —
+`map-renderer` added to `COMPOSE_PROFILES`, and `MAP_RENDERER_URL=map-renderer:3000` — and
+`docker compose up -d`. Each card draws its map the first time it is shown after that. Leaving it
+off is a supported choice too, and the lighter one: the renderer adds roughly 270 MB of memory at
+its peak.
+
 ## Pin the version
 
 `OPENDIVING_VERSION` in `.env` selects the tag both images run, and it defaults to `latest`. Once

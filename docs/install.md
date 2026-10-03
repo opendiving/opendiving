@@ -77,7 +77,10 @@ asks for relay credentials instead of bundling Postfix.
 **A machine.** Modest: this is a personal dive log, not a photo library.
 
 - 1 vCPU, 1 GB RAM, and 10 GB of disk is enough to start. Postgres and Redis are the memory floor;
-  two GB is comfortable.
+  two GB is comfortable. The [map renderer](configuration.md#card-maps) that draws the cards' maps
+  is off unless you switch it on, and it is what changes that: it adds roughly 270 MB at its peak,
+  so plan on two GB with it. How long it takes to draw a card on a Raspberry Pi has not been
+  measured yet.
 - **Disk grows with the files you upload**, which live on their own Docker volume rather than in the
   database. A dive-computer export runs from tens of kilobytes for a FIT file to 1 or 2 MB for a
   Suunto JSON, and is stored compressed — the JSON at about a tenth of that; a c-card photo is up to
@@ -110,12 +113,17 @@ Seven containers, of which exactly one publishes a port:
 | `db`         | PostgreSQL 18 — **every dive, site, trip and certification**      |
 | `redis`      | Cache and job queue; nothing durable                              |
 
+An eighth, `map-renderer`, starts only once you switch the cards' maps on — until then each card
+shows water where its map would be. [configuration.md](configuration.md#card-maps) has the two
+lines that do it.
+
 `docker compose ps` should show them all `healthy` within a minute or so of the images being pulled.
 `docker compose logs -f api` is where the API's startup — including `alembic upgrade head`, which
 runs itself — reports in.
 
 **The uploaded files are not in Postgres.** Dive-computer exports, c-card images, profile pictures,
-portraits and the species photographs are ordinary files on the `files-data` volume — or objects in
+portraits, the species photographs and the cards' map pictures are ordinary files on the
+`files-data` volume — or objects in
 your bucket, if you switched the API to object storage
 ([configuration.md](configuration.md#object-storage)) — one per row that references them, which is
 why a backup of this instance is *two* artifacts and a `pg_dump` alone is not one. Restoring the
