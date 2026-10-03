@@ -4,8 +4,9 @@
 every dive, dive site, trip and certification record; the `files-data` volume holds the uploaded
 dive-computer exports, c-card images, profile pictures and portraits themselves, one ordinary file
 each — along with the species photographs the API fetched from Wikimedia Commons, which are stored
-rather than hotlinked, and, with the [map renderer](configuration.md#card-maps) on, the cards' map
-pictures, which are drawn from the logbook and drawn again if a restore comes back without them. A
+rather than hotlinked, and, with the [map renderer](configuration.md#the-map-renderer) on, the map
+tiles behind cards and page heads, which are drawn from the basemap alone and drawn again if a
+restore comes back without them. A
 dive-computer export is stored compressed and is still one file, named with a `.zst` on the end; the
 API decodes it when it serves it, so a download is the file as uploaded. Neither is a backup on its
 own — a restore of the dump alone gives you a logbook whose file downloads all fail.

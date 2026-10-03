@@ -122,10 +122,10 @@ server {
     # the app the thing that enforces it.
     client_max_body_size 512m;
 
-    # A card's map picture can take up to MAP_RENDERER_TIMEOUT to arrive, 90 seconds by
-    # default, when the map renderer is on and its queue is full. nginx stops waiting for
-    # an answer after 60, which shows the last cards of a busy page as water; this has to
-    # be at least MAP_RENDERER_TIMEOUT, and moves with it.
+    # A map tile can take up to MAP_RENDERER_TIMEOUT to arrive, 90 seconds by default,
+    # when the map renderer is on and its queue is full. nginx stops waiting for an answer
+    # after 60, which shows the last cards of a busy page as water; this has to be at
+    # least MAP_RENDERER_TIMEOUT, and moves with it.
     proxy_read_timeout 120s;
 
     # No `add_header` here, deliberately - see step 6. Both upstreams set their own
@@ -178,20 +178,20 @@ client_max_body_size 512m;
 proxy_read_timeout 120s;
 ```
 
-The second line is for the [map renderer](configuration.md#card-maps), when you have switched it on,
-and it is the same line as in the nginx snippet, for the same reason.
+The second line is for the [map renderer](configuration.md#the-map-renderer), when you have
+switched it on, and it is the same line as in the nginx snippet, for the same reason.
 
 Leave the *HSTS* toggles on the SSL tab off unless you also set `WEB_HSTS=off`, and keep any
 `add_header` you use elsewhere out of that *Advanced* box — both for the reasons in step 6. *Block
 Common Exploits* is unrelated to any of this and safe to leave however you have it.
 
-**Whatever the proxy, let it wait as long as the API does.** With the
-[map renderer](configuration.md#card-maps) on, the request for a card's map is answered when the
-picture is drawn, and that can take up to `MAP_RENDERER_TIMEOUT` — 90 seconds by default — when
-several pages ask at once. A proxy that stops waiting for an upstream's answer sooner turns those
-cards to water. nginx, and so Nginx Proxy Manager, stops at 60 seconds unless told otherwise, which
-is what the `proxy_read_timeout` lines above are for; the bundled Caddy sets no limit. Raise your
-proxy's along with `MAP_RENDERER_TIMEOUT` if you ever raise that.
+**Whatever the proxy, let it wait as long as the API does.** With the [map
+renderer](configuration.md#the-map-renderer) on, a request for a map tile nobody has drawn yet is
+answered when it is drawn, and that can take up to `MAP_RENDERER_TIMEOUT` — 90 seconds by default —
+when several pages ask at once. A proxy that stops waiting for an upstream's answer sooner turns
+those cards and page heads to water. nginx, and so Nginx Proxy Manager, stops at 60 seconds unless
+told otherwise, which is what the `proxy_read_timeout` lines above are for; the bundled Caddy sets
+no limit. Raise your proxy's along with `MAP_RENDERER_TIMEOUT` if you ever raise that.
 
 ## LAN, or no domain at all
 
