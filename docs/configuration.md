@@ -29,7 +29,7 @@ self-hoster normally touches, and any setting from that file can be added to `.e
 
 | Variable             | Default             | What it does                                                                                                                                                                                |
 | -------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `COMPOSE_PROFILES`   | `proxy`             | Runs the bundled Caddy. Comment it out to bring your own proxy — [reverse-proxy.md](reverse-proxy.md). Add `map-renderer` to the list to draw the cards' maps — [Card maps](#card-maps).    |
+| `COMPOSE_PROFILES`   | `proxy`             | Runs the bundled Caddy. Comment it out to bring your own proxy — [reverse-proxy.md](reverse-proxy.md). Add `map-renderer` to the list to draw the maps on cards and page heads — [The map renderer](#the-map-renderer). |
 | `CADDY_SITE_ADDRESS` | `${DOMAIN}`         | The address Caddy answers on. `:80` for a LAN instance with no certificate.                                                                                                                 |
 | `TRUSTED_PROXY_IPS`  | `172.29.0.0/16`     | Whose `X-Forwarded-For` and `X-Forwarded-Proto` the API believes. Every per-IP rate limit depends on it, as do the admin panel's HTTPS enforcement and its IP allowlist.                    |
 | `ENVIRONMENT`        | `production`        | `production` hides `/docs`. `staging` puts them behind a superuser; both require `SMTP_HOST`. `local` opens the docs and logs sign-in links instead of emailing them.                       |
@@ -248,7 +248,7 @@ a database that already exists under a different name).
 | `MIGRATE_ON_START`       | `true`        | Runs `alembic upgrade head` as the API starts, which is what makes an upgrade `pull` + `up -d`. Turn it off only if you'd rather run `docker compose run --rm api alembic upgrade head` yourself.                                                                                                                                                          |
 | `REDIS_PASSWORD`         | *(none)*      | For pointing the app at a managed Redis instead of the bundled one. The bundled one needs no password and is not reachable outside the compose network.                                                                                                                                                                                                    |
 | `FILE_STORAGE_BACKEND`   | `local`       | Where uploaded files are kept: `local` writes them into `FILE_STORAGE_DIR`, `s3` puts them in an S3-compatible bucket. The bundle mounts a volume for `local`, so a compose install on one machine has nothing to set here — see [Object storage](#object-storage) for the install that does. Any other value refuses to start.                             |
-| `FILE_STORAGE_DIR`       | `/data/files` | Where the `local` backend writes uploaded dive-computer exports, c-card images, profile pictures, portraits, species photographs and the cards' [map pictures](#card-maps), inside the container. The compose file mounts the `files-data` volume there, so there is nothing to set unless you replaced that volume with a bind mount — and then the host directory has to be owned by uid 1000 or the API refuses to start. Ignored entirely under `s3`. |
+| `FILE_STORAGE_DIR`       | `/data/files` | Where the `local` backend writes uploaded dive-computer exports, c-card images, profile pictures, portraits, species photographs and the [map tiles](#the-map-renderer) behind cards and page heads, inside the container. The compose file mounts the `files-data` volume there, so there is nothing to set unless you replaced that volume with a bind mount — and then the host directory has to be owned by uid 1000 or the API refuses to start. Ignored entirely under `s3`. |
 
 Redis holds cache entries, open rate-limit windows and in-flight passkey challenges. Losing it costs
 a cold cache and interrupts passkey sign-in until it is back (see [Sign-in](#sign-in)); nothing
@@ -348,7 +348,7 @@ down, or the bucket's own lifecycle rules going the other way.
 | `GOOGLE_CLIENT_SECRET`                                                                                             | *(none)*            | The other half of that OAuth client, and a real secret. Required whenever `GOOGLE_CLIENT_ID` is set — the API refuses to start without it. See [Setting up Google sign-in](#setting-up-google-sign-in).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `MAP_STYLE_URL`, `MAP_STYLE_URL_DARK`                                                                              | OpenFreeMap         | A MapLibre vector style of your own, in place of the pair the web image ships — see [Third-party calls](#third-party-calls). Wins over the raster group below outright, on every map the app draws, leaving those variables inert. The dark one falls back to the light one; setting it alone does nothing. Serve the style's tiles, glyphs and sprite from the style URL's own host: that origin is the only one the CSP admits, so a style reaching a second host draws blank.                                                                                                                                                                                                                                                                                                                            |
 | `MAP_ATTRIBUTION`                                                                                                  | the basemap's       | The credit drawn over whichever basemap is active — one variable, not one per mode, which is why it is no longer `MAP_TILE_ATTRIBUTION`. **Required whenever `MAP_STYLE_URL` is set**: the app refuses to serve without it, because it cannot know what your style's licence asks for.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| `MAP_TILE_URL`, `MAP_TILE_URL_DARK`, `MAP_TILE_API_KEY`                                                            | *(none)*            | The raster escape hatch, in `{z}/{x}/{y}` form, for a tile server you run or a keyed provider. A whole-map mode chosen instead of the vector default, not a second renderer: MapLibre wraps the template into a minimal style. Ignored entirely when `MAP_STYLE_URL` is set. The CSP follows all of these automatically. **`MAP_TILE_API_KEY` is not a secret and cannot be one** — the pages' maps are drawn in the browser, so the key is handed to every visitor along with the tile URL and is readable in the page. Use a key the provider has restricted to your own domain, and never one that also buys geocoding, routing or anything else on the same account. With the [map renderer](#card-maps) on, the key is sent from this stack too, with your domain as the origin, so that restriction keeps working.                                                                                                                                    |
+| `MAP_TILE_URL`, `MAP_TILE_URL_DARK`, `MAP_TILE_API_KEY`                                                            | *(none)*            | The raster escape hatch, in `{z}/{x}/{y}` form, for a tile server you run or a keyed provider. A whole-map mode chosen instead of the vector default, not a second renderer: MapLibre wraps the template into a minimal style. Ignored entirely when `MAP_STYLE_URL` is set. The CSP follows all of these automatically. **`MAP_TILE_API_KEY` is not a secret and cannot be one** — the forms' maps are drawn in the browser, so the key is handed to every visitor along with the tile URL and is readable in the page. Use a key the provider has restricted to your own domain, and never one that also buys geocoding, routing or anything else on the same account. With the [map renderer](#the-map-renderer) on, the key is sent from this stack too, with your domain as the origin, so that restriction keeps working.                                                                                                                                    |
 | `GEOCODER_URL`                                                                                                     | Nominatim           | Names the spot behind a map pin, server-side, and has to name a Nominatim-compatible host. Set to `""` to switch geocoding off entirely, place search included, whatever `GEOCODER_SEARCH_URL` says.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `GEOCODER_SEARCH_URL`                                                                                              | Photon              | Answers a place typed into the search on the dive site form and the trip form, server-side: the typed search string goes out, nothing identifying the diver. Has to name a Photon-compatible host. The default is the public instance komoot runs, a demo server with no availability guarantee — when it fails, no places come back and a diver types the name in. It does not follow `GEOCODER_URL`: pointing that at your own Nominatim still sends searches to komoot until this names a Photon of yours. Set to `""` to switch place search off while pins are still named.                                                                                                                                                                                                                            |
 | `GEOCODER_USER_AGENT`                                                                                              | the project's       | The `User-Agent` on every geocoder call, to both providers, and the only place it is sent. Ships as `OpenDiving (+https://github.com/opendiving/opendiving-api)`. It fails closed harder than `SPECIES_USER_AGENT` does: Nominatim answers **403** to an empty value *and* to a merely generic one — `python-httpx/0.27` was measured taking the same 403 as `""`, where the shipped default takes a 200 — and a 403 there costs naming the spot behind a pin. Photon's maintainers give a generic agent no guarantees, so place search is at risk too. Either way the API stays healthy, and the only trace is a warning in the API log naming the provider and what went wrong. Change it because the default identifies the *project*, not your instance — see [Third-party calls](#third-party-calls).  |
@@ -357,16 +357,18 @@ down, or the bucket's own lifecycle rules going the other way.
 | `SPECIES_USER_AGENT`                                                                                               | the project's       | The `User-Agent` on every species call — both registers, and Commons for the credit metadata and the image bytes. Ships as `OpenDiving (+https://github.com/opendiving/opendiving-api)`. Emptying it is **not** the graceful off switch the row above is: Wikimedia answers **403** to an empty one, on the metadata call and the byte fetch both, and the same header goes to WoRMS and Wikidata — so a blank value takes species search and resolution with it, not only the photos, and the API starts normally either way. Change it because the default identifies the *project*, not your instance: every deployment sends that one string, so one operator's runaway backfill is attributed to everyone running OpenDiving; put your own contact in — see [Third-party calls](#third-party-calls).   |
 | `SPECIES_WORMS_RATE_LIMIT_REQUESTS`, `SPECIES_WIKIDATA_RATE_LIMIT_REQUESTS`, `SPECIES_COMMONS_RATE_LIMIT_REQUESTS` | `120`, `300`, `120` | What the whole instance may spend on each upstream, over `SPECIES_WORMS_RATE_LIMIT_WINDOW_SECONDS`, `SPECIES_WIKIDATA_RATE_LIMIT_WINDOW_SECONDS` and `SPECIES_COMMONS_RATE_LIMIT_WINDOW_SECONDS` — `60` seconds each. Counted across every user and charged only to calls that actually leave, so exceeding one is never a 429: that upstream drops out and the rest still answer. Neither provider publishes a limit — WoRMS states none at all, and Wikimedia's applies to anonymous heavy use rather than to a call every few seconds — so all three are self-imposed politeness, set well above what a picker generates. Commons's is lower than Wikidata's and still ample — it is charged at most twice per *new* species, the credit call and the byte fetch, rather than once per search candidate. |
 
-### Card maps
+### The map renderer
 
 The cards that list dives, trips and dive sites carry a map behind them — every card in the lists
 of dives, trips and dive sites, the dashboard's recent dives and trips, and the dives listed on the
-page of a dive site, a trip, a piece of gear, a species, a course or a person. This stack draws
-those maps, not the browser: the `map-renderer` service, a second program in the web image, draws
-a card's picture the first time the card is shown, and the API stores it and serves it from then
-on. It is **off unless you switch it on**, and with it off every card shows water where its map
-would be. The pages of a dive, a trip and a dive site draw their own maps in the browser either
-way. The service is in the bundle from the release after 0.3.0.
+page of a dive site, a trip, a piece of gear, a species, a course or a person — and so does the head
+of a dive's, a trip's and a dive site's own page. This stack draws those maps, not the browser: the
+`map-renderer` service, a second program in the web image, draws square tiles of the map, and the
+API stores each one once for the whole instance. A card or a page head is put together from the
+tiles that cover it, with its own pins drawn over them, so one tile serves every card, page head and
+account that shows that stretch of coast. It is **off unless you switch it on**, and with it off
+every card and every page head shows water where its map would be. The service is in the bundle
+from the release after 0.3.0.
 
 Switching it on takes two lines in `.env`, and both are needed:
 
@@ -376,56 +378,67 @@ MAP_RENDERER_URL=map-renderer:3000    # tells the API to use it
 ```
 
 then `docker compose up -d`. Either line alone changes nothing a diver can see —
-[troubleshooting.md](troubleshooting.md#cards-show-water-instead-of-a-map) has what each looks like.
-An install made from an earlier release has to re-download `docker-compose.yml` first, since the
-service is defined there — [upgrade.md](upgrade.md#the-cards-maps-need-the-map-renderer).
+[troubleshooting.md](troubleshooting.md#cards-and-page-heads-show-water-instead-of-a-map) has what
+each looks like. An install made from an earlier release has to re-download `docker-compose.yml`
+first, since the service is defined there —
+[upgrade.md](upgrade.md#cards-and-page-heads-need-the-map-renderer).
 
 Switching it off is the same two lines taken out again, and one command more: `docker compose up -d`
 leaves alone a service whose profile is no longer listed rather than stopping it, so
 `docker compose rm -sf map-renderer` is what stops it.
 
-| Variable                                                                   | Default    | What it does                                                                                                                                                          |
-| -------------------------------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MAP_RENDERER_URL`                                                         | *(none)*   | Where the API reaches the renderer — `map-renderer:3000` for the bundled service. Empty draws no card maps.                                                           |
-| `MAP_RENDERER_TIMEOUT`                                                     | `90`       | Seconds one card's picture may take, its wait in the renderer's queue included. Raise it, never lower it — see below.                                                 |
-| `MAP_PICTURE_RATE_LIMIT_PER_USER`, `MAP_PICTURE_RATE_LIMIT_WINDOW_SECONDS` | `30`, `60` | Draws one account may start per window. Past it a card shows water until it is shown again; a picture already drawn, or one being drawn for another request, is free. |
+| Variable                              | Default  | What it does                                                                                                                                                                                                                           |
+| ------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MAP_RENDERER_URL`                    | *(none)* | Where the API reaches the renderer — `map-renderer:3000` for the bundled service. Empty draws no maps, and nothing asks for one.                                                                                                       |
+| `MAP_RENDERER_TIMEOUT`                | `90`     | Seconds one tile may take to arrive, its wait in the renderer's queue included. Raise it, never lower it — see below.                                                                                                                  |
+| `MAP_RENDERER_DRAW_LIMIT_PER_USER`    | `150`    | Tiles one account may have drawn per window. Past it, a card or page head that needs a tile nobody has drawn yet shows water until it is shown again; a tile already stored, or one being drawn for another request, is never counted. |
+| `MAP_RENDERER_REQUEST_LIMIT_PER_USER` | `1200`   | Tile requests one account may make per window, stored tiles included. Past it every card and page head that still needs a tile shows water. It is there because a stored tile answers faster than a drawn one — see below.             |
+| `MAP_RENDERER_LIMIT_WINDOW_SECONDS`   | `60`     | The window both limits are counted over.                                                                                                                                                                                               |
 
-**What it costs.** Memory first: the renderer peaks at roughly 270 MB, measured on amd64 held to
+**What it costs.** Memory first: the renderer peaks at roughly 210 MB, measured on amd64 held to
 half a CPU and 512 MB, which is why it is off by default — the 1 vCPU, 1 GB floor in
 [install.md](install.md#what-you-need) is for an install without it, and two GB is the floor with
-it. Then time: on that measurement a cold picture — the renderer's first of a place, with nothing of
-it fetched yet — took 1.4 to 3.6 seconds to draw, and the renderer draws one at a time, so a fresh
-list page's cards fill in one after another; every view after that is the stored picture. Nobody has
-measured it on a Raspberry Pi yet; it runs there, being the same image on arm64, but expect it to be
-slower.
+it. Then time: on that measurement a cold tile — the renderer's first of a square, with nothing of
+it fetched yet — took 0.4 to 1.6 seconds to draw, 0.8 at the median, and the renderer draws one at a
+time. A card can need up to six tiles and shows none of them until it has
+them all, so the first view of a stretch of coast nobody here has been shown fills in card by card;
+every view after that, by anyone on this instance, is the stored tiles. Nobody has measured it on a
+Raspberry Pi yet; it runs there, being the same image on arm64, but expect it to be slower.
 
-**`MAP_RENDERER_TIMEOUT` is raised, never lowered.** The renderer queues up to 24 draws, and the
-setting is one deadline for the whole of a card's wait, so it has to cover a full queue: 90 seconds
-is a margin over 24 draws at the slowest time measured. The renderer logs each draw —
+**`MAP_RENDERER_TIMEOUT` is raised, never lowered.** The renderer queues up to 55 draws, and the
+setting is one deadline for the whole of a tile's wait, so it has to cover a full queue: 90 seconds
+covers 55 draws at the slowest time measured. The renderer logs each draw —
 `docker compose logs map-renderer` shows lines like
-`drew a dive (light) in 2140 ms, after 0 ms in the queue` — and where 24 times the slowest cold draw
-you see is more than 90 seconds, set it to that.
-Below what a full queue needs, the last cards of a busy page give up and show water. A proxy of your
-own in front of the stack has to wait at least as long: [reverse-proxy.md](reverse-proxy.md) has the
-nginx line.
+`drew a tile, light 9/301/215, in 790 ms, after 0 ms in the queue` — and where 55 times the slowest
+cold draw you see is more than 90 seconds, set it to that. Below what a full queue needs, the last
+cards of a busy page give up and show water. A proxy of your own in front of the stack has to wait
+at least as long: [reverse-proxy.md](reverse-proxy.md) has the nginx line.
 
-**It draws the basemap the pages draw.** The compose file hands it the same `MAP_*` variables and
-`SITE_URL` it hands `web`, so there is nothing more to set, and a card's picture shows the same map
-as its record's page. On the default basemap that is OpenFreeMap, whose terms ask for permission
-before anything collects from it automatically. It has given it for this: asked by the project, it
-answered that drawing card maps this way is fine for self-hosted installs as well as for the
+**It draws the basemap the forms draw.** The compose file hands it the same `MAP_*` variables and
+`SITE_URL` it hands `web`, so there is nothing more to set, and a card or a page head shows the same
+map as the dive site and trip forms. On the default basemap that is OpenFreeMap, whose terms ask for
+permission before anything collects from it automatically. It has given it: asked by the project, it
+answered that drawing card maps on the server is fine for self-hosted installs as well as for the
 project's own instance, asking that the request rate stay reasonable and the caching stay in place.
-The renderer keeps both as it ships — it draws one picture at a time, and a picture once drawn is
-stored and served until what it shows, or how it is drawn, changes. On a basemap of your own, it is
-that provider's terms that apply.
+The project reads that as covering the page heads, which are drawn from the same tiles, and the
+renderer keeps both conditions as it ships — it draws one tile at a time, and a tile once drawn is
+stored and shared by every card, page head and account that shows it, so the provider is asked for
+each square once for each theme rather than once per dive, trip or site. On a basemap of your own, it is that
+provider's terms that apply.
 
-**The pictures are files, kept like uploads and treated like species photographs.** Each card's
-picture, one per theme, is stored in the same place as the uploaded files — the `files-data` volume,
-or your bucket — and deleted after 30 days in which nobody was shown it, and with its account. They
-count against no [storage limit](#storage-limit) and are not in an export: they are drawn from
-places the logbook already holds, so a restore without them simply draws them again. Its own
-privacy effect is under [Third-party calls](#third-party-calls): for the cards' maps the basemap's
-provider sees this server, not the diver.
+**The tiles are files, kept like uploads and belonging to nobody.** Each tile, one per theme, is
+stored in the same place as the uploaded files — the `files-data` volume, or your bucket — and
+deleted after 30 days in which nobody was shown it. A tile holds nothing of anybody's logbook: it is
+drawn from the basemap alone, so it counts against no [storage limit](#storage-limit), is not in an
+export, and is not deleted with an account, and a restore without the tiles simply draws them again.
+
+**What sharing tells your members.** Because a stored tile answers faster than one drawn on the
+spot, a signed-in member could learn that someone on this instance was shown a given square — a
+region tens of kilometres across — in the last 30 days, though not who, or what dive or site it was
+for. `MAP_RENDERER_REQUEST_LIMIT_PER_USER` bounds how fast anyone can ask, and does not remove it;
+the bundled privacy page says the same to your members. Its effect on third parties is under
+[Third-party calls](#third-party-calls): for these maps the basemap's provider sees this server, not
+the diver.
 
 **Nothing but the API should reach it.** It takes no credential, so the service publishes no port and
 the Caddyfile has no route to it; leave both that way.
@@ -446,7 +459,7 @@ as stored, which is compressed — a Suunto JSON export keeps about a tenth of i
 about a quarter — plus its c-card scans, and its profile picture and portrait, the original and the
 resized copy of each. At those sizes the default holds a few thousand dives' worth of recordings.
 Species photographs are a catalogue the whole instance shares, and count against nobody; so do the
-cards' [map pictures](#card-maps), which this server draws rather than anybody uploads. A
+[map tiles](#the-map-renderer), which this server draws rather than anybody uploads. A
 dive-computer file stored by an earlier version stays as it was, uncompressed, and counts at its
 full size.
 
@@ -568,7 +581,7 @@ this copy. Leave the panel off, as it ships, and none of this exists.
 
 Nothing here phones home. What the app can be told to contact:
 
-- **From the browser**: the basemap, for the maps on its pages and forms. Nothing else, in any
+- **From the browser**: the basemap, for the maps on its forms. Nothing else, in any
   configuration — profile pictures, portraits and species photographs included. A diver's profile
   picture and portrait are stored by your own instance and served by your own API, and so is the
   Commons photograph on a species: the server fetches it once and stores it, so no visitor's browser
@@ -576,23 +589,20 @@ Nothing here phones home. What the app can be told to contact:
   user's email address and their IP to Automattic on every page. It is gone, along with its
   `GRAVATAR_ENABLED` variable.)
 
-  **The basemap** is fetched wherever a page draws a map, and each request carries only the
-  `z/x/y` of the area shown. Unconfigured, that is the MapLibre vector pair the web image ships —
-  its tiles, its label glyphs and a low-zoom raster underlay, all from `tiles.openfreemap.org`. The
-  browser draws a map on the form to add or edit a dive site and the form to add or edit a trip,
-  both as soon as they open, and at the head of the page of a dive site with a position, of a trip —
-  which shows the whole world until the trip has a place — and of a dive that has a position. A
-  dive has a position from the site it was logged at, from the GPS reading in the file it was
-  imported from, or from a logbook file that carried the position itself. Anywhere else, nothing to
-  show loads no map. Whoever serves the basemap therefore sees a visitor's IP address and roughly
-  where they dive, and nothing else — not their account, their dive log, or the name of anything on
-  the map.
+  **The basemap** is fetched wherever a page draws a map in the browser, and each request carries
+  only the `z/x/y` of the area shown. Unconfigured, that is the MapLibre vector pair the web image
+  ships — its tiles, its label glyphs and a low-zoom raster underlay, all from
+  `tiles.openfreemap.org`. The browser draws a map on the form to add or edit a dive site and the
+  form to add or edit a trip, both as soon as they open, and nowhere else. Whoever serves the
+  basemap therefore sees a visitor's IP address and roughly where they dive, and nothing else — not
+  their account, their dive log, or the name of anything on the map.
 
-  **The cards' maps are not among them.** The cards that list dives, trips and dive sites are drawn
-  by this stack when the [map renderer](#card-maps) is on, and show no map when it is off, so in
-  neither case does a visitor's browser fetch tiles for them. With it on, the basemap's provider
-  sees your server and the places drawn instead, once per picture rather than once per view — see
-  *From the server* below.
+  **The cards' and page heads' maps are not among them.** The cards that list dives, trips and dive
+  sites, and the heads of a dive's, a trip's and a dive site's own page, are drawn by this stack
+  when the [map renderer](#the-map-renderer) is on, and show no map when it is off, so in neither
+  case does a visitor's browser fetch the basemap for them. With it on, the basemap's provider sees
+  your server and the regions drawn instead, once per tile rather than once per view — see *From the
+  server* below.
 
   **Removing the third party takes one variable.** Every one of those maps draws through MapLibre,
   so a single setting reaches all of them: `MAP_STYLE_URL` for a vector style you serve, or
@@ -605,17 +615,17 @@ Nothing here phones home. What the app can be told to contact:
   template into a minimal style and draws it the way it draws a vector one. It stays as the escape
   hatch — for a tile server you already run, or a keyed provider you prefer.
 
-  **If that provider wants a key, the key goes to the visitor.** The pages' maps are drawn
+  **If that provider wants a key, the key goes to the visitor.** The forms' maps are drawn
   client-side, so `MAP_TILE_API_KEY` is served to every browser that loads a page with a map on it,
   exactly as the tile URL is — there is no arrangement in which it stays on your server, and none is
   coming, because those tiles are fetched by the browser and not by this stack. Every keyed provider
   offers a domain restriction for precisely this; set one, so a key lifted from your page is refused
-  everywhere else. With the map renderer on, the key leaves your server as well, for the cards'
-  maps, and it carries your domain in `Origin` and `Referer` exactly as a browser on one of your
-  pages does — so a key restricted that way keeps working for both. Issue it for tiles alone, too: a
-  key that also buys geocoding or routing on the same account is a bill someone else can run up.
-  This is the ordinary way keyed web maps work rather than a shortcoming of the escape hatch — but
-  it is the sort of thing that is obvious only after it has happened to you.
+  everywhere else. With the map renderer on, the key leaves your server as well, for the cards' and
+  page heads' maps, and it carries your domain in `Origin` and `Referer` exactly as a browser on one
+  of your pages does — so a key restricted that way keeps working for both. Issue it for tiles
+  alone, too: a key that also buys geocoding or routing on the same account is a bill someone else
+  can run up. This is the ordinary way keyed web maps work rather than a shortcoming of the escape
+  hatch — but it is the sort of thing that is obvious only after it has happened to you.
 
   **Google sign-in is deliberately absent from that bullet**, and it is worth saying why rather than
   leaving it to be inferred. With `GOOGLE_CLIENT_ID` set, no page this app serves fetches, embeds or
@@ -632,21 +642,23 @@ Nothing here phones home. What the app can be told to contact:
   Leaving `GOOGLE_CLIENT_ID` unset still removes the option entirely: no button, and the bundled
   privacy page has no Google section at all.
 
-- **From the server**: the basemap, for the cards' maps, when the [map renderer](#card-maps) is on;
-  two geocoders and the two species *name registers*, WoRMS and Wikidata, on cache misses only. A
-  pinned coordinate goes to Nominatim (`GEOCODER_URL`) to be named; a place typed into the dive site
-  or trip search goes to Photon (`GEOCODER_SEARCH_URL`), by default the public instance komoot runs;
-  a typed species search goes to the registers. Nothing identifying the diver goes with any of them,
-  and the source IP is your server's. Each is configurable, and geocoding can be switched off
-  outright — place search alone, or pins and search together.
+- **From the server**: the basemap, for the cards' and page heads' maps, when the
+  [map renderer](#the-map-renderer) is on; two geocoders and the two species *name registers*, WoRMS and
+  Wikidata, on cache misses only. A pinned coordinate goes to Nominatim (`GEOCODER_URL`) to be
+  named; a place typed into the dive site or trip search goes to Photon (`GEOCODER_SEARCH_URL`), by
+  default the public instance komoot runs; a typed species search goes to the registers. Nothing
+  identifying the diver goes with any of them, and the source IP is your server's. Each is
+  configurable, and geocoding can be switched off outright — place search alone, or pins and search
+  together.
 
-  **The renderer fetches what one card's picture needs, once**: the tiles and label glyphs of the
-  area the card shows, from whichever basemap the `MAP_*` variables name — the same one the pages
+  **The renderer fetches what one tile needs, once**: the basemap's own tile and label glyphs for
+  that square — on the default basemap one vector tile, and at zoom 6 and below up to four tiles of
+  the low-zoom underlay — from whichever basemap the `MAP_*` variables name, the same one the forms
   draw. Its requests carry a `User-Agent` naming OpenDiving's map renderer, and `Origin` and
-  `Referer` naming `SITE_URL`, the headers your own pages send for the same tiles. A picture is
-  drawn the first time a card is shown and stored, so the provider sees a card again only when its
-  places change, when your basemap or a new release changes how it is drawn, or after 30 days in
-  which nobody was shown it.
+  `Referer` naming `SITE_URL`, the headers your own pages send for the same tiles. A tile is drawn
+  the first time any card or page head shows its square, and stored for every account, so the
+  provider sees a region again only when your basemap or a new release changes how it is drawn, or
+  after 30 days in which nobody here was shown it.
 
   **Wikimedia Commons is one more, and it is not one of those registers.** It is never asked
   anything a diver typed — it receives a file title derived from an AphiaID, and answers with a

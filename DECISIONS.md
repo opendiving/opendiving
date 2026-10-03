@@ -335,11 +335,12 @@ carries the same correction for the same reason; both were written when the purg
 
 ## The map renderer is opt-in
 
-The cards' maps are drawn by `map-renderer`, behind a compose profile of its own, and the API uses
-it only once `MAP_RENDERER_URL` names it. A default install does without it, and its cards show
-water. The renderer peaks at roughly 270 MB, and on by default that would break the 1 vCPU, 1 GB
+The maps on cards and page heads are drawn by `map-renderer`, behind a compose profile of its own,
+and the API uses it only once `MAP_RENDERER_URL` names it. A default install does without it, and its
+cards and page heads show water; the web app has no second way of drawing a page head's map. The renderer peaks at roughly 210 MB, and on by default that would break the 1 vCPU, 1 GB
 floor `docs/install.md` promises and run on Raspberry Pis whose draw time nobody has measured.
-Rejected: running it by default, and keeping it to the project's own instance.
+Rejected: running it by default, keeping it to the project's own instance, and drawing the page
+heads in the browser where it is off.
 
 Two lines rather than one because compose cannot set a variable from a profile: the profile starts
 the service, and only the API's own setting tells it to ask.

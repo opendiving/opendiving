@@ -244,31 +244,35 @@ unset `MAP_STYLE_URL` to go back to the basemap the image ships — then `docker
 **load a page**, because the healthcheck will not tell you whether it worked. The variables are in
 [configuration.md](configuration.md#optional-features).
 
-## Cards show water instead of a map
+## Cards and page heads show water instead of a map
 
-That is what a card shows while nothing draws its map, and on a default install nothing does: the
-cards' maps are drawn by the [map renderer](configuration.md#card-maps), which takes two lines in
-`.env` to switch on — `map-renderer` in `COMPOSE_PROFILES`, which starts the service, and
+That is what a card, or the head of a dive's, a trip's or a dive site's page, shows while nothing
+draws its map, and on a default install nothing does: those maps are drawn by the
+[map renderer](configuration.md#the-map-renderer), which takes two lines in `.env` to switch on —
+`map-renderer` in `COMPOSE_PROFILES`, which starts the service, and
 `MAP_RENDERER_URL=map-renderer:3000`, which tells the API to use it. Either one alone looks exactly
 like neither:
 
 - **The service is running and `MAP_RENDERER_URL` is empty.** `docker compose ps` lists
   `map-renderer` as healthy and its log shows no draws, because the API never asks.
-  `curl -s https://your-domain/api/v1/config` says `"map_pictures":false`.
+  `curl -s https://your-domain/api/v1/config` says `"map_tiles":false`.
 - **`MAP_RENDERER_URL` is set and the service is not running.** `/api/v1/config` says
-  `"map_pictures":true`, but `docker compose ps` has no `map-renderer`, and the API's log says
+  `"map_tiles":true`, but `docker compose ps` has no `map-renderer`, and the API's log says
   `The map renderer could not be asked for its signature` — it has nothing at that address to ask.
   An install made from an earlier release has no such service in its `docker-compose.yml` at all,
-  and needs the new one ([upgrade.md](upgrade.md#the-cards-maps-need-the-map-renderer)).
+  and needs the new one ([upgrade.md](upgrade.md#cards-and-page-heads-need-the-map-renderer)).
 
-Set both, then `docker compose up -d`. A card asks for its map when it is shown, so reload the page
-rather than waiting on it.
+Set both, then `docker compose up -d`. A browser keeps the `/api/v1/config` answer for up to a
+minute, so give it that, then reload the page rather than waiting on it.
 
-With both right, a card that stays water while the others draw is one whose picture could not be had
-in time. `docker compose logs map-renderer` says why a draw failed, and the time each one took — 24
-times the slowest of those is what `MAP_RENDERER_TIMEOUT` has to cover. Behind a proxy of your own,
-that proxy has to wait as long as well: nginx gives up after 60 seconds unless told otherwise
-([reverse-proxy.md](reverse-proxy.md)).
+With both right, a card or page head that stays water while the others draw is one whose tiles could
+not all be had in time — a map shows only once every tile of it has arrived.
+`docker compose logs map-renderer` says why a draw failed, and the time each one took — 55 times the
+slowest of those is what `MAP_RENDERER_TIMEOUT` has to cover. Behind a proxy of your own, that proxy
+has to wait as long as well: nginx gives up after 60 seconds unless told otherwise
+([reverse-proxy.md](reverse-proxy.md)). An account past one of its limits per minute —
+`MAP_RENDERER_DRAW_LIMIT_PER_USER` or `MAP_RENDERER_REQUEST_LIMIT_PER_USER` — sees water too, until
+the window passes and the page is loaded again.
 
 ## Starting over
 
@@ -280,7 +284,7 @@ docker compose down -v
 
 `-v` takes every volume, and that now includes `files-data` — every uploaded dive-computer export,
 every c-card image, every profile picture and portrait, every species photograph and every map
-picture, none of which the database dump contains. If there is anything in there, take both
+tile, none of which the database dump contains. If there is anything in there, take both
 artifacts first: [backup-restore.md](backup-restore.md).
 
 On `FILE_STORAGE_BACKEND=s3` it reaches none of those: the uploads are in your bucket and `-v` does

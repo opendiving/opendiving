@@ -83,7 +83,8 @@ x-api-environment: &api-environment
 
 # What the web app and the map renderer both draw with: the instance's own origin, and the
 # basemap. One block, merged into both services below, because a renderer drawing on a
-# different basemap from the pages' maps is a card that disagrees with its record's page.
+# different basemap from the forms' is a card or a page head disagreeing with the map its
+# place was picked on.
 x-map-environment: &map-environment
   SITE_URL: ${SITE_URL:-https://${DOMAIN}}
   # The basemap, in two groups and one variable that belongs to neither. Unset, the web
@@ -172,22 +173,22 @@ services:
       api:
         condition: service_healthy
 
-  # Draws the maps behind the dive, trip and dive site cards, for the API to store - the
+  # Draws the tiles of the map that the dive, trip and dive site cards and the heads of
+  # their pages are put together from, for the API to store once for every account - the
   # second program in the web image, run with its own command as `worker` runs the API
   # image's. Off unless you switch it on, and it takes two lines in `.env` to do that:
   # `map-renderer` added to COMPOSE_PROFILES, which starts this service, and
   # MAP_RENDERER_URL=map-renderer:3000, which tells the API to use it. Without both, cards
-  # show water instead of a map; the pages of a dive, a trip or a dive site still draw
-  # theirs in the browser either way. It adds roughly 270 MB of memory at its peak, which
-  # is why a default install - and its 1 GB floor - goes without it. See
-  # docs/configuration.md#card-maps.
+  # and page heads show water instead of a map. It adds roughly 210 MB of memory at its
+  # peak, which is why a default install - and its 1 GB floor - goes without it. See
+  # docs/configuration.md#the-map-renderer.
   map-renderer:
     image: ghcr.io/opendiving/opendiving-web:${OPENDIVING_VERSION:-latest}
     command: ["node", "map-renderer/index.mjs"]
     profiles: ["map-renderer"]
     restart: unless-stopped
-    # The basemap the web app draws with, so a card's picture and its record's page show
-    # the same map, and SITE_URL, which it sends to the basemap's host as the `Origin` and
+    # The basemap the web app draws with, so the cards and page heads show the same map as
+    # the forms, and SITE_URL, which it sends to the basemap's host as the `Origin` and
     # `Referer` the instance's own pages send - a key restricted to your domain accepts it
     # for that. Nothing else: like `web`, it never sees `.env` whole.
     environment: *map-environment
@@ -207,7 +208,7 @@ services:
       - "8000"
     volumes:
       # Every uploaded dive-computer export, c-card image, profile picture, portrait and
-      # species photograph, and the cards' map pictures when the map renderer is on. This
+      # species photograph, and the map tiles when the map renderer is on. This
       # is the **second half of your backup** - the database dump does not carry it. See
       # docs/backup-restore.md, which gives the tar recipe for it.
       #
@@ -330,8 +331,8 @@ volumes:
   postgres-data:
   # Uploaded dive-computer exports, c-card images, profile pictures, portraits, the
   # species photographs fetched from Wikimedia Commons and, with the map renderer on, the
-  # map pictures it drew for cards - one ordinary file each, named by the `storage_key` its
-  # row carries. The other half of your backup: `pg_dump` does not
+  # map tiles it drew for cards and page heads - one ordinary file each, named by the
+  # `storage_key` its row carries. The other half of your backup: `pg_dump` does not
   # contain these, and a restore of the dump alone leaves every download 500ing. Back it up
   # with the tar recipe in docs/backup-restore.md - and note that `docker
   # compose down -v` destroys it along with everything else.

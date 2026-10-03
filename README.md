@@ -47,7 +47,7 @@ after you gets in by an invitation you send; `REGISTRATION_MODE=open` is the oth
 
 That is the whole product: the web app, the API and its worker, PostgreSQL, Redis, and Caddy
 terminating TLS with a certificate it fetches itself — plus, once you switch it on, a renderer that
-draws the maps behind the dive, trip and dive site cards. Nothing is built — every image is pulled,
+draws the maps behind the dive, trip and dive site cards and at the head of their pages. Nothing is built — every image is pulled,
 prebuilt for **amd64 and arm64**, so a Raspberry Pi runs the same bytes as a VPS. Migrations apply
 themselves on startup, so an upgrade is `docker compose pull && docker compose up -d`. A backup is
 two artifacts: a `pg_dump` and a copy of the uploaded files, which are on a volume beside the stack
