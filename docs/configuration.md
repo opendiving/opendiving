@@ -393,19 +393,21 @@ leaves alone a service whose profile is no longer listed rather than stopping it
 **What it costs.** Memory first: the renderer peaks at roughly 270 MB, measured on amd64 held to
 half a CPU and 512 MB, which is why it is off by default — the 1 vCPU, 1 GB floor in
 [install.md](install.md#what-you-need) is for an install without it, and two GB is the floor with
-it. Then time: on that measurement a picture took one to four seconds to draw, the slowest being the
-first ones after a start, and the renderer draws one at a time — so a fresh list page's cards fill
-in one after another, and every view after that is the stored picture. Nobody has measured it on a
-Raspberry Pi yet; it runs there, being the same image on arm64, but expect it to be slower.
+it. Then time: on that measurement a cold picture — the renderer's first of a place, with nothing of
+it fetched yet — took 1.4 to 3.6 seconds to draw, and the renderer draws one at a time, so a fresh
+list page's cards fill in one after another; every view after that is the stored picture. Nobody has
+measured it on a Raspberry Pi yet; it runs there, being the same image on arm64, but expect it to be
+slower.
 
 **`MAP_RENDERER_TIMEOUT` is raised, never lowered.** The renderer queues up to 24 draws, and the
 setting is one deadline for the whole of a card's wait, so it has to cover a full queue: 90 seconds
 is a margin over 24 draws at the slowest time measured. The renderer logs each draw —
-`docker compose logs map-renderer` shows lines like `drew a dive (light) in 2140 ms, after 0 ms in
-the queue` — and where 24 times the slowest draw you see after a start is more than 90 seconds, set
-it to that. Below what a full queue needs, the last cards of a busy page give up and show water. A
-proxy of your own in front of the stack has to wait at least as long:
-[reverse-proxy.md](reverse-proxy.md) has the nginx line.
+`docker compose logs map-renderer` shows lines like
+`drew a dive (light) in 2140 ms, after 0 ms in the queue` — and where 24 times the slowest cold draw
+you see is more than 90 seconds, set it to that.
+Below what a full queue needs, the last cards of a busy page give up and show water. A proxy of your
+own in front of the stack has to wait at least as long: [reverse-proxy.md](reverse-proxy.md) has the
+nginx line.
 
 **It draws the basemap the pages draw.** The compose file hands it the same `MAP_*` variables and
 `SITE_URL` it hands `web`, so there is nothing more to set, and a card's picture shows the same map
@@ -414,8 +416,8 @@ before anything collects from it automatically. It has given it for this: asked 
 answered that drawing card maps this way is fine for self-hosted installs as well as for the
 project's own instance, asking that the request rate stay reasonable and the caching stay in place.
 The renderer keeps both as it ships — it draws one picture at a time, and a picture once drawn is
-stored and served until what it shows, or how it is drawn, changes. On a basemap of your own, it is that provider's
-terms that apply.
+stored and served until what it shows, or how it is drawn, changes. On a basemap of your own, it is
+that provider's terms that apply.
 
 **The pictures are files, kept like uploads and treated like species photographs.** Each card's
 picture, one per theme, is stored in the same place as the uploaded files — the `files-data` volume,
@@ -566,12 +568,13 @@ this copy. Leave the panel off, as it ships, and none of this exists.
 
 Nothing here phones home. What the app can be told to contact:
 
-- **From the browser**: the basemap, for the maps on its pages and forms. Nothing else, in any configuration — profile pictures,
-  portraits and species photographs included. A diver's profile picture and portrait are stored by
-  your own instance and served by your own API, and so is the Commons photograph on a species: the
-  server fetches it once and stores it, so no visitor's browser ever contacts Wikimedia. (Gravatar
-  used to be an option here, disclosing a hash of every signed-in user's email address and their IP
-  to Automattic on every page. It is gone, along with its `GRAVATAR_ENABLED` variable.)
+- **From the browser**: the basemap, for the maps on its pages and forms. Nothing else, in any
+  configuration — profile pictures, portraits and species photographs included. A diver's profile
+  picture and portrait are stored by your own instance and served by your own API, and so is the
+  Commons photograph on a species: the server fetches it once and stores it, so no visitor's browser
+  ever contacts Wikimedia. (Gravatar used to be an option here, disclosing a hash of every signed-in
+  user's email address and their IP to Automattic on every page. It is gone, along with its
+  `GRAVATAR_ENABLED` variable.)
 
   **The basemap** is fetched wherever a page draws a map, and each request carries only the
   `z/x/y` of the area shown. Unconfigured, that is the MapLibre vector pair the web image ships —
@@ -609,10 +612,10 @@ Nothing here phones home. What the app can be told to contact:
   offers a domain restriction for precisely this; set one, so a key lifted from your page is refused
   everywhere else. With the map renderer on, the key leaves your server as well, for the cards'
   maps, and it carries your domain in `Origin` and `Referer` exactly as a browser on one of your
-  pages does — so a key restricted that way keeps working for both. Issue it for tiles alone, too: a key that also buys geocoding or routing on the
-  same account is a bill someone else can run up. This is the ordinary way keyed web maps work rather
-  than a shortcoming of the escape hatch — but it is the sort of thing that is obvious only after it
-  has happened to you.
+  pages does — so a key restricted that way keeps working for both. Issue it for tiles alone, too: a
+  key that also buys geocoding or routing on the same account is a bill someone else can run up.
+  This is the ordinary way keyed web maps work rather than a shortcoming of the escape hatch — but
+  it is the sort of thing that is obvious only after it has happened to you.
 
   **Google sign-in is deliberately absent from that bullet**, and it is worth saying why rather than
   leaving it to be inferred. With `GOOGLE_CLIENT_ID` set, no page this app serves fetches, embeds or
@@ -630,11 +633,12 @@ Nothing here phones home. What the app can be told to contact:
   privacy page has no Google section at all.
 
 - **From the server**: the basemap, for the cards' maps, when the [map renderer](#card-maps) is on;
-  two geocoders and the two species *name registers*, WoRMS and Wikidata, on cache misses only. A pinned coordinate goes to Nominatim (`GEOCODER_URL`) to be named; a place
-  typed into the dive site or trip search goes to Photon (`GEOCODER_SEARCH_URL`), by default the
-  public instance komoot runs; a typed species search goes to the registers. Nothing identifying
-  the diver goes with any of them, and the source IP is your server's. Each is configurable, and
-  geocoding can be switched off outright — place search alone, or pins and search together.
+  two geocoders and the two species *name registers*, WoRMS and Wikidata, on cache misses only. A
+  pinned coordinate goes to Nominatim (`GEOCODER_URL`) to be named; a place typed into the dive site
+  or trip search goes to Photon (`GEOCODER_SEARCH_URL`), by default the public instance komoot runs;
+  a typed species search goes to the registers. Nothing identifying the diver goes with any of them,
+  and the source IP is your server's. Each is configurable, and geocoding can be switched off
+  outright — place search alone, or pins and search together.
 
   **The renderer fetches what one card's picture needs, once**: the tiles and label glyphs of the
   area the card shows, from whichever basemap the `MAP_*` variables name — the same one the pages

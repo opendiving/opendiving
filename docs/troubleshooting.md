@@ -265,10 +265,10 @@ Set both, then `docker compose up -d`. A card asks for its map when it is shown,
 rather than waiting on it.
 
 With both right, a card that stays water while the others draw is one whose picture could not be had
-in time. `docker compose logs map-renderer` says why a draw failed, and the time each one took —
-24 times the slowest of those, after a start, is what `MAP_RENDERER_TIMEOUT` has to cover. Behind a
-proxy of your own, that proxy has to wait as long as well: nginx gives up after 60 seconds unless
-told otherwise ([reverse-proxy.md](reverse-proxy.md)).
+in time. `docker compose logs map-renderer` says why a draw failed, and the time each one took — 24
+times the slowest of those is what `MAP_RENDERER_TIMEOUT` has to cover. Behind a proxy of your own,
+that proxy has to wait as long as well: nginx gives up after 60 seconds unless told otherwise
+([reverse-proxy.md](reverse-proxy.md)).
 
 ## Starting over
 
@@ -280,8 +280,8 @@ docker compose down -v
 
 `-v` takes every volume, and that now includes `files-data` — every uploaded dive-computer export,
 every c-card image, every profile picture and portrait, every species photograph and every map
-picture, none of which the database dump contains. If there is anything in there, take both artifacts first:
-[backup-restore.md](backup-restore.md).
+picture, none of which the database dump contains. If there is anything in there, take both
+artifacts first: [backup-restore.md](backup-restore.md).
 
 On `FILE_STORAGE_BACKEND=s3` it reaches none of those: the uploads are in your bucket and `-v` does
 not touch it. That cuts both ways — starting over leaves the old instance's files sitting there, to

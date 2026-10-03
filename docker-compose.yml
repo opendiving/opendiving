@@ -208,7 +208,8 @@ services:
     volumes:
       # Every uploaded dive-computer export, c-card image, profile picture, portrait and
       # species photograph, and the cards' map pictures when the map renderer is on. This
-      # is the **second half of your backup** - the database dump does not carry it. See docs/backup-restore.md, which gives the tar recipe for it.
+      # is the **second half of your backup** - the database dump does not carry it. See
+      # docs/backup-restore.md, which gives the tar recipe for it.
       #
       # Unless you set FILE_STORAGE_BACKEND=s3, in which case the files are in your bucket,
       # this mount goes unused, and the backup's second half is a copy of that bucket
