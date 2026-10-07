@@ -43,11 +43,12 @@ curl -LO https://github.com/opendiving/opendiving/releases/latest/download/Caddy
 Your `.env` is never overwritten — take new settings out of that release's `example.env` by hand,
 which is also how you get the paragraph explaining each one.
 
-**The other kind is the profile backfill**, a command run once in the api container after the
-upgrade. Each dive's per-sample profile is read out of the dive-computer files you uploaded, and a
-stored profile records which reader read it. When a release changes how that reading is done, its
-Breaking section names the backfill, with the exact command — this one, plus any flags that release
-needs:
+**The other kind is a backfill**, a command run once in the api container after the upgrade to bring
+data the previous version stored level with what the new one would store. The one a Breaking section
+names is the profile backfill. Each dive's per-sample profile is read out of the dive-computer files
+you uploaded, and a stored profile records which reader read it. When a release changes how that
+reading is done, its Breaking section names the backfill, with the exact command — this one, plus
+any flags that release needs:
 
 ```bash
 docker compose exec api python -m src.scripts.backfill_dive_profiles
@@ -60,6 +61,23 @@ before — so the instance is usable in between. A release that only moves the v
 [`divejson`](https://github.com/divejson/divejson-py), the package that reads every dive-computer
 file, also leaves the stored profiles behind the new reader, and just as valid; there the backfill
 is optional — run it when convenient to bring them level — and not a Breaking step.
+
+**The species photo re-check is a backfill of that optional sort**, and the release notes name it
+outside Breaking. A species photo narrower than 500 px is refused rather than stored soft, and this
+brings the photos stored before that rule under it:
+
+```bash
+docker compose exec api python -m src.scripts.backfill_species_photos --recheck-size --dry-run
+docker compose exec api python -m src.scripts.backfill_species_photos --recheck-size
+```
+
+It reads each stored photo's own bytes and calls Wikimedia Commons for nothing. It records every
+photo's width and height, and drops one narrower than 500 px unless an admin pinned it — and any
+whose stored file is missing or will not open, pinned or not. The dry run lists what it would drop
+and ends `without_dimensions=N to_drop=M`; the real run ends `without_dimensions=N dropped=M`, and a
+dry run after it reports zero for both. Running it twice is harmless. Until it runs, a narrow photo
+is served exactly as before; once it has, a dive page that was showing a dropped photo can show a
+broken image for up to an hour, until its cached copy expires.
 
 ## Cards and page heads need the map renderer
 

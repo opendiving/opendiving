@@ -69,10 +69,12 @@ account is deleted and purged hands the same deal to whoever signs in next.
 above. As the operator you also get an **Admin** entry in the account menu — sign in as the first
 account, open the menu, choose *Admin*. Its *Invite Queue* lists the addresses that used the request
 form, tells you which of them already have an account, and invites or removes them in a batch; its
-*Stats* screen shows daily totals of accounts created, sign-ins and active accounts. An invitation is
-an entry against the email address rather than a code to forward: the invitee signs in with the
-address that was invited — by link, code or Google, exactly as anybody else does — so there is no
-token for them to lose and nothing extra for you to explain.
+*Stats* screen shows daily totals of accounts created, sign-ins and active accounts; and its
+*Species* screen lists the species catalog newest first, where you can hide a species' photo, pin
+another file from Commons in its place, or re-fetch it by the rule. An invitation is an entry
+against the email address rather than a code to forward: the invitee signs in with the address that
+was invited — by link, code or Google, exactly as anybody else does — so there is no token for them
+to lose and nothing extra for you to explain.
 
 Somebody who is not invited still gets their sign-in email. The endpoint that sends it deliberately
 never learns whether an address is invited, or even whether it has an account, which is what keeps
@@ -353,9 +355,9 @@ down, or the bucket's own lifecycle rules going the other way.
 | `GEOCODER_SEARCH_URL`                                                                                              | Photon              | Answers a place typed into the search on the dive site form and the trip form, server-side: the typed search string goes out, nothing identifying the diver. Has to name a Photon-compatible host. The default is the public instance komoot runs, a demo server with no availability guarantee — when it fails, no places come back and a diver types the name in. It does not follow `GEOCODER_URL`: pointing that at your own Nominatim still sends searches to komoot until this names a Photon of yours. Set to `""` to switch place search off while pins are still named.                                                                                                                                                                                                                            |
 | `GEOCODER_USER_AGENT`                                                                                              | the project's       | The `User-Agent` on every geocoder call, to both providers, and the only place it is sent. Ships as `OpenDiving (+https://github.com/opendiving/opendiving-api)`. It fails closed harder than `SPECIES_USER_AGENT` does: Nominatim answers **403** to an empty value *and* to a merely generic one — `python-httpx/0.27` was measured taking the same 403 as `""`, where the shipped default takes a 200 — and a 403 there costs naming the spot behind a pin. Photon's maintainers give a generic agent no guarantees, so place search is at risk too. Either way the API stays healthy, and the only trace is a warning in the API log naming the provider and what went wrong. Change it because the default identifies the *project*, not your instance — see [Third-party calls](#third-party-calls).  |
 | `WORMS_API_URL`, `WIKIDATA_API_URL`                                                                                | public              | The two name registers the species picker searches, called server-side. WoRMS is the taxonomic authority every catalog row is keyed on; Wikidata supplies the common names it lacks — WoRMS records exactly one vernacular for the clownfish, and it is in Japanese. Emptying one does not switch the feature off the way `GEOCODER_URL` does: search falls back to the species already in your catalog, and resolving one nobody has logged yet fails.                                                                                                                                                                                                                                                                                                                                                     |
-| `COMMONS_API_URL`                                                                                                  | public              | Wikimedia Commons, asked for a species photo's credit metadata and the URL of one scaled copy, once Wikidata has named the file — never for anything a diver typed. This one *is* optional in the way the two above are not: `""` or an unreachable host simply means species have no photos. It configures the **metadata** call only. The image bytes are only ever fetched from `thumb.wikimedia.org` or `upload.wikimedia.org`, the two hosts one Commons reply can name; that pair is hard-coded and deliberately has no setting in front of it, because it is an SSRF fence — see [Third-party calls](#third-party-calls).                                                                                                                                                                            |
-| `SPECIES_USER_AGENT`                                                                                               | the project's       | The `User-Agent` on every species call — both registers, and Commons for the credit metadata and the image bytes. Ships as `OpenDiving (+https://github.com/opendiving/opendiving-api)`. Emptying it is **not** the graceful off switch the row above is: Wikimedia answers **403** to an empty one, on the metadata call and the byte fetch both, and the same header goes to WoRMS and Wikidata — so a blank value takes species search and resolution with it, not only the photos, and the API starts normally either way. Change it because the default identifies the *project*, not your instance: every deployment sends that one string, so one operator's runaway backfill is attributed to everyone running OpenDiving; put your own contact in — see [Third-party calls](#third-party-calls).   |
-| `SPECIES_WORMS_RATE_LIMIT_REQUESTS`, `SPECIES_WIKIDATA_RATE_LIMIT_REQUESTS`, `SPECIES_COMMONS_RATE_LIMIT_REQUESTS` | `120`, `300`, `120` | What the whole instance may spend on each upstream, over `SPECIES_WORMS_RATE_LIMIT_WINDOW_SECONDS`, `SPECIES_WIKIDATA_RATE_LIMIT_WINDOW_SECONDS` and `SPECIES_COMMONS_RATE_LIMIT_WINDOW_SECONDS` — `60` seconds each. Counted across every user and charged only to calls that actually leave, so exceeding one is never a 429: that upstream drops out and the rest still answer. Neither provider publishes a limit — WoRMS states none at all, and Wikimedia's applies to anonymous heavy use rather than to a call every few seconds — so all three are self-imposed politeness, set well above what a picker generates. Commons's is lower than Wikidata's and still ample — it is charged at most twice per *new* species, the credit call and the byte fetch, rather than once per search candidate. |
+| `COMMONS_API_URL`                                                                                                  | public              | Wikimedia Commons, asked for a species photo's credit metadata and the URL of one scaled copy once Wikidata or an admin has named the file, and for the files in a species' Commons category when an admin opens its photo picker — never for anything a diver typed. This one *is* optional in the way the two above are not: `""` or an unreachable host simply means species have no photos. It configures the **metadata** calls only. The image bytes, the picker's previews included, are only ever fetched from `thumb.wikimedia.org` or `upload.wikimedia.org`, the two hosts one Commons reply can name; that pair is hard-coded and deliberately has no setting in front of it, because it is an SSRF fence — see [Third-party calls](#third-party-calls).                                                                                                                                                                            |
+| `SPECIES_USER_AGENT`                                                                                               | the project's       | The `User-Agent` on every species call — both registers, and every Commons call, metadata and image bytes alike. Ships as `OpenDiving (+https://github.com/opendiving/opendiving-api)`. Emptying it is **not** the graceful off switch the row above is: Wikimedia answers **403** to an empty one, on the metadata call and the byte fetch both, and the same header goes to WoRMS and Wikidata — so a blank value takes species search and resolution with it, not only the photos, and the API starts normally either way. Change it because the default identifies the *project*, not your instance: every deployment sends that one string, so one operator's runaway backfill is attributed to everyone running OpenDiving; put your own contact in — see [Third-party calls](#third-party-calls).   |
+| `SPECIES_WORMS_RATE_LIMIT_REQUESTS`, `SPECIES_WIKIDATA_RATE_LIMIT_REQUESTS`, `SPECIES_COMMONS_RATE_LIMIT_REQUESTS` | `120`, `300`, `120` | What the whole instance may spend on each upstream, over `SPECIES_WORMS_RATE_LIMIT_WINDOW_SECONDS`, `SPECIES_WIKIDATA_RATE_LIMIT_WINDOW_SECONDS` and `SPECIES_COMMONS_RATE_LIMIT_WINDOW_SECONDS` — `60` seconds each. Counted across every user and charged only to calls that actually leave, so exceeding one is never a 429: that upstream drops out and the rest still answer. Neither provider publishes a limit — WoRMS states none at all, and Wikimedia's applies to anonymous heavy use rather than to a call every few seconds — so all three are self-imposed politeness, set well above what a picker generates. Commons's is lower than Wikidata's and still ample — it is charged twice per *new* species, the credit call and the byte fetch, rather than once per search candidate, and an admin adds a few: two for a re-fetch or a pin, two or three to open the photo picker, whose previews are charged nothing. |
 
 ### The map renderer
 
@@ -584,7 +586,7 @@ Nothing here phones home. What the app can be told to contact:
 - **From the browser**: the basemap, for the maps on its forms. Nothing else, in any
   configuration — profile pictures, portraits and species photographs included. A diver's profile
   picture and portrait are stored by your own instance and served by your own API, and so is the
-  Commons photograph on a species: the server fetches it once and stores it, so no visitor's browser
+  Commons photograph on a species: the server fetches it and stores it, so no visitor's browser
   ever contacts Wikimedia. (Gravatar used to be an option here, disclosing a hash of every signed-in
   user's email address and their IP to Automattic on every page. It is gone, along with its
   `GRAVATAR_ENABLED` variable.)
@@ -661,21 +663,25 @@ Nothing here phones home. What the app can be told to contact:
   after 30 days in which nobody here was shown it.
 
   **Wikimedia Commons is one more, and it is not one of those registers.** It is never asked
-  anything a diver typed — it receives a file title derived from an AphiaID, and answers with a
-  photograph's credit metadata and the URL of one scaled copy, which the server then fetches. That
-  is not a cache miss on a search: it happens once, when a species is first resolved into your
-  catalog, and again for species already in it whenever an operator runs the photo backfill script
-  in the API container by hand — nothing runs it on a schedule. `COMMONS_API_URL` points the
-  metadata call at a mirror, and `""` switches species photos off entirely. The image bytes
-  themselves are only ever fetched from `thumb.wikimedia.org` or `upload.wikimedia.org` — one
-  Commons reply names both, the scaled copy on the first and the full-size original on the second
-  for a file already small enough to serve whole. Those two hostnames are hard-coded and have no
-  setting, because that is an SSRF fence and a fence with an environment variable in front of it is
-  not a fence.
+  anything a diver typed — it receives a file title derived from an AphiaID, or one an admin chose,
+  and answers with a photograph's credit metadata and the URL of one scaled copy, which the server
+  then fetches. That is not a cache miss on a search: it happens when a species is first resolved
+  into your catalog, again for species already in it whenever an operator runs the photo backfill
+  script in the API container by hand — nothing runs it on a schedule — and when an admin works on a
+  species' photo on the *Species* screen: a re-fetch asks again, a pin fetches the file the admin
+  named, and the photo picker lists the files in the species' Commons category and fetches a small
+  preview of each. `COMMONS_API_URL` points the metadata calls at a mirror, and `""` switches
+  species photos off entirely. A photograph narrower than 500 px is refused rather than stored soft,
+  so a species whose chosen file is that narrow has no photo; only an admin's pin stores one,
+  unscaled. The image bytes themselves are only ever fetched from `thumb.wikimedia.org` or
+  `upload.wikimedia.org` — one Commons reply names both, a scaled copy on the first and, for a file
+  narrower than the copy asked for, the unscaled original on the second. Those two hostnames are
+  hard-coded and have no setting, because that is an SSRF fence and a fence with an environment
+  variable in front of it is not a fence.
 
   **Every one of those species calls carries the same `User-Agent`**, `SPECIES_USER_AGENT` — the two
-  registers, the Commons metadata call and the byte fetch. It says what the software is, never who
-  the diver is, and both upstreams want it: WoRMS asks to be told who is calling, and
+  registers, the Commons metadata calls and the byte fetches. It says what the software is, never
+  who the diver is, and both upstreams want it: WoRMS asks to be told who is calling, and
   [Wikimedia's policy](https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy)
   requires one. **Unlike `COMMONS_API_URL` it is not an off switch.** An empty value was measured
   answering 403 on the Commons metadata call and on the image bytes alike, and the registers carry
