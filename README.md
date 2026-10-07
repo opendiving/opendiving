@@ -101,13 +101,14 @@ what you need, what the six values are, and what each container does.
 - **Gear tracking** — equipment with per-item dive counts, groupable into sets you attach to a dive
   in one click, plus service schedules with due-soon reminders on the dashboard and by email.
 - **Certifications** — photos of your c-cards on hand at the dive shop, without digging out the
-  plastic, and an email when a card or your dive insurance comes within 90 days of expiring, and
-  again when it does.
+  plastic, and an email when a card or one of your insurance policies comes within 90 days of
+  expiring, and again when it does.
 - **Check-in** — the details a dive shop asks for at the desk, kept once: a portrait cropped like a
-  passport photo, date of birth, phone, an emergency contact and your dive insurance. One page
-  gathers them with your c-cards, dive count, max depth and last dive, and prints — your browser's
-  save-as-PDF is the copy for a desk with no signal — or shares as a link and a QR code the desk
-  opens on its own phone, for a day or until you revoke it.
+  passport photo, date of birth, phone, the email you choose to give out, which need not be the one
+  you sign in with, your emergency contacts in the order to call them, and your insurance policies.
+  One page gathers them with your c-cards, dive count, max depth and last dive, and prints — your
+  browser's save-as-PDF is the copy for a desk with no signal — or shares as a link and a QR code
+  the desk opens on its own phone, for a day or until you revoke it.
 - **Contacts** — the dive centers, shops, schools, clubs and places you stayed, each kept once and
   picked from a list rather than typed again: for a dive, a course, a c-card, a gear service or a
   part of a trip. A UDDF file's dive bases, shops and accommodation arrive as contacts.
