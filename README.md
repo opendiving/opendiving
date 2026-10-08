@@ -21,7 +21,7 @@ with a waitlist.** It is the same code at the same release as an install from th
 difference is only who operates it, and running your own copy is still the version of this with
 nobody to trust but yourself.
 
-![Dashboard](docs/screenshots/dashboard.png)
+![Home](docs/screenshots/home.png)
 
 ## Install
 
