@@ -109,10 +109,10 @@ the web clone:
 
 ```bash
 npm run screenshots -- you@example.com             # all four
-npm run screenshots -- you@example.com dashboard   # just the named ones
+npm run screenshots -- you@example.com home        # just the named ones
 ```
 
-The account you name has to have a populated logbook behind it — enough dives to draw the dashboard
+The account you name has to have a populated logbook behind it — enough dives to draw the Home page's
 charts, one with a dive-computer recording, a gear item, and **a dive site with coordinates on it**.
 Coordinates are the one hard requirement of the four: the site shot exists for its map, and the map
 draws nothing for an unplaced site, so a logbook whose sites are all unplaced fails the run outright
