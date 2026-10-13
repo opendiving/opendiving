@@ -98,8 +98,10 @@ what you need, what the six values are, and what each container does.
   there — how many, the last and the deepest, the species you saw and your average rating — beside
   every dive logged at it, and a dive logged there starts from its water, altitude and entry. The
   list sorts by name, by dives or by the last dive, and filters by a tag.
-- **Gear tracking** — equipment with per-item dive counts, groupable into sets you attach to a dive
-  in one click, plus service schedules with due-soon reminders on the dashboard and by email.
+- **Gear tracking** — equipment with per-item dive counts and dive time, groupable into sets you
+  attach to a dive in one click; a cylinder records its volume, working pressure and material once,
+  and a dive's tank links it. Plus service schedules by months, dives or hours of diving, with
+  due-soon reminders on the dashboard and by email.
 - **Certifications** — photos of your c-cards on hand at the dive shop, without digging out the
   plastic, and an email when a card or one of your insurance policies comes within 90 days of
   expiring, and again when it does.
