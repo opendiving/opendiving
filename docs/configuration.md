@@ -50,8 +50,8 @@ which is what this app did before the setting existed.
 
 | Variable                                   | Default  | What it does                                                                                                                                                                                                                                                                                                       |
 | ------------------------------------------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `REGISTRATION_MODE`                        | `invite` | `invite` admits only an address somebody already invited: the home page offers a stranger a **Request an invite** form instead of a sign-in form, and their address joins a queue you work through. `open` gives an account to anybody who proves they own an address. The first account on an empty instance needs no invitation in either mode — see below. An unknown value refuses to start. |
-| `INVITATIONS_PER_USER`                     | `5`      | How many invitations one member may send per window. A rate, not a lifetime allotment. Counted from the invitations themselves, revoked ones included, so it bounds emails sent. Superusers are exempt.                                                                                                            |
+| `REGISTRATION_MODE`                        | `invite` | `invite` admits only an address somebody already invited, or somebody who follows a member's invite link: the home page offers a stranger a **Request an invite** form instead of a sign-in form, and their address joins a queue you work through. `open` gives an account to anybody who proves they own an address. The first account on an empty instance needs no invitation in either mode — see below. An unknown value refuses to start. |
+| `INVITATIONS_PER_USER`                     | `5`      | How many invitations one member may make per window — addresses they invite and accounts created through their invite link, counted together. A rate, not a lifetime allotment. Counted from the invitations themselves, revoked ones included, so it bounds emails sent and sign-ups through the link alike; a member at it has a link that admits nobody not already invited. Superusers are exempt. |
 | `INVITATIONS_WINDOW_DAYS`                  | `1`      | The window those are counted over.                                                                                                                                                                                                                                                                                 |
 | `INVITATION_ATTEMPT_RATE_LIMIT_PER_USER`   | `20`     | A separate backstop on how often one member may *attempt* an invitation, over `MAGIC_LINK_RATE_LIMIT_WINDOW_SECONDS`. Inviting an address that already has an account is refused without creating anything, so the quota above never charges for it; this is what stops that refusal being a probe. Superusers get it too. |
 | `INVITE_REQUEST_RATE_LIMIT_WINDOW_SECONDS` | `3600`   | The window for the two limits below, on the anonymous request-an-invite endpoint. Consulted only in `invite` mode.                                                                                                                                                                                                 |
@@ -66,15 +66,22 @@ a bootstrap script. It fires on the table being empty rather than once, so an in
 account is deleted and purged hands the same deal to whoever signs in next.
 
 **How you invite people.** Every member has an *Invitations* card in Settings, subject to the quota
-above. As the operator you also get an **Admin** entry in the account menu — sign in as the first
-account, open the menu, choose *Admin*. Its *Invite Queue* lists the addresses that used the request
-form, tells you which of them already have an account, and invites or removes them in a batch; its
-*Stats* screen shows daily totals of accounts created, sign-ins and active accounts; and its
-*Species* screen lists the species catalog newest first, where you can hide a species' photo, pin
-another file from Commons in its place, or re-fetch it by the rule. An invitation is an entry
-against the email address rather than a code to forward: the invitee signs in with the address that
-was invited — by link, code or Google, exactly as anybody else does — so there is no token for them
-to lose and nothing extra for you to explain.
+above, which invites an address or hands out that member's own invite link. As the operator you
+also get an **Admin** entry in the account menu — sign in as the first account, open the menu,
+choose *Admin*. Its *Invite Queue* lists the addresses that used the request form, tells you which
+of them already have an account, and invites or removes them in a batch; its *Stats* screen shows
+daily totals of accounts created, sign-ins and active accounts; and its *Species* screen lists the
+species catalog newest first, where you can hide a species' photo, pin another file from Commons in
+its place, or re-fetch it by the rule.
+
+An invitation typed against an email address is an entry against that address: the invitee signs in
+with the address that was invited — by link, code or Google, exactly as anybody else does — so there
+is no token for them to lose and nothing extra for you to explain. A member's **invite link** is the
+other kind: one per member, shown on their card as an address and a QR code to copy, share or scan.
+Whoever follows it creates an account with whatever address they sign in with, counted as that
+member's invitation, and the member sees them on the card by the name on their account rather than
+by address. Anybody holding the link can use it until its member resets or removes it on the same
+card. It sends no email of its own.
 
 Somebody who is not invited still gets their sign-in email. The endpoint that sends it deliberately
 never learns whether an address is invited, or even whether it has an account, which is what keeps

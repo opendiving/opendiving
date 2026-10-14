@@ -26,8 +26,9 @@ ask for a link, and the first account to sign in is yours — with the operator'
 Admin section that comes with them.
 
 A new install takes no other accounts on its own: the home page offers a stranger a *request an
-invite* form, and everybody after you gets in by an invitation you send from Settings or from that
-Admin section. That is `REGISTRATION_MODE`, it defaults to `invite`, and
+invite* form, and everybody after you gets in by an invitation: one sent to their address from
+Settings or from that Admin section, or the invite link every member has on the same Settings card,
+which admits whoever follows it. That is `REGISTRATION_MODE`, it defaults to `invite`, and
 [configuration.md](configuration.md#who-may-create-an-account) covers both values and the invitation
 limits.
 
@@ -68,7 +69,8 @@ expands the `$`. Then `docker compose up -d`, with the same DNS caveat above.
 
 **A mail relay.** Sign-in is passwordless — an emailed link, or the six-digit code beside it, is the
 only way anybody including you gets in — so an instance that cannot send mail cannot be used. It
-carries the invitations as well, which is what everybody after the first account arrives by. Any
+carries every invitation sent to an address as well; a member's invite link needs no email to reach
+anybody, but whoever follows it still signs in by one. Any
 SMTP relay works: your mail provider, your host's, or your own existing server. Don't stand up an
 MTA for this unless you already know why; getting mail *accepted* (SPF, DKIM, DMARC, IP reputation,
 a port 25 your host probably blocks) is the hard part, and it is why every serious self-hosted app
