@@ -96,9 +96,10 @@ or "Sign in to this instance" further down the page, both of which go to `/signi
 link the way they always did.
 
 If this is a brand new install and nobody has signed in yet, the first account is admitted
-regardless: sign in as yourself, and everybody else arrives by an invitation you send from Settings
-or from the Admin section. `REGISTRATION_MODE=open` in `.env` and `docker compose up -d` is the
-other answer, and it is the behaviour releases before this one had — see
+regardless: sign in as yourself, and everybody else arrives by an invitation — one you send from
+Settings or from the Admin section, or a member's invite link from the Invitations card in Settings.
+`REGISTRATION_MODE=open` in `.env` and `docker compose up -d` is the other answer, and it is the
+behaviour releases before this one had — see
 [configuration.md](configuration.md#who-may-create-an-account).
 
 ## "This address hasn't been invited to this instance yet"
@@ -112,7 +113,10 @@ clicked it. Nobody's account is affected and nothing was created.
 To let them in, invite the address: Settings → Invitations for any member, or the Admin section if
 they used the request form on the home page and you would rather work the queue. The invitation is
 an entry against that exact address, so invite the one they will actually sign in with — an
-invitation for `diver@example.com` does nothing for `diver@work.example.com`.
+invitation for `diver@example.com` does nothing for `diver@work.example.com`. Or hand them a
+member's invite link from the same card, which admits whatever address they sign in with. A link
+whose member has used up the invitation quota admits nobody new until the window moves on, and
+says so: "This invite link can't admit anyone else right now".
 
 Getting it on an instance you meant to be open means `REGISTRATION_MODE` is not what you think.
 `docker compose exec api env | grep REGISTRATION_MODE` says what the container is actually running
