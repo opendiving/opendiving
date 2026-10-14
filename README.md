@@ -71,9 +71,10 @@ what you need, what the six values are, and what each container does.
   altitude, current, waves, weather, weight, notes, and any number of gas mixtures (O₂/He,
   start/end pressures) per dive, with whether you went in from the shore, a pier, a pool or a boat
   and the boat's name. Say what kind of dive it was, from open circuit to freediving, rate it out
-  of five and tag it in your own words; the dive list filters by tag or type and sorts by rating,
-  and Settings renames or deletes a tag. A dive can span multiple dive sites, in order, because
-  drift dives happen.
+  of five and tag it in your own words — tag it `survey` when you recorded every species you could
+  identify, the spelling other readers of your log look for; the dive list filters by tag or type
+  and sorts by rating, and Settings renames or deletes a tag. A dive can span multiple dive sites,
+  in order, because drift dives happen.
 - **Technical diving** — trimix and nitrox mixes get derived gas names and per-mix **MOD** at your
   ppO₂ limit, plus END/EAD; the profile chart shades the **deco ceiling**, plots the computer's own
   **NDL, TTS, ppO₂, CNS and gradient factors** and marks dive events; each recording says the mode
@@ -91,7 +92,7 @@ what you need, what the six values are, and what each container does.
 - **Air consumption** — SAC and RMV derived automatically, including a per-tank breakdown across
   recorded gas switches, with a consumption trend on the dashboard.
 - **Trips and species** — group dives into a liveaboard or a holiday week; track what you saw, with
-  how many you counted and a note on each.
+  how many you counted or a band — few, many, abundant — and a note on each.
 - **Dive sites** — your own site list: the other names a site goes by, the depths it is dived at,
   its water, its altitude and how you get in, your own tags, and its OpenStreetMap or Wikidata entry
   when you pick it from the built-in catalogue of named sites. A site's page sums up your dives
