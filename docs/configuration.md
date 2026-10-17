@@ -111,7 +111,7 @@ and the answer to it changes none of the three methods.
 
 | Variable                               | Default | What it does                                                                                                                                                                                    |
 | -------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SIGN_IN_CODE_ATTEMPTS_MAX`            | `5`     | Wrong guesses allowed against the emailed code. Running out spends the code only — the link in the same mail still works.                                                                       |
+| `SIGN_IN_CODE_ATTEMPTS_MAX`            | `5`     | Guesses allowed against the emailed code, the right one included. Running out spends the code only — the link in the same mail still works.                                                     |
 | `PASSKEY_CHALLENGE_TTL_SECONDS`        | `600`   | How long a started ceremony stays completable. It is spent on the first attempt either way, so this bounds only an abandoned one.                                                               |
 | `PASSKEY_MAX_CREDENTIALS_PER_USER`     | `10`    | Passkeys one account may hold. Abuse hygiene, not product policy.                                                                                                                               |
 | `PASSKEY_OPTIONS_RATE_LIMIT_PER_IP`    | `240`   | Per IP, per `MAGIC_LINK_RATE_LIMIT_WINDOW_SECONDS`. High because one is minted per signed-out page view that offers passkey autofill, and an office behind one NAT gateway is a single IP here. |
@@ -166,9 +166,10 @@ Two consequences worth knowing before you edit it:
   credential created under one domain to another, and the API will not accept one. Nobody is locked
   out — the emailed link is the recovery path, and everyone re-adds a passkey afterwards — but it is
   silent, so treat a hostname change as "everyone signs in by email once".
-- **Write it without a trailing slash.** The origin is rebuilt from the parsed URL rather than
-  concatenated, so `https://dive.example.com/` is tolerated — but keep it clean anyway, since the
-  same value is compared against what the browser sends.
+- **Write it without a trailing slash.** Everything checked against what the browser sends — the
+  allowed CORS origin, the passkey origin, the Google redirect URI — is rebuilt from the parsed URL,
+  so `https://dive.example.com/` is tolerated there. Emailed links are the value with a path
+  appended, though, and would carry a double slash.
 
 `SITE_URL` is the web app's own origin and should move with it.
 
@@ -286,7 +287,10 @@ directory, under the same names.
 them unset, the API refuses to start and names the ones that are missing, rather than starting and
 failing on the first diver's upload. Then it writes a probe object and deletes it again, so a wrong
 bucket name, a credential that can read but not write, or a bucket in somebody else's account fails
-at `docker compose up -d` with the endpoint and the bucket in the message.
+at `docker compose up -d` with the endpoint and the bucket in the message. A key that cannot list is
+the one gap: startup does not refuse it, but once anything is stored it logs an ERROR at every boot,
+`Could not list …`, instead of checking that the bucket holds the files the database references —
+and the orphan sweep and a copy out of the bucket fail.
 
 **The worker needs the credentials too**, and the compose file already hands them over — `.env` goes
 to `api` and `worker` wholesale, so there is nothing extra to set. It is worth knowing why it
