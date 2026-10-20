@@ -136,10 +136,10 @@ what you need, what the six values are, and what each container does.
   dive is kept on the dive it becomes; a logbook of several dives, or a DiveJSON document, arrives
   without its file. You see what each file was read as and a row for every dive it becomes — new,
   already here, brought back from deletion, gaining a file, or skipped and why — before anything is
-  written, and anything a conversion could not carry is listed rather than quietly dropped. Records
-  you already have are matched rather than duplicated, a dive you deleted comes back under the
-  identifier it had, and the full archive restores the files it carries too. An exit door you cannot
-  walk back through is only half of owning your data.
+  written, and under each dive what its files did not record, what the import worked out, and which
+  of the dive's values it left out. Records you already have are matched rather than duplicated, a
+  dive you deleted comes back under the identifier it had, and the full archive restores the files it
+  carries too. An exit door you cannot walk back through is only half of owning your data.
 - **Year in review** — each January, an email with the year before in figures: dives and time
   underwater, the deepest and longest, dive sites, and species with the ones you saw for the first
   time.
