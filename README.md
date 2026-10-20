@@ -91,7 +91,7 @@ what you need, what the six values are, and what each container does.
   switcher when a dive has more than one. A computer that chopped one dive in half logs it as two
   dives, and **Merge** folds them back into one.
 - **Air consumption** — SAC and RMV derived automatically, including a per-tank breakdown across
-  recorded gas switches, with a consumption trend on the dashboard.
+  recorded gas switches, with a consumption trend on the Home page.
 - **Trips and species** — group dives into a liveaboard or a holiday week; track what you saw, with
   how many you counted or a band — few, many, abundant — and a note on each.
 - **Dive sites** — your own site list: the other names a site goes by, the depths it is dived at,
@@ -103,7 +103,7 @@ what you need, what the six values are, and what each container does.
 - **Gear tracking** — equipment with per-item dive counts and dive time, groupable into sets you
   attach to a dive in one click; a cylinder records its volume, working pressure and material once,
   and a dive's tank links it. Plus service schedules by months, dives or hours of diving, with
-  due-soon reminders on the dashboard and by email.
+  due-soon reminders on the Home page and by email.
 - **Certifications** — photos of your c-cards on hand at the dive shop, without digging out the
   plastic, and an email when a card or one of your insurance policies comes within 90 days of
   expiring, and again when it does.
@@ -148,7 +148,7 @@ what you need, what the six values are, and what each container does.
 - **Dark mode and responsive** — works on the boat, in the dive shop, and on your desk.
 - **Installs like an app** — add it to a phone's home screen from the browser's install or share
   menu (on iOS 16.4 and later, Safari's Share → Add to Home Screen), and it opens in its own window
-  at your dashboard.
+  on your Home page.
 
 |                                                                                                        |                                                                                                                                                                                           |
 | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
