@@ -606,7 +606,8 @@ Nothing here phones home. What the app can be told to contact:
   only the `z/x/y` of the area shown. Unconfigured, that is the MapLibre vector pair the web image
   ships — its tiles, its label glyphs and a low-zoom raster underlay, all from
   `tiles.openfreemap.org`. The browser draws a map on the form to add or edit a dive site and the
-  form to add or edit a trip, both as soon as they open, and nowhere else. Whoever serves the
+  form to add or edit a trip, both as soon as they open, and on the form to add or edit a contact
+  only once the visitor asks it to show one — and nowhere else. Whoever serves the
   basemap therefore sees a visitor's IP address and roughly where they dive, and nothing else — not
   their account, their dive log, or the name of anything on the map.
 
