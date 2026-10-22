@@ -167,7 +167,9 @@ Roughly in priority order — contributions welcome:
   hardware support.
 - **Statistics** — depth and time records, dives per year, a sites map.
 - **Sharing** — a public link to a dive or a trip.
-- **iOS companion app** — parked until the server story is done.
+- **iOS companion app** — in development: a client of your own server, starting with your logbook
+  and your certification cards. Nothing is in the App Store yet; for now you build it onto your own
+  phone from source.
 
 ## How it compares
 
@@ -204,7 +206,7 @@ The application itself lives next door:
 | -------------------------------------------------------------- | ----------------------------------------------------- |
 | [opendiving-api](https://github.com/opendiving/opendiving-api) | FastAPI backend — Postgres, Redis, dive-file parsing  |
 | [opendiving-web](https://github.com/opendiving/opendiving-web) | Next.js web app                                       |
-| [opendiving-ios](https://github.com/opendiving/opendiving-ios) | SwiftUI app (early scaffold, parked)                  |
+| [opendiving-ios](https://github.com/opendiving/opendiving-ios) | SwiftUI app (in development, built from source)       |
 
 Each carries its own `CONTRIBUTING.md` with its setup, its checks and its house rules, and its own
 `DECISIONS.md` recording the non-obvious choices already made. Working on the app means working in
