@@ -109,29 +109,42 @@ of it still has working sign-in as long as mail is delivered. Who is *allowed* t
 account is the separate question above — [Who may create an account](#who-may-create-an-account) —
 and the answer to it changes none of the three methods.
 
-| Variable                               | Default | What it does                                                                                                                                                                                    |
-| -------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SIGN_IN_CODE_ATTEMPTS_MAX`            | `5`     | Guesses allowed against the emailed code, the right one included. Running out spends the code only — the link in the same mail still works.                                                     |
-| `PASSKEY_CHALLENGE_TTL_SECONDS`        | `600`   | How long a started ceremony stays completable. It is spent on the first attempt either way, so this bounds only an abandoned one.                                                               |
-| `PASSKEY_MAX_CREDENTIALS_PER_USER`     | `10`    | Passkeys one account may hold. Abuse hygiene, not product policy.                                                                                                                               |
-| `PASSKEY_OPTIONS_RATE_LIMIT_PER_IP`    | `240`   | Per IP, per `MAGIC_LINK_RATE_LIMIT_WINDOW_SECONDS`. High because one is minted per signed-out page view that offers passkey autofill, and an office behind one NAT gateway is a single IP here. |
-| `PASSKEY_VERIFY_RATE_LIMIT_PER_IP`     | `30`    | Per IP, same window.                                                                                                                                                                            |
-| `PASSKEY_REGISTER_RATE_LIMIT_PER_USER` | `10`    | Per signed-in account, same window.                                                                                                                                                             |
-| `REFRESH_TOKEN_EXPIRE_DAYS`            | `7`     | How long a browser stays signed in **without the app being used**. A rolling window, not a session length — read below before changing it.                                                      |
+| Variable                               | Default | What it does                                                                                                                                                                                                                                                                                     |
+| -------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `SIGN_IN_CODE_ATTEMPTS_MAX`            | `5`     | Guesses allowed against the emailed code, the right one included. Running out spends the code only — the link in the same mail still works.                                                                                                                                                      |
+| `PASSKEY_CHALLENGE_TTL_SECONDS`        | `600`   | How long a started ceremony stays completable. It is spent on the first attempt either way, so this bounds only an abandoned one.                                                                                                                                                                |
+| `PASSKEY_MAX_CREDENTIALS_PER_USER`     | `10`    | Passkeys one account may hold. Abuse hygiene, not product policy.                                                                                                                                                                                                                                |
+| `PASSKEY_OPTIONS_RATE_LIMIT_PER_IP`    | `240`   | Per IP, per `MAGIC_LINK_RATE_LIMIT_WINDOW_SECONDS`. High because one is minted per signed-out page view that offers passkey autofill, and an office behind one NAT gateway is a single IP here.                                                                                                  |
+| `PASSKEY_VERIFY_RATE_LIMIT_PER_IP`     | `30`    | Per IP, same window.                                                                                                                                                                                                                                                                             |
+| `PASSKEY_REGISTER_RATE_LIMIT_PER_USER` | `10`    | Per signed-in account, same window.                                                                                                                                                                                                                                                              |
+| `REFRESH_TOKEN_EXPIRE_DAYS`            | `7`     | How long a browser stays signed in **without the app being used**. A rolling window, not a session length — read below before changing it.                                                                                                                                                       |
+| `EXTENDED_REFRESH_TOKEN_EXPIRE_DAYS`   | `90`    | The same rolling window for a session that asked for a longer one when signing in with the emailed code — the iOS app always does, a browser never does. Also how long each create the app sent with an `Idempotency-Key` is remembered, so a retry days after a lost reply makes nothing twice. |
+| `REFRESH_TOKEN_REUSE_GRACE_SECONDS`    | `60`    | How long a spent refresh cookie presented again is answered with what its first use was given — the retry after a reply lost on a bad connection — rather than ending the session as a stolen one. Below `5` the API refuses to start.                                                           |
 
-**Two things worth knowing before you change the number.** The refresh cookie is single-use: each
-time it is spent a fresh one replaces it with the clock started again, so this setting bounds
+**Three things worth knowing before you change these numbers.** The refresh cookie is single-use:
+each time it is spent a fresh one replaces it with the clock started again, so the two windows bound
 *inactivity* rather than the session. A browser used every day stays signed in indefinitely; one
-left alone for longer than this asks for a sign-in link again. That is the behaviour the web app
-describes, so raising or lowering it changes what the app does rather than only how long a token
-lives.
+left alone for longer than `REFRESH_TOKEN_EXPIRE_DAYS` asks for a sign-in link again. That is the
+behaviour the web app describes, so raising or lowering it changes what the app does rather than
+only how long a token lives. **`REFRESH_TOKEN_EXPIRE_DAYS` does not bound a session that asked to be
+extended**: an instance that lowered it to sign people out sooner has to lower
+`EXTENDED_REFRESH_TOKEN_EXPIRE_DAYS` too, or the iOS app stays signed in for the full extended
+window.
 
-And the number is quoted back to divers in two places the web image ships as prose — the note under
-the sign-in button and the bundled privacy page's section on the sign-in cookie, both of which say
-"about a week" from the default of 7. Neither reads this setting, so an instance that changes it has
-two lines of copy that no longer match it. It is the same coupling as the privacy page's "within 30
-days" against [account deletion](#account-deletion), and the same remedy: pick a number your own
-copy can honestly stand behind, or expect to edit those two lines.
+The reuse grace is a trade, and it cannot be switched off. Inside it a spent cookie is honoured
+rather than ending its session, so raising it widens the window in which a stolen one is replayed
+successfully, and lowering it makes a retry after a longer dropout cost a sign-in. The same line is
+also what tells two tabs refreshing at the same instant from a replay, which is why the API refuses
+to start below 5 rather than signing a diver out for having two tabs open.
+
+And the numbers are quoted back to divers as prose the web image ships. The note under the sign-in
+button and the bundled privacy page's section on the sign-in cookie both say "about a week" from the
+default of 7; the privacy page also says "about three months" from the default of 90 — for how long
+the app stays signed in and for how long its retry records are kept — and "within about a minute"
+from the grace's 60. None of them reads these settings, so an instance that changes one has copy
+that no longer matches it. It is the same coupling as the privacy page's "within 30 days" against
+[account deletion](#account-deletion), and the same remedy: pick numbers your own copy can honestly
+stand behind, or expect to edit those lines.
 
 There is deliberately **no on/off switch for passkeys**. The browser's own capability detection is
 the switch: where a ceremony cannot work the web app hides the option rather than offering one that
@@ -260,10 +273,11 @@ a database that already exists under a different name).
 | `FILE_STORAGE_BACKEND`   | `local`       | Where uploaded files are kept: `local` writes them into `FILE_STORAGE_DIR`, `s3` puts them in an S3-compatible bucket. The bundle mounts a volume for `local`, so a compose install on one machine has nothing to set here — see [Object storage](#object-storage) for the install that does. Any other value refuses to start.                             |
 | `FILE_STORAGE_DIR`       | `/data/files` | Where the `local` backend writes uploaded dive-computer exports, c-card images, profile pictures, portraits, species photographs and the [map tiles](#the-map-renderer) behind cards and page heads, inside the container. The compose file mounts the `files-data` volume there, so there is nothing to set unless you replaced that volume with a bind mount — and then the host directory has to be owned by uid 1000 or the API refuses to start. Ignored entirely under `s3`. |
 
-Redis holds cache entries, open rate-limit windows and in-flight passkey challenges. Losing it costs
-a cold cache and interrupts passkey sign-in until it is back (see [Sign-in](#sign-in)); nothing
-durable lives there. What is durable lives in two places, and a backup has to cover both: the
-records are in Postgres, and the uploaded files themselves are on the `files-data` volume — or in
+Redis holds cache entries, open rate-limit windows, in-flight passkey challenges and, for the
+[reuse grace](#sign-in), the answer each recent refresh was given. Losing it costs a cold cache,
+interrupts passkey sign-in until it is back and makes a refresh retried inside the grace sign in
+again; nothing durable lives there. What is durable lives in two places, and a backup has to cover
+both: the records are in Postgres, and the uploaded files themselves are on the `files-data` volume — or in
 your bucket, if you switched the backend below. See [backup-restore.md](backup-restore.md).
 
 ### Object storage
@@ -497,8 +511,8 @@ racing each other can overshoot the limit by one of them.
 Deleting an account takes effect immediately — the app stops opening, on every device — but the data
 is not destroyed until the grace period runs out. A cron in the `worker` container runs hourly at
 :30 and issues a real `DELETE FROM "user"` for each account past its deadline, taking that diver's
-dives, dive sites, certifications, check-in details, gear, trips, contacts, people, tags and every
-uploaded file with it.
+dives, dive drafts, dive sites, certifications, check-in details, gear, trips, contacts, people,
+tags and every uploaded file with it.
 Nothing else purges an account, and nothing decides on a user's behalf that one should go: the job
 only ever executes a request the user already made.
 
