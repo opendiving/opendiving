@@ -125,9 +125,9 @@ what you need, what the six values are, and what each container does.
 - **Full export** — one click takes _everything_ out in open formats: a
   **[DiveJSON](https://divejson.org)** document — the open dive-log interchange format this
   project publishes and implements — a **UDDF** document other programs import, a **CSV** for a
-  spreadsheet, or a complete archive carrying all three, every dive-computer file you uploaded,
-  every c-card image you stored, and your profile picture and portrait. A data-ownership log
-  without an exit door is a contradiction.
+  spreadsheet, or a complete archive carrying all three, your unfinished dive drafts, every
+  dive-computer file you uploaded, every c-card image you stored, and your profile picture and
+  portrait. A data-ownership log without an exit door is a contradiction.
 - **Logbook import** — and the door swings both ways: bring a whole logbook in from a **DiveJSON**
   document, a full archive, a **UDDF** file, a Subsurface **`.ssrf`**, a **FIT** file, a **Suunto
   app JSON** export, a **Suunto DM5 XML** export, or a zip of any of them — any number of files at
