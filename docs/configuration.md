@@ -729,7 +729,7 @@ Nothing here phones home. What the app can be told to contact:
   leaves for this. Set it to `open-meteo` and a cron in the worker asks Open-Meteo's Historical
   Weather and Marine APIs about dives whose air temperature, weather or waves are empty: what goes
   out is the dive's position rounded to two decimals — about a kilometre — and the dates around it,
-  two or three days and never an hour, on a cache miss, so every dive in one square on one day shares
+  at most three days and never an hour, on a cache miss, so every dive in one square on one day shares
   an answer. Nothing identifying the diver goes with it — no account, no dive, no name — and the
   source IP is your server's. If you publish a privacy policy, this belongs in it. The requests carry
   the project's `User-Agent`, which has no setting of its own. The free API is for non-commercial use
