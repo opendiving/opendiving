@@ -165,7 +165,8 @@ Roughly in priority order — contributions welcome:
   reader has to decode that log rather than walk a table; Shearwater Cloud's UDDF export of the same
   dives already imports. The iOS app downloads straight from a dive computer over Bluetooth, through
   [libdivecomputer](https://www.libdivecomputer.org/), and the server keeps each dive's original
-  download beside it without reading it; reading those originals on the server is still to come.
+  bytes on its recording, within the size any dive-computer file is held to, without reading them;
+  reading those originals on the server is still to come.
 - **Statistics** — depth and time records, dives per year, a sites map.
 - **Sharing** — a public link to a dive or a trip.
 - **iOS companion app** — in development: a client of your own server, with your logbook and
