@@ -424,7 +424,7 @@ other two. Whether they still agree is not a thing to take this paragraph's word
 `git grep -n discussions .github/ISSUE_TEMPLATE/config.yml` in each says where its links point. A
 sentence claiming the three agree is written once and never re-checked; the two commands are.
 
-## The README names the import formats, and `## Planned` keeps Shearwater
+## The README names the import formats
 
 The API reads whatever the `divejson` converter reads, and builds every sentence it shows a diver —
 the upload field's description, the "no reader claims this file" refusal — from the library's own
@@ -444,15 +444,8 @@ spanning two repositories — the bump is not finished until a change here has n
 Suunto's DM5 XML is the case that proved it: `divejson` 0.4.0 added the reader, the api's pin bump
 switched it on, and this README went on omitting the format until a later PR caught up.
 
-**Shearwater stays under `## Planned` even though Shearwater Cloud can export UDDF**, which the app
-does read. What is still to come is the whole-database export, and having a database in hand moved
-that blocker rather than clearing it: in the one export available to work from, the
-`dive_log_records` table is empty and each dive's samples sit in `sw-pnf` blobs — the computer's own
-log format — so the reader is a libdivecomputer-class binary parser rather than a walk over readable
-rows. The bullet says so, because "no database to build the reader against" was the old reason and
-reads as a much smaller obstacle than the real one. The `## How it compares` vendor-clouds bullet
-keeps naming all four for the same reason it always did: it is a claim about those clouds'
-*exports*, and every one of the four has one this app reads.
+The `## How it compares` vendor-clouds bullet names all four clouds because it is a claim about
+their *exports*, and every one of the four has one this app reads.
 
 ## "The original file is kept" is a claim about a file that is one dive, not about a logbook
 

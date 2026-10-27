@@ -130,16 +130,18 @@ what you need, what the six values are, and what each container does.
   portrait. A data-ownership log without an exit door is a contradiction.
 - **Logbook import** — and the door swings both ways: bring a whole logbook in from a **DiveJSON**
   document, a full archive, a **UDDF** file, a Subsurface **`.ssrf`**, a **FIT** file, a **Suunto
-  app JSON** export, a **Suunto DM5 XML** export, or a zip of any of them — any number of files at
-  once, in any mix, so a watch's whole folder of exports arrives in one go. A computer's two exports
-  of one dive become one dive with both files, and a file converted from another format that is one
-  dive is kept on the dive it becomes; a logbook of several dives, or a DiveJSON document, arrives
-  without its file. You see what each file was read as and a row for every dive it becomes — new,
-  already here, brought back from deletion, gaining a file, or skipped and why — before anything is
-  written, and under each dive what its files did not record, what the import worked out, and which
-  of the dive's values it left out. Records you already have are matched rather than duplicated, a
-  dive you deleted comes back under the identifier it had, and the full archive restores the files it
-  carries too. An exit door you cannot walk back through is only half of owning your data.
+  app JSON** export, a **Shearwater Cloud** database export holding every dive of the account or its
+  XML export of one dive, a **Suunto DM5 XML** export, or a zip of any of them — any number of files
+  at once, in any mix, so a watch's whole folder of exports arrives in one go. A computer's two
+  exports of one dive become one dive with both files, and a file converted from another format that
+  is one dive is kept on the dive it becomes; a logbook of several dives, or a DiveJSON document,
+  arrives without its file. You see what each file was read as and a row for every dive it becomes —
+  new, already here, brought back from deletion, gaining a file, or skipped and why — before
+  anything is written, and under each dive what its files did not record, what the import worked
+  out, and which of the dive's values it left out. Records you already have are matched rather than
+  duplicated, a dive you deleted comes back under the identifier it had, and the full archive
+  restores the files it carries too. An exit door you cannot walk back through is only half of
+  owning your data.
 - **Year in review** — each January, an email with the year before in figures: dives and time
   underwater, the deepest and longest, dive sites, and species with the ones you saw for the first
   time.
@@ -160,13 +162,10 @@ Roughly in priority order — contributions welcome:
 
 - **More importers** — a new format is a reader in the
   [`divejson`](https://github.com/divejson/divejson-py) package, which reads every file the dive
-  form and logbook import take. Shearwater Cloud's whole-database export is the one outstanding: it
-  keeps each dive's samples in the computer's own binary log rather than in readable rows, so its
-  reader has to decode that log rather than walk a table; Shearwater Cloud's UDDF export of the same
-  dives already imports. The iOS app downloads straight from a dive computer over Bluetooth, through
-  [libdivecomputer](https://www.libdivecomputer.org/), and the server keeps each dive's original
-  bytes on its recording, within the size any dive-computer file is held to, without reading them;
-  reading those originals on the server is still to come.
+  form and logbook import take. The iOS app downloads straight from a dive computer over Bluetooth,
+  through [libdivecomputer](https://www.libdivecomputer.org/), and the server keeps each dive's
+  original bytes on its recording, within the size any dive-computer file is held to, without
+  reading them; reading those originals on the server is still to come.
 - **Statistics** — depth and time records, dives per year, a sites map.
 - **Sharing** — a public link to a dive or a trip.
 - **iOS companion app** — in development: a client of your own server, with your logbook and
