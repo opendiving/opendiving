@@ -163,12 +163,17 @@ Roughly in priority order — contributions welcome:
   form and logbook import take. Shearwater Cloud's whole-database export is the one outstanding: it
   keeps each dive's samples in the computer's own binary log rather than in readable rows, so its
   reader has to decode that log rather than walk a table; Shearwater Cloud's UDDF export of the same
-  dives already imports. Longer term, [libdivecomputer](https://www.libdivecomputer.org/) for direct
-  hardware support.
+  dives already imports. The iOS app downloads straight from a dive computer over Bluetooth, through
+  [libdivecomputer](https://www.libdivecomputer.org/), and the server keeps each dive's original
+  bytes on its recording, within the size any dive-computer file is held to, without reading them;
+  reading those originals on the server is still to come.
 - **Statistics** — depth and time records, dives per year, a sites map.
 - **Sharing** — a public link to a dive or a trip.
-- **iOS companion app** — in development: a client of your own server, starting with your logbook
-  and your certification cards. Nothing is in the App Store yet.
+- **iOS companion app** — in development: a client of your own server, with your logbook and
+  certification cards, dives logged with or without signal, dive-computer files shared to it, and
+  downloads straight off the computer over Bluetooth — built for the Shearwater Perdix 3 and the
+  Suunto Ocean, whose support is experimental, with every other computer untried.
+  Nothing is in the App Store yet.
 
 ## How it compares
 
@@ -178,10 +183,12 @@ Honest answers to "why not X":
   dive-computer support and a full deco planner. It's desktop-first, with no web app or
   self-hostable server; OpenDiving is the server-shaped complement — a modern web UI on your own
   box, API-first, reachable from any browser. Use Subsurface to download over a cable, then bring
-  its `.ssrf` in whole, so both can hold the same log.
+  its `.ssrf` in whole, so both can hold the same log; over Bluetooth, the iOS app downloads
+  straight into OpenDiving.
 - **[Submersion](https://submersion.app/) / [Bubbletrail](https://bubbletrail.app/)** — excellent
   newer open-source _apps_: local-first, on-device databases, Bluetooth downloads. OpenDiving is the
-  household-server alternative: one instance, every browser and family member, one backup, an API.
+  household-server alternative: one instance, every browser and family member, one backup, an API —
+  and its iOS app's Bluetooth downloads land on that server rather than in a database on the phone.
 - **Vendor clouds (Shearwater, Garmin, Suunto, Oceanic+)** — where dives are born, not where they
   should live. OpenDiving reads their exports, and a file you upload to a dive stays with it
   forever, so switching computers never splits your history.
