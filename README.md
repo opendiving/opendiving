@@ -65,6 +65,7 @@ what you need, what the six values are, and what each container does.
 | [Backup & restore](docs/backup-restore.md)         | The dump, the uploaded files, and the drill    |
 | [Upgrade](docs/upgrade.md)                         | Pull, up, any step a release names, downgrades |
 | [Troubleshooting](docs/troubleshooting.md)         | Certificates, mail, rate limits, starting over |
+| [API access](docs/api-access.md)                   | A key for your own tools, and the schema       |
 
 ## Features
 
