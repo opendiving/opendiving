@@ -84,9 +84,9 @@ revoked or expires.
 Every instance serves its OpenAPI document at `/api/v1/openapi.json`, with no key and whatever its
 `ENVIRONMENT` — on the project's instance that is <https://opendiving.app/api/v1/openapi.json>. It
 is generated from the routes themselves, so it lists every path, parameter and response shape as
-that instance's release has them. The interactive pages that render it, `/docs` and `/redoc`, are
-open only on a `local` instance and behind an operator account on `staging`; a `production`
-instance does not serve them, so point a viewer of your own at the JSON instead.
+that instance's release has them. The interactive reference that renders it, `/docs`, is open
+only on a `local` instance and behind an operator account on `staging`; a `production` instance
+does not serve it, so point a viewer of your own at the JSON instead.
 
 ## For the operator
 
