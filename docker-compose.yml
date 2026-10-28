@@ -315,7 +315,7 @@ services:
   # Cache and job queue. Nothing durable lives here: losing it costs cache warmth and
   # resets the open rate-limit windows, and nothing else.
   redis:
-    image: redis:8-alpine@sha256:3811787313eba226a2ef38658c6ccb91cd5e110edc89c37767de373120a0e5a0
+    image: redis:8-alpine@sha256:47b08295737773de3b711fb86f13ae802f5074e96a9a2d29f5f80164ac08c046
     restart: unless-stopped
     volumes:
       - redis-data:/data
