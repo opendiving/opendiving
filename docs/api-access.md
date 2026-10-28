@@ -86,7 +86,8 @@ Every instance serves its OpenAPI document at `/api/v1/openapi.json`, with no ke
 is generated from the routes themselves, so it lists every path, parameter and response shape as
 that instance's release has them. The interactive reference that renders it, `/docs`, is open
 only on a `local` instance and behind an operator account on `staging`; a `production` instance
-does not serve it, so point a viewer of your own at the JSON instead.
+does not serve it. The web app renders the same document at `/developers` on every instance, with no
+sign-in — on the project's instance that is <https://opendiving.app/developers>.
 
 ## For the operator
 
