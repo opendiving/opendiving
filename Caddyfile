@@ -33,10 +33,11 @@
 	# perfectly good proxy for `/api/v1` and there is no reason to add a Node hop to a 10
 	# MB card upload or a whole-logbook export archive.
 	#
-	# The three docs paths are here because they mount on the *API*, not on the web app: a
+	# The two docs paths are here because they mount on the *API*, not on the web app: a
 	# plain "everything to web:3000" file leaves them answering 404 with nothing to suggest
 	# why. They are absent on ENVIRONMENT=production anyway - routing them costs nothing
-	# and means that a staging instance behaves the way its operator expects.
+	# and means that a staging instance behaves the way its operator expects. The schema
+	# they render is under /api/v1 and served on every instance.
 	#
 	# `/admin` used to be on this line and is deliberately not any more. The operator's
 	# surface is a superuser-gated section of the *web* app now - the invite queue lives
@@ -57,7 +58,7 @@
 	# the version that also holds for the installs that run their own proxy instead of
 	# this file. Adding them here as well would be a second definition of one policy,
 	# free to drift from the first.
-	@api path /api/v1* /docs /redoc /openapi.json
+	@api path /api/v1* /docs /redoc
 	handle @api {
 		reverse_proxy api:8000
 	}

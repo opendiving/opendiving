@@ -150,3 +150,4 @@ lists the full set of tags a released version carries.
 - [backup-restore.md](backup-restore.md) — the dump and the uploaded files, both
 - [upgrade.md](upgrade.md) — pull, up, and any step a release names
 - [troubleshooting.md](troubleshooting.md) — when it doesn't go like that
+- [api-access.md](api-access.md) — an API key for your own tools, and where the schema is
