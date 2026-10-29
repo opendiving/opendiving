@@ -5,9 +5,9 @@ formats out, everything in one click. Yours to self-host, and this repository is
 
 OpenDiving is an open-source logbook for scuba divers, recreational and technical: log dives with
 multi-tank gas mixtures, import them straight from your dive computer's export files — full
-depth/temperature/tank-pressure profile, deco ceiling, the readouts the computer itself computed and
-dive events included — group them into trips, and keep your gear service history and c-cards in one
-place.
+depth/temperature/tank-pressure profile, the heart rate where the computer measured one, deco
+ceiling, the readouts the computer itself computed and dive events included — group them into trips,
+and keep your gear service history and c-cards in one place.
 
 Cloud dive logs come and go — Movescount, Deepblu, Diveboard — and when they go, years of dive
 history go with them. OpenDiving is built on a different premise: the app is AGPL-licensed, every
@@ -79,9 +79,11 @@ what you need, what the six values are, and what each container does.
   in order, because drift dives happen.
 - **Technical diving** — trimix and nitrox mixes get derived gas names and per-mix **MOD** at your
   ppO₂ limit, plus END/EAD; the profile chart shades the **deco ceiling**, plots the computer's own
-  **NDL, TTS, ppO₂, CNS and gradient factors** and marks dive events; each recording says the mode
-  it ran in and the **decompression model** behind those numbers; **CNS/OTU** oxygen exposure and
-  surface pressure are kept from imports, per-cylinder ppO₂ limits and gas roles included.
+  **NDL, TTS, ppO₂, CNS and gradient factors**, draws the **heart rate** it measured in a row of its
+  own — the profile card states its maximum and average — and marks dive events; each recording
+  says the mode it ran in and the **decompression model** behind those numbers; **CNS/OTU** oxygen
+  exposure and surface pressure are kept from imports, per-cylinder ppO₂ limits and gas roles
+  included.
 - **Dive-computer import** — upload one dive's file in any format **Logbook import** below reads
   and the form pre-fills itself, while a file holding several dives, or one file carrying two
   computers' records of a dive, goes through that import instead. Each file lands on a
