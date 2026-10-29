@@ -542,7 +542,7 @@ queue — that is the app's own [Admin section](#who-may-create-an-account), whi
 
 ```bash
 CRUD_ADMIN_ENABLED=true
-ADMIN_PASSWORD=a-real-password        # production refuses to start without one
+ADMIN_PASSWORD=a-real-password        # only local starts without one, or with a placeholder
 ADMIN_USERNAME=admin
 CRUD_ADMIN_MOUNT_PATH=/crud-admin     # required now: /admin is the app's own admin section
 CRUD_ADMIN_ALLOWED_NETWORKS=10.0.0.0/8   # optional, comma-separated
