@@ -13,7 +13,8 @@ Postgres and Redis — so `healthy` means "can serve", not "has a process".
 ## The stack won't start
 
 **`SECRET_KEY is unset or still a placeholder`** — exactly what it says. The template value is
-published in this repository, so anyone could mint a token for any account with it.
+published in this repository, so anyone could mint a token for any account with it. So is the API's
+CI key, `test-secret-key-for-testing-only`, refused on any `ENVIRONMENT` but `local`.
 `openssl rand -hex 32`, put it in `.env`, `docker compose up -d`.
 
 **`ENVIRONMENT is production but SMTP_HOST is not set`** — sign-in is passwordless, so an instance
@@ -26,7 +27,10 @@ to be an address on a domain your relay may send for, and a wrong one fails hour
 somebody's spam folder rather than here.
 
 **`CRUD_ADMIN_ENABLED is true in production but ADMIN_PASSWORD is unset`** — the panel is a full
-CRUD interface over every model. Set a real password, or turn it off.
+CRUD interface over every model. Set a real password, or turn it off. The message continues
+`or still a placeholder`: published stand-ins are refused like an empty value, in any capitalization
+— `admin`, `password`, `changeme` and the template's own `a-real-password-not-this-one` among them.
+It names `staging` on a staging instance: `local` is the only value that skips the check.
 
 **`FILE_STORAGE_BACKEND is s3 but … are not set`** — the message names the ones that are missing.
 All four of `S3_ENDPOINT_URL`, `S3_BUCKET`, `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` are
