@@ -455,22 +455,23 @@ project's own instance, asking that the request rate stay reasonable and the cac
 The project reads that as covering the page heads, which are drawn from the same tiles, and the
 renderer keeps both conditions as it ships — it draws one tile at a time, and a tile once drawn is
 stored and shared by every card, page head and account that shows it, so the provider is asked for
-each square once for each theme rather than once per dive, trip or site. On a basemap of your own, it is that
-provider's terms that apply.
+each square once for each theme and label language rather than once per dive, trip or site. On a
+basemap of your own, it is that provider's terms that apply.
 
-**The tiles are files, kept like uploads and belonging to nobody.** Each tile, one per theme, is
-stored in the same place as the uploaded files — the `files-data` volume, or your bucket — and
-deleted after 30 days in which nobody was shown it. A tile holds nothing of anybody's logbook: it is
-drawn from the basemap alone, so it counts against no [storage limit](#storage-limit), is not in an
-export, and is not deleted with an account, and a restore without the tiles simply draws them again.
+**The tiles are files, kept like uploads and belonging to nobody.** Each tile, one per theme and
+label language, is stored in the same place as the uploaded files — the `files-data` volume, or
+your bucket — and deleted after 30 days in which nobody was shown it. A tile holds nothing of
+anybody's logbook: it is drawn from the basemap alone, so it counts against no
+[storage limit](#storage-limit), is not in an export, and is not deleted with an account, and a
+restore without the tiles simply draws them again.
 
 **What sharing tells your members.** Because a stored tile answers faster than one drawn on the
 spot, a signed-in member could learn that someone on this instance was shown a given square — a
-region tens of kilometres across — in the last 30 days, though not who, or what dive or site it was
-for. `MAP_RENDERER_REQUEST_LIMIT_PER_USER` bounds how fast anyone can ask, and does not remove it;
-the bundled privacy page says the same to your members. Its effect on third parties is under
-[Third-party calls](#third-party-calls): for these maps the basemap's provider sees this server, not
-the diver.
+region tens of kilometres across — in the last 30 days, and in which label language, though not who,
+or what dive or site it was for. `MAP_RENDERER_REQUEST_LIMIT_PER_USER` bounds how fast anyone can
+ask, and does not remove it; the bundled privacy page says the same to your members. Its effect on
+third parties is under [Third-party calls](#third-party-calls): for these maps the basemap's
+provider sees this server, not the diver.
 
 **Nothing but the API should reach it.** It takes no credential, so the service publishes no port and
 the Caddyfile has no route to it; leave both that way.
@@ -690,8 +691,9 @@ Nothing here phones home. What the app can be told to contact:
   draw. Its requests carry a `User-Agent` naming OpenDiving's map renderer, and `Origin` and
   `Referer` naming `SITE_URL`, the headers your own pages send for the same tiles. A tile is drawn
   the first time any card or page head shows its square, and stored for every account, so the
-  provider sees a region again only when your basemap or a new release changes how it is drawn, or
-  after 30 days in which nobody here was shown it.
+  provider sees a region again only when it is first shown in another label language, when your
+  basemap or a new release changes how it is drawn, or after 30 days in which nobody here was shown
+  it.
 
   **Wikimedia Commons is one more, and it is not one of those registers.** It is never asked
   anything a diver typed — it receives a file title derived from an AphiaID, or one an admin chose,
