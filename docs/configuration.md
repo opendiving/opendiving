@@ -467,11 +467,12 @@ restore without the tiles simply draws them again.
 
 **What sharing tells your members.** Because a stored tile answers faster than one drawn on the
 spot, a signed-in member could learn that someone on this instance was shown a given square — a
-region tens of kilometres across — in the last 30 days, and in which label language, though not who,
-or what dive or site it was for. `MAP_RENDERER_REQUEST_LIMIT_PER_USER` bounds how fast anyone can
-ask, and does not remove it; the bundled privacy page says the same to your members. Its effect on
-third parties is under [Third-party calls](#third-party-calls): for these maps the basemap's
-provider sees this server, not the diver.
+region tens of kilometres across — in the last 30 days, though not who, or what dive or site it was
+for, and, for a tile labelled in a second language, that their browser asked for that language.
+`MAP_RENDERER_REQUEST_LIMIT_PER_USER` bounds how fast anyone can ask, and does not remove it; the
+bundled privacy page tells your members about the square. Its effect on third parties is under
+[Third-party calls](#third-party-calls): for these maps the basemap's provider sees this server, not
+the diver.
 
 **Nothing but the API should reach it.** It takes no credential, so the service publishes no port and
 the Caddyfile has no route to it; leave both that way.
