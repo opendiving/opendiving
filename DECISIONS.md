@@ -764,8 +764,9 @@ is a genuine widening of what a leak would reach and is accepted rather than ove
 mitigation is the App's own permissions — Contents and Pull requests, no organisation permissions,
 no webhook, nothing else — and the `tags` ruleset, which blocks deletion and force-pushes on
 `refs/tags/v*` for everybody but an organisation admin. A leaked key could cut a release nobody
-asked for; it could not delete the evidence, and it could not rewrite `main` without opening a pull
-request that the same rules gate.
+asked for, and, as a `pull_request`-mode bypass actor on api's and web's `main`, merge a pull
+request of its own past the queue and the checks; it could not push to `main` or delete it, and it
+could not delete the evidence.
 
 ## The bump is merged past the queue by a bypass actor, still through a pull request
 
