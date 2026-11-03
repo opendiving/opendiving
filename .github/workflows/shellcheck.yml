@@ -13,6 +13,9 @@ on:
   pull_request:
   push:
     branches: [main]
+  # The merge queue tests each entry squashed onto `main` under this event, and a required
+  # check that never reports there holds the entry until the queue times it out.
+  merge_group:
 
 # Nothing is published and nothing is written back - the checkout is all this needs.
 permissions:

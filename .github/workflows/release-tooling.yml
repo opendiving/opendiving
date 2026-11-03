@@ -27,6 +27,9 @@ on:
   pull_request:
   push:
     branches: [main]
+  # The merge queue tests each entry squashed onto `main` under this event, and a required
+  # check that never reports there holds the entry until the queue times it out.
+  merge_group:
 
 # Reads the checkout and nothing else. No token is needed to run a test suite, and the
 # suite executes whatever it is handed - which is why saying so is worth a line.

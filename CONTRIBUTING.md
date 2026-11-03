@@ -40,9 +40,11 @@ conduct@opendiving.app.
   there is nothing to install and nothing to pin. `DECISIONS.md` has the reasoning behind all three
   of those choices.
 
-Use semantic **PR titles** — `<type>[(scope)][!]: <description>`, where type is one of `feat`, `fix`,
-`refactor`, `docs`, `test`, `chore`, `perf`, `ci`, `build`, `revert`. PRs are squash-merged, so the
-title becomes the commit subject on `main` and is the only thing that outlives the branch.
+Use semantic **PR titles** — `<type>[(scope)][!]: <description>`, where type is one of `feat`,
+`fix`, `refactor`, `docs`, `test`, `chore`, `perf`, `ci`, `build`, `revert`. PRs are squash-merged,
+so the title becomes the commit subject on `main` and is the only thing that outlives the branch. A
+branch never needs to be current with `main`: a maintainer adds a green PR to the merge queue, which
+squashes it onto `main` as it then stands, runs the required checks on that result and lands it.
 
 ## Verifying a change to the bundle
 
