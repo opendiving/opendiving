@@ -21,13 +21,14 @@ name: Cut the release
 # nobody. GraphQL's `createCommitOnBranch` is the path that adds neither a signing key in CI
 # nor a hole in a ruleset: a commit it creates is signed by GitHub itself.
 #
-# **Through a pull request, and this App is not a bypass actor.** Not because bypass is
-# ruleset-wide - `bypass_mode: pull_request` is per-actor and rulesets aggregate, so a
-# second ruleset carrying `pull_request` with the App on its bypass list would work. It is
-# because that second ruleset is a second place `main`'s protection is described, and the
-# pull request costs nothing to keep: `required_approving_review_count` is 0 on all three
-# `main` rulesets, so this opens one and squash-merges it in the same run with no rule
-# relaxed and no human in the loop. DECISIONS.md carries the longer version.
+# **Through a pull request, merged by a bypass actor.** `main` in api and web requires a
+# merge queue, and `gh pr merge` against such a branch enqueues rather than merges - the
+# queue would then test the bump squashed onto `main`, which for this one pull request
+# proves nothing: it is cut from `main`'s tip and the base-head guard below refuses if
+# `main` moved. So the App is a bypass actor on each `main` ruleset in `pull_request`
+# mode - it may merge a pull request past the queue and the checks, and can neither push
+# to `main` nor delete it - and the merge is the REST call, which answers with the squash
+# commit. The App still waits for CLEAN itself. DECISIONS.md carries the longer version.
 #
 # **Each tag goes on the squash commit.** Squash-merging writes a *new* commit on `main`;
 # the branch's own commit never lands there, and a tag on it would name a release nothing
@@ -632,6 +633,7 @@ jobs:
             esac
 
             printf '%s' "$base" > "$STATE/$name.base"
+            printf '%s' "$commit" > "$STATE/$name.head"
             printf '%s' "$number" > "$STATE/$name.pr"
             echo "$url"
           done
@@ -693,7 +695,9 @@ jobs:
           # The App holds Contents and Pull requests and nothing else, so this cannot read the
           # check runs to say *which* check is outstanding - `mergeStateStatus` is the whole
           # of what it can see, which is why the timeout below sends a reader to the pull
-          # request rather than naming a job.
+          # request rather than naming a job. It reads that field as a bypass actor, and
+          # takes it to report the rules' own verdict rather than what the viewer may bypass:
+          # BLOCKED still means an outstanding check, never a merge this token could force.
           #
           # DIRTY and DRAFT are refused rather than waited out: neither can become CLEAN on
           # its own. BEHIND cannot arise while `strict_required_status_checks_policy` is
@@ -783,14 +787,21 @@ jobs:
             slug="${pair#*:}"
             number="$(cat "$STATE/$name.pr")"
 
-            # No --subject: these repositories take their squash subject from the pull
-            # request title, so the title `pr-title.yml` checked is the subject that lands on
-            # `main` - and the subject the *next* release's window will classify.
+            # The REST merge rather than `gh pr merge`, which enqueues on a branch whose
+            # ruleset requires a merge queue and returns before anything lands. `sha` is the
+            # head this run committed, so a branch somebody pushed to meanwhile is refused
+            # rather than merged. No subject: these repositories take their squash subject
+            # from the pull request title, so the title `pr-title.yml` checked is the subject
+            # that lands on `main` - and the subject the *next* release's window will
+            # classify. The answer names the squash commit, which is what gets tagged.
             #
             # A merge call that fails may still have merged - the answer is what was lost,
             # not necessarily the merge - so the failure asks the pull request what happened
             # rather than assuming, the same distinction the tag calls make below.
-            if ! gh pr merge "$number" --repo "$slug" --squash; then
+            head="$(cat "$STATE/$name.head")"
+            merged="$(gh api -X PUT "repos/$slug/pulls/$number/merge" \
+              -f merge_method=squash -f "sha=$head" --jq '.sha // empty')" || merged=""
+            if [ -z "$merged" ]; then
               merge_state="$(gh pr view "$number" --repo "$slug" --json state --jq .state)" || merge_state=UNREADABLE
               if [ "$merge_state" != MERGED ]; then
                 stopped_part_way "$slug's bump pull request #$number could not be merged, and it is $merge_state."
@@ -802,15 +813,14 @@ jobs:
             # the window between the two is exactly where that distinction matters.
             : > "$STATE/$name.merged"
 
-            # The squash commit, not the branch's. GitHub names it a moment after the merge.
-            # A call that fails is one lost attempt rather than the end of the step: the
-            # merge has already happened, so from here on a bad gateway must cost a few
-            # seconds and not the release.
-            merged=""
+            # The squash commit, when the merge call's answer was lost: GitHub names it on
+            # the pull request a moment after the merge. A call that fails is one lost
+            # attempt rather than the end of the step - the merge has already happened, so
+            # from here on a bad gateway must cost a few seconds and not the release.
             for _ in $(seq 30); do
-              merged="$(gh pr view "$number" --repo "$slug" --json mergeCommit --jq '.mergeCommit.oid // empty')" || merged=""
               [ -z "$merged" ] || break
-              sleep 2
+              merged="$(gh pr view "$number" --repo "$slug" --json mergeCommit --jq '.mergeCommit.oid // empty')" || merged=""
+              [ -n "$merged" ] || sleep 2
             done
             if [ -z "$merged" ]; then
               stopped_part_way "$slug merged #$number, but GitHub has not named the squash commit, so this run does not know which commit to tag."

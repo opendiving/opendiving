@@ -767,21 +767,17 @@ no webhook, nothing else — and the `tags` ruleset, which blocks deletion and f
 asked for; it could not delete the evidence, and it could not rewrite `main` without opening a pull
 request that the same rules gate.
 
-## The bump goes through a pull request rather than a bypass actor
+## The bump is merged past the queue by a bypass actor, still through a pull request
 
-The implementation this is modelled on argues that GitHub's bypass is ruleset-wide, so an entry for
-the App would also let it force-push and delete `main`. That reasoning does not survive reading the
-documentation: `bypass_mode: pull_request` grants an actor bypass only through a pull request, and
-rulesets targeting the same ref aggregate — so `pull_request` in its own ruleset with the App on its
-bypass list, while `deletion` and `non_fast_forward` sit in another with none, gives exactly the
-per-rule selectivity that argument calls impossible.
-
-**The conclusion holds on different grounds.** That arrangement doubles the number of places `main`'s
-protection is described, and a second ruleset goes unnoticed — the leftover disabled `main` ruleset
-found on `opendiving-api` and replaced in place is this project's own evidence for that. Against
-which the pull request costs nothing: `required_approving_review_count` is 0 on all three `main`
-rulesets, so the coordinator opens one and squash-merges it in the same run with no rule relaxed and
-no human in the loop. Saving that is a few seconds of a ritual that runs every one to four weeks.
+`main` in api and web requires a merge queue, and `gh pr merge` against such a branch enqueues
+rather than merges: the queue would then squash the bump onto `main` and run the checks again,
+minutes the coordinator's poll does not have, to prove nothing: the bump is cut from `main`'s tip
+and the base-head guard refuses if `main` moved. So the App is a bypass actor on each `main` ruleset
+in `pull_request` mode, the existing ruleset rather than a second one: it may merge a pull request
+past the queue and the checks, and can neither push to `main` nor delete it. The merge is the REST
+call with the bump's head as `sha`, and its answer names the squash commit. The coordinator still
+waits for `CLEAN` first, taking `mergeStateStatus` to report the rules' verdict rather than what the
+viewer may bypass — the first cut after the queue went on confirms it.
 
 ## The bump commit is made by GitHub, because the branch it lands on requires signatures
 
