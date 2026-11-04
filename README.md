@@ -164,11 +164,14 @@ what you need, what the six values are, and what each container does.
 Roughly in priority order — contributions welcome:
 
 - **More importers** — a new format is a reader in the
-  [`divejson`](https://github.com/divejson/divejson-py) package, which reads every file the dive
+  [`divejson`](https://github.com/divejson/divejson-py) package, which reads every export the dive
   form and logbook import take. The iOS app downloads straight from a dive computer over Bluetooth,
   through [libdivecomputer](https://www.libdivecomputer.org/), and the server keeps each dive's
-  original bytes on its recording, within the size any dive-computer file is held to, without
-  reading them; reading those originals on the server is still to come.
+  original bytes on its recording, within the size any dive-computer file is held to, and reads
+  them with `divejson-raw`, from [`divejson-c`](https://github.com/divejson/divejson-c), DiveJSON's
+  C implementation — so a computer not read yet is a contribution to libdivecomputer or to that
+  repository. An original the app downloaded before it began tagging each one with the computer it
+  came from is kept and never read.
 - **Statistics** — depth and time records, dives per year, a sites map.
 - **Sharing** — a public link to a dive or a trip.
 - **iOS companion app** — in development: a client of your own server, with your logbook and
@@ -242,3 +245,7 @@ this repository, the API and the web app alike.
 [AGPL-3.0](LICENSE). In short: run it, change it, self-host it freely — but if you offer a modified
 version as a service, you share your changes. Nobody gets to take this closed-source and lock
 divers' data away.
+
+The api image also carries `divejson-raw`, which links libdivecomputer, licensed LGPL-2.1-or-later;
+that licence, and a notice naming the libdivecomputer source it was built from, are in the image
+under `/usr/share/licenses/divejson-c/`.

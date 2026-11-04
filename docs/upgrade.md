@@ -57,10 +57,11 @@ docker compose exec api python -m src.scripts.backfill_dive_profiles
 It re-reads each file-backed profile from its stored files, and running it twice is harmless: the
 second run finds nothing left to do. `--dry-run` reports what it would re-read and writes nothing.
 Until it runs, every profile is served as the previous reader left it — a valid profile, charted as
-before — so the instance is usable in between. A release that only moves the version of
+before — so the instance is usable in between. A release that only moves the version of a reader —
 [`divejson`](https://github.com/divejson/divejson-py), the package that reads every dive-computer
-file, also leaves the stored profiles behind the new reader, and just as valid; there the backfill
-is optional — run it when convenient to bring them level — and not a Breaking step.
+export you upload, or `divejson-raw`, which reads the originals the iOS app downloads — also leaves
+the stored profiles that reader fed behind it, and just as valid; there the backfill is optional —
+run it when convenient to bring them level — and not a Breaking step.
 
 **The species photo re-check is a backfill of that optional sort**, and the release notes name it
 outside Breaking. A species photo narrower than 500 px is refused rather than stored soft, and this

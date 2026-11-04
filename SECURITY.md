@@ -45,8 +45,10 @@ private-reporting tab:
 
 A defect in reading a file format itself — the code that turns a dive-computer file or a logbook
 into dives — belongs to neither: every format the app takes is read by the
-[`divejson`](https://github.com/divejson/divejson-py) package, which lives in its own organisation
-under [its own security policy](https://github.com/divejson/.github/blob/main/SECURITY.md).
+[`divejson`](https://github.com/divejson/divejson-py) package, and the originals the iOS app
+downloads by [`divejson-c`](https://github.com/divejson/divejson-c), DiveJSON's C implementation.
+Both live in their own organisation under
+[its own security policy](https://github.com/divejson/.github/blob/main/SECURITY.md).
 
 Report it here if you aren't sure, or if it is the *combination* that is unsafe rather than either
 half — that is exactly what this repository is responsible for. It will be moved if it belongs
