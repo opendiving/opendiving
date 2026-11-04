@@ -116,8 +116,8 @@ Seven containers, of which exactly one publishes a port:
 | `redis`      | Cache and job queue; nothing durable                              |
 
 An eighth, `map-renderer`, starts only once you switch the maps on — until then each card and the
-head of each dive's, trip's and dive site's page shows water where its map would be.
-[configuration.md](configuration.md#the-map-renderer) has the two lines that do it.
+head of each dive's, trip's and dive site's page shows water where its map would be, and a form in
+the iOS app has no map. [configuration.md](configuration.md#the-map-renderer) has the two lines that do it.
 
 `docker compose ps` should show them all `healthy` within a minute or so of the images being pulled.
 `docker compose logs -f api` is where the API's startup — including `alembic upgrade head`, which

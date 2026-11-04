@@ -179,9 +179,10 @@ services:
   # image's. Off unless you switch it on, and it takes two lines in `.env` to do that:
   # `map-renderer` added to COMPOSE_PROFILES, which starts this service, and
   # MAP_RENDERER_URL=map-renderer:3000, which tells the API to use it. Without both, cards
-  # and page heads show water instead of a map. It adds roughly 210 MB of memory at its
-  # peak, which is why a default install - and its 1 GB floor - goes without it. See
-  # docs/configuration.md#the-map-renderer.
+  # and page heads show water instead of a map, and the iOS app's forms, which draw the
+  # basemap's style this service hands the API, have no map. It adds roughly 210 MB of
+  # memory at its peak, which is why a default install - and its 1 GB floor - goes without
+  # it. See docs/configuration.md#the-map-renderer.
   map-renderer:
     image: ghcr.io/opendiving/opendiving-web:${OPENDIVING_VERSION:-latest}
     command: ["node", "map-renderer/index.mjs"]

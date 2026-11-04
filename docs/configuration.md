@@ -29,12 +29,12 @@ self-hoster normally touches, and any setting from that file can be added to `.e
 
 | Variable             | Default             | What it does                                                                                                                                                                                |
 | -------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `COMPOSE_PROFILES`   | `proxy`             | Runs the bundled Caddy. Comment it out to bring your own proxy — [reverse-proxy.md](reverse-proxy.md). Add `map-renderer` to the list to draw the maps on cards and page heads — [The map renderer](#the-map-renderer). |
+| `COMPOSE_PROFILES`   | `proxy`             | Runs the bundled Caddy. Comment it out to bring your own proxy — [reverse-proxy.md](reverse-proxy.md). Add `map-renderer` to the list to draw the maps on cards and page heads and give the iOS app's forms theirs — [The map renderer](#the-map-renderer). |
 | `CADDY_SITE_ADDRESS` | `${DOMAIN}`         | The address Caddy answers on. `:80` for a LAN instance with no certificate.                                                                                                                 |
 | `TRUSTED_PROXY_IPS`  | `172.29.0.0/16`     | Whose `X-Forwarded-For` and `X-Forwarded-Proto` the API believes. Every per-IP rate limit depends on it, as do the admin panel's HTTPS enforcement and its IP allowlist.                    |
 | `ENVIRONMENT`        | `production`        | `production` hides `/docs`. `staging` puts it behind a superuser; both require `SMTP_HOST`. `local` opens the docs and logs sign-in links instead of emailing them. The schema at `/api/v1/openapi.json` is served whatever the value. |
 | `FRONTEND_URL`       | `https://${DOMAIN}` | Where emailed links point, the API's single allowed CORS origin, and the passkey domain — see [Sign-in](#sign-in) before changing its hostname. Override for a plain-HTTP instance.         |
-| `SITE_URL`           | `https://${DOMAIN}` | The origin relative URLs in page metadata resolve against, and the one the [map renderer](#the-map-renderer) sends to the basemap. Override alongside `FRONTEND_URL`.                       |
+| `SITE_URL`           | `https://${DOMAIN}` | The origin relative URLs in page metadata resolve against, and the one the [map renderer](#the-map-renderer) sends to the basemap. On the basemap the image ships, the iOS app fetches the map's sprite from it, so a phone has to be able to reach it. Override alongside `FRONTEND_URL`.                       |
 | `AUTH_COOKIE_SECURE` | `true`              | The refresh cookie's `Secure` flag. `false` only for plain HTTP, where the browser otherwise drops it and every reload signs the user out.                                                  |
 | `WEB_HSTS`           | `on`                | `Strict-Transport-Security`, sent only on requests that already arrived over HTTPS. `off` hands the header to a proxy in front, or supports an instance that must stay reachable over HTTP. |
 | `WEB_NOINDEX`        | `off`               | `true` disallows all crawlers and adds `X-Robots-Tag: noindex, nofollow` to every page.                                                                                                     |
@@ -377,7 +377,7 @@ down, or the bucket's own lifecycle rules going the other way.
 | `GOOGLE_CLIENT_SECRET`                                                                                             | *(none)*            | The other half of that OAuth client, and a real secret. Required whenever `GOOGLE_CLIENT_ID` is set — the API refuses to start without it. See [Setting up Google sign-in](#setting-up-google-sign-in).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `MAP_STYLE_URL`, `MAP_STYLE_URL_DARK`                                                                              | OpenFreeMap         | A MapLibre vector style of your own, in place of the pair the web image ships — see [Third-party calls](#third-party-calls). Wins over the raster group below outright, on every map the app draws, leaving those variables inert. The dark one falls back to the light one; setting it alone does nothing. Serve the style's tiles, glyphs and sprite from the style URL's own host: that origin is the only one the CSP admits, so a style reaching a second host draws blank.                                                                                                                                                                                                                                                                                                                            |
 | `MAP_ATTRIBUTION`                                                                                                  | the basemap's       | The credit drawn over whichever basemap is active — one variable, not one per mode, which is why it is no longer `MAP_TILE_ATTRIBUTION`. **Required whenever `MAP_STYLE_URL` is set**: the app refuses to serve without it, because it cannot know what your style's licence asks for.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| `MAP_TILE_URL`, `MAP_TILE_URL_DARK`, `MAP_TILE_API_KEY`                                                            | *(none)*            | The raster escape hatch, in `{z}/{x}/{y}` form, for a tile server you run or a keyed provider. A whole-map mode chosen instead of the vector default, not a second renderer: MapLibre wraps the template into a minimal style. Ignored entirely when `MAP_STYLE_URL` is set. The CSP follows all of these automatically. **`MAP_TILE_API_KEY` is not a secret and cannot be one** — the forms' maps are drawn in the browser, so the key is handed to every visitor along with the tile URL and is readable in the page. Use a key the provider has restricted to your own domain, and never one that also buys geocoding, routing or anything else on the same account. With the [map renderer](#the-map-renderer) on, the key is sent from this stack too, with your domain as the origin, so that restriction keeps working.                                                                                                                                    |
+| `MAP_TILE_URL`, `MAP_TILE_URL_DARK`, `MAP_TILE_API_KEY`                                                            | *(none)*            | The raster escape hatch, in `{z}/{x}/{y}` form, for a tile server you run or a keyed provider. A whole-map mode chosen instead of the vector default, not a second renderer: MapLibre wraps the template into a minimal style. Ignored entirely when `MAP_STYLE_URL` is set. The CSP follows all of these automatically. **`MAP_TILE_API_KEY` is not a secret and cannot be one** — the forms' maps are drawn in the browser, so the key is handed to every visitor along with the tile URL and is readable in the page, and the iOS app is handed it in the style. Use a key the provider has restricted to your own domain, and never one that also buys geocoding, routing or anything else on the same account. With the [map renderer](#the-map-renderer) on, the key is sent from this stack too, with your domain as the origin, so that restriction keeps working — except on the iOS app's forms, whose requests name no origin: see [Third-party calls](#third-party-calls).                                                                                                                                    |
 | `GEOCODER_URL`                                                                                                     | Nominatim           | Names the spot behind a map pin, server-side, and has to name a Nominatim-compatible host. Set to `""` to switch geocoding off entirely, place search included, whatever `GEOCODER_SEARCH_URL` says.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `GEOCODER_SEARCH_URL`                                                                                              | Photon              | Answers a place typed into the search on the dive site form and the trip form, server-side: the typed search string goes out, nothing identifying the diver. Has to name a Photon-compatible host. The default is the public instance komoot runs, a demo server with no availability guarantee — when it fails, no places come back and a diver types the name in. It does not follow `GEOCODER_URL`: pointing that at your own Nominatim still sends searches to komoot until this names a Photon of yours. Set to `""` to switch place search off while pins are still named.                                                                                                                                                                                                                            |
 | `GEOCODER_USER_AGENT`                                                                                              | the project's       | The `User-Agent` on every geocoder call, to both providers, and the only place it is sent. Ships as `OpenDiving (+https://github.com/opendiving/opendiving-api)`. It fails closed harder than `SPECIES_USER_AGENT` does: Nominatim answers **403** to an empty value *and* to a merely generic one — `python-httpx/0.27` was measured taking the same 403 as `""`, where the shipped default takes a 200 — and a 403 there costs naming the spot behind a pin. Photon's maintainers give a generic agent no guarantees, so place search is at risk too. Either way the API stays healthy, and the only trace is a warning in the API log naming the provider and what went wrong. Change it because the default identifies the *project*, not your instance — see [Third-party calls](#third-party-calls).  |
@@ -402,6 +402,13 @@ account that shows that stretch of coast. It is **off unless you switch it on**,
 every card and every page head shows water where its map would be. The service is in the bundle
 from the release after 0.3.0.
 
+The iOS app's forms need it too, for a different thing: not tiles, which stop too far out to place a
+pin on, but the basemap's style. The renderer resolves the same `MAP_*` variables the web app reads,
+the API passes the result on at `GET /api/v1/map-style/{theme}`, and the app draws it itself wherever
+`/api/v1/config` says `map_tiles` and names `map_attribution`. With the renderer off that route
+answers 404 and a form in the app has no map; a pin is still placed by coordinates, place search or
+"Use my location". The web app's forms draw their maps in the browser either way.
+
 Switching it on takes two lines in `.env`, and both are needed:
 
 ```bash
@@ -421,10 +428,10 @@ leaves alone a service whose profile is no longer listed rather than stopping it
 
 | Variable                              | Default  | What it does                                                                                                                                                                                                                           |
 | ------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MAP_RENDERER_URL`                    | *(none)* | Where the API reaches the renderer — `map-renderer:3000` for the bundled service. Empty draws no maps, and nothing asks for one.                                                                                                       |
+| `MAP_RENDERER_URL`                    | *(none)* | Where the API reaches the renderer — `map-renderer:3000` for the bundled service. Empty draws no maps, nothing asks for one, and the iOS app's forms have none to show.                                                                                                       |
 | `MAP_RENDERER_TIMEOUT`                | `90`     | Seconds one tile may take to arrive, its wait in the renderer's queue included. Raise it, never lower it — see below.                                                                                                                  |
 | `MAP_RENDERER_DRAW_LIMIT_PER_USER`    | `150`    | Tiles one account may have drawn per window. Past it, a card or page head that needs a tile nobody has drawn yet shows water until it is shown again; a tile already stored, or one being drawn for another request, is never counted. |
-| `MAP_RENDERER_REQUEST_LIMIT_PER_USER` | `1200`   | Tile requests one account may make per window, stored tiles included. Past it every card and page head that still needs a tile shows water. It is there because a stored tile answers faster than a drawn one — see below.             |
+| `MAP_RENDERER_REQUEST_LIMIT_PER_USER` | `1200`   | Tile requests one account may make per window, stored tiles included, and the iOS app's reads of the map style with them. Past it every card and page head that still needs a tile shows water, and a form in the app that still needs the style has no map. It is there because a stored tile answers faster than a drawn one — see below.             |
 | `MAP_RENDERER_LIMIT_WINDOW_SECONDS`   | `60`     | The window both limits are counted over.                                                                                                                                                                                               |
 
 **What it costs.** Memory first: the renderer peaks at roughly 210 MB, measured on amd64 held to
@@ -624,13 +631,14 @@ Nothing here phones home. What the app can be told to contact:
   `GRAVATAR_ENABLED` variable.)
 
   **The basemap** is fetched wherever a page draws a map in the browser, and each request carries
-  only the `z/x/y` of the area shown. Unconfigured, that is the MapLibre vector pair the web image
+  the `z/x/y` of the area shown, along with what a browser sends to any site, the languages it is
+  set to among them. Unconfigured, that is the MapLibre vector pair the web image
   ships — its tiles, its label glyphs and a low-zoom raster underlay, all from
   `tiles.openfreemap.org`. The browser draws a map on the form to add or edit a dive site and the
   form to add or edit a trip, both as soon as they open, and on the form to add or edit a contact
   only once the visitor asks it to show one — and nowhere else. Whoever serves the
-  basemap therefore sees a visitor's IP address and roughly where they dive, and nothing else — not
-  their account, their dive log, or the name of anything on the map.
+  basemap therefore sees a visitor's IP address, roughly where they dive and the languages their
+  browser is set to — not their account, their dive log, or the name of anything on the map.
 
   **The cards' and page heads' maps are not among them.** The cards that list dives, trips and dive
   sites, and the heads of a dive's, a trip's and a dive site's own page, are drawn by this stack
@@ -640,7 +648,7 @@ Nothing here phones home. What the app can be told to contact:
   server* below.
 
   **Removing the third party takes one variable.** Every one of those maps draws through MapLibre,
-  so a single setting reaches all of them: `MAP_STYLE_URL` for a vector style you serve, or
+  and so do the iOS app's forms, so a single setting reaches all of them: `MAP_STYLE_URL` for a vector style you serve, or
   `MAP_TILE_URL` for a raster tile server you run. The two are alternatives rather than layers — a
   style set alongside the raster group leaves it inert — so there is no second fetch to close off
   separately. The shipped default contacts one host, `tiles.openfreemap.org`, and pointing either
@@ -652,13 +660,18 @@ Nothing here phones home. What the app can be told to contact:
 
   **If that provider wants a key, the key goes to the visitor.** The forms' maps are drawn
   client-side, so `MAP_TILE_API_KEY` is served to every browser that loads a page with a map on it,
-  exactly as the tile URL is — there is no arrangement in which it stays on your server, and none is
+  exactly as the tile URL is, and with the map renderer on it reaches the iOS app inside the style
+  — there is no arrangement in which it stays on your server, and none is
   coming, because those tiles are fetched by the browser and not by this stack. Every keyed provider
   offers a domain restriction for precisely this; set one, so a key lifted from your page is refused
   everywhere else. With the map renderer on, the key leaves your server as well, for the cards' and
   page heads' maps, and it carries your domain in `Origin` and `Referer` exactly as a browser on one
-  of your pages does — so a key restricted that way keeps working for both. Issue it for tiles
-  alone, too: a key that also buys geocoding or routing on the same account is a bill someone else
+  of your pages does — so a key restricted that way keeps working for both. The iOS app's forms are
+  the exception: the app sends neither header, so a provider that checks them refuses it, and a form
+  draws the credit over a map with no tiles, where a pin can still be placed by tap, coordinates,
+  search or "Use my location". The remedy is yours: a key the provider does not restrict by domain,
+  which gives up the restriction this section recommends, or forms that stay that way. No setting
+  turns the app's form maps off alone. Issue the key for tiles alone, too: a key that also buys geocoding or routing on the same account is a bill someone else
   can run up. This is the ordinary way keyed web maps work rather than a shortcoming of the escape
   hatch — but it is the sort of thing that is obvious only after it has happened to you.
 
@@ -676,6 +689,16 @@ Nothing here phones home. What the app can be told to contact:
 
   Leaving `GOOGLE_CLIENT_ID` unset still removes the option entirely: no button, and the bundled
   privacy page has no Google section at all.
+
+- **From the iOS app**: the basemap, for the maps on its forms, when the
+  [map renderer](#the-map-renderer) is on. The app asks this server for the style, naming the
+  phone's language, then fetches that style's tiles and glyphs from the basemap's host itself, as a
+  browser does, so nothing of those maps passes through this stack. Whoever serves the basemap
+  therefore sees the phone's IP address, the part of the world on screen, the app's name and version
+  and the iOS version in the `User-Agent`, and the language settings in `Accept-Language` — not the
+  account, the dive log, or the name of anything on the map. The requests carry neither `Origin` nor
+  `Referer`, which matters to a keyed provider: see *If that provider wants a key* above. The app's
+  cards and page heads are this server's tiles, so the provider does not see the phone for those.
 
 - **From the server**: the basemap, for the cards' and page heads' maps, when the
   [map renderer](#the-map-renderer) is on; two geocoders and the two species *name registers*, WoRMS and
