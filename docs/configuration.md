@@ -693,7 +693,8 @@ Nothing here phones home. What the app can be told to contact:
 - **From the iOS app**: the basemap, for the maps on its forms, when the
   [map renderer](#the-map-renderer) is on. The app asks this server for the style, naming the
   phone's language, then fetches that style's tiles and glyphs from the basemap's host itself, as a
-  browser does, so nothing of those maps passes through this stack. Whoever serves the basemap
+  browser does, so those do not pass through this stack; on the basemap the image ships, only the
+  sprite comes from `SITE_URL`. Whoever serves the basemap
   therefore sees the phone's IP address, the part of the world on screen, the app's name and version
   and the iOS version in the `User-Agent`, and the language settings in `Accept-Language` — not the
   account, the dive log, or the name of anything on the map. The requests carry neither `Origin` nor
