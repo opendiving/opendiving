@@ -522,8 +522,10 @@ racing each other can overshoot the limit by one of them.
 Deleting an account takes effect immediately — the app stops opening, on every device — but the data
 is not destroyed until the grace period runs out. A cron in the `worker` container runs hourly at
 :30 and issues a real `DELETE FROM "user"` for each account past its deadline, taking that diver's
-dives, dive drafts, dive sites, certifications, check-in details, gear, trips, contacts, people,
-tags and every uploaded file with it.
+dives, dive drafts, dive sites, their notes on Commons sites, any proposals for the
+[Commons](#opendiving-commons), certifications, check-in details, gear, trips, contacts, people,
+tags and every uploaded file with it. A record the Commons has already accepted stays, being the
+Commons' and no longer that diver's.
 Nothing else purges an account, and nothing decides on a user's behalf that one should go: the job
 only ever executes a request the user already made.
 
@@ -617,6 +619,25 @@ Audit rows carry the id of the event they belong to, but not as a foreign key �
 deleting the events and leaving the audit rows pointing at nothing, so keep the two windows the
 same. And when you serve an erasure request for someone whose row you once edited by hand, remember
 this copy. Leave the panel off, as it ships, and none of this exists.
+
+## OpenDiving Commons
+
+[OpenDiving Commons](https://github.com/opendiving/opendiving-commons) is an open pool of real dive
+sites, and the API image carries it. There is nothing to set up and no outbound call: the API brings
+the records into the database as it starts, every signed-in account can use them, and a diver's
+notes and tags on one stay that diver's.
+
+**Your copy is read-only, and the image is what refreshes it.** A release carries the records as they
+stood when it was cut, so upgrading is how new sites and corrections arrive
+([upgrade.md](upgrade.md)). A Commons record cannot be changed from the app, and an edit made through
+the [admin panel](#the-admin-panel) is overwritten the next time the API starts. A diver's own site
+is left alone; where one shares an OpenStreetMap or Wikidata entry with a Commons record, its page
+offers to replace it with that record, and nothing moves until the diver accepts.
+
+**Proposing happens on the project's instance.** New sites and corrections go in at
+<https://opendiving.app>, which is invite-only, where a reviewer accepts them; they reach your copy
+in a later release. An install of yours has no proposal routes, no review queue and no controls for
+either, and nothing leaves it for the Commons.
 
 ## Third-party calls
 

@@ -10,7 +10,9 @@ That is the whole procedure, unless a release's notes name a step of their own �
 [below](#read-the-release-notes) says which two kinds there are. Database migrations run themselves:
 the API executes `alembic upgrade head` as it starts, under an advisory lock so the four workers in
 the container cannot race each other, and only then begins serving. A schema change is therefore not
-a manual step and never has been one for an installed instance.
+a manual step and never has been one for an installed instance. The same goes for the read-only
+copy of [OpenDiving Commons](configuration.md#opendiving-commons): the image carries the records and
+the API refreshes them as it starts.
 
 Take a backup first anyway — [backup-restore.md](backup-restore.md), the database dump *and* the
 uploaded files, since neither is a backup without the other — because going back is never

@@ -97,12 +97,17 @@ what you need, what the six values are, and what each container does.
   recorded gas switches, with a consumption trend on the Home page.
 - **Trips and species** — group dives into a liveaboard or a holiday week; track what you saw, with
   how many you counted or a band — few, many, abundant — and a note on each.
-- **Dive sites** — your own site list: the other names a site goes by, the depths it is dived at,
-  its water, its altitude and how you get in, your own tags, and its OpenStreetMap or Wikidata entry
-  when you pick it from the built-in catalogue of named sites. A site's page sums up your dives
-  there — how many, the last and the deepest, the species you saw and your average rating — beside
-  every dive logged at it, and a dive logged there starts from its water, altitude and entry. The
-  list sorts by name, by dives or by the last dive, and filters by a tag.
+- **Dive sites** — your site list is your own sites and the
+  [OpenDiving Commons](https://github.com/opendiving/opendiving-commons) sites you use: the other
+  names a site goes by, the depths it is dived at, its water, its altitude and how you get in, and
+  on a Commons site its OpenStreetMap or Wikidata entry. The Commons is an open pool of real dive
+  sites that comes with the app; a Commons site is one shared record, and your notes and tags on it
+  stay yours. A site's page sums up your dives there — how many, the last and the deepest, the
+  species you saw and your average rating — beside every dive logged at it, and a dive logged there
+  starts from its water, altitude and entry. The list sorts by name, by dives or by the last dive,
+  and filters by a tag. Divers propose new sites and corrections on the project's own instance,
+  where a reviewer accepts them; every other install carries a
+  [read-only copy](docs/configuration.md#opendiving-commons).
 - **Gear tracking** — equipment with per-item dive counts and dive time, groupable into sets you
   attach to a dive in one click; a cylinder records its volume, working pressure and material once,
   and a dive's tank links it. Plus service schedules by months, dives or hours of diving, with
@@ -249,3 +254,7 @@ divers' data away.
 The api image also carries `divejson-raw`, which links libdivecomputer, licensed LGPL-2.1-or-later;
 that licence, and a notice naming the libdivecomputer source it was built from, are in the image
 under `/usr/share/licenses/divejson-c/`.
+
+It carries the records of OpenDiving Commons too, and the AGPL does not cover them: they are a
+database under the [Open Database License 1.0](https://opendatacommons.org/licenses/odbl/1-0/), with
+the notice naming their sources inside the file, `/code/app/data/commons_dive_sites.geojson`.
