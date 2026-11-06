@@ -389,6 +389,17 @@ down, or the bucket's own lifecycle rules going the other way.
 | `DIVE_CONDITIONS_OPEN_METEO_API_KEY`                                                                               | *(none)*            | A subscriber's key, and a real secret. Set, every call goes to Open-Meteo's `customer-` hosts carrying it; unset, to the free ones. It has to be on a plan that includes the Historical Weather API — Professional or above: a key without it, Standard included, is refused on the archive and nothing is filled. |
 | `DIVE_CONDITIONS_OPEN_METEO_RATE_LIMIT_REQUESTS`, `DIVE_CONDITIONS_OPEN_METEO_RATE_LIMIT_WINDOW_SECONDS`           | `400`, `3600`       | What the whole instance may spend on Open-Meteo over that many seconds, charged only to calls that leave. The default sits under the free API's hourly, daily and monthly caps at once, which leaves room for one instance behind an address, not two — Open-Meteo limits by address. Over it, the run stops and the remaining dives wait for a later one; nothing errors. |
 
+### MCP applications
+
+`MCP_ENABLED=false` keeps delegated AI access off. Set it to `true` to expose the MCP server
+at `/api/v1/mcp`. `FRONTEND_URL` must be HTTPS, except on localhost. Each user approves the
+application's requested permissions in the browser and can revoke a connection in Authentication
+settings.
+
+`MCP_ALLOWED_HOSTS` adds exact internal proxy Host values to the public hostname already allowed
+from `FRONTEND_URL`. `MCP_ALLOWED_ORIGINS` adds exact browser client origins, separated by commas.
+See [MCP applications](mcp.md) for OAuth, uploads, limits and proxy discovery paths.
+
 ### The map renderer
 
 The cards that list dives, trips and dive sites carry a map behind them — every card in the lists

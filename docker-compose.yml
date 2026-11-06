@@ -48,6 +48,9 @@ x-api-environment: &api-environment
   # rather than asked for again: on the default (bundled-Caddy, TLS) install they are the
   # same fact. Set FRONTEND_URL in `.env` to override it - a LAN instance on plain HTTP
   # is the case that has to.
+  MCP_ENABLED: ${MCP_ENABLED:-false}
+  MCP_ALLOWED_HOSTS: ${MCP_ALLOWED_HOSTS:-api:8000,localhost:8000,127.0.0.1:8000}
+  MCP_ALLOWED_ORIGINS: ${MCP_ALLOWED_ORIGINS:-}
   FRONTEND_URL: ${FRONTEND_URL:-https://${DOMAIN:?set DOMAIN in .env - it is the address this instance is reached at}}
   # Which peers may set the request's scheme and client address through
   # `X-Forwarded-Proto`/`X-Forwarded-For`, read by gunicorn from the environment and

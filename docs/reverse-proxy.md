@@ -100,6 +100,14 @@ If you would rather your proxy own HSTS — one place for every site on the box,
 way to run a machine — set `WEB_HSTS=off` and send `Strict-Transport-Security` yourself. Pick one or
 the other; two things sending it is how they end up disagreeing about `max-age`.
 
+## MCP discovery
+
+When `MCP_ENABLED=true`, route `/api/v1/mcp` and its children to the API, along with
+`/.well-known/oauth-protected-resource/api/v1/mcp` and
+`/.well-known/oauth-authorization-server/api/v1/mcp/oauth`. The updated bundled Caddy and web
+proxy include these routes. Keep streaming responses unbuffered. See [MCP applications](mcp.md)
+for the public URL and browser origin configuration.
+
 ## Snippets
 
 Adapt the upstream host to however your proxy reaches the stack.
