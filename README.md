@@ -143,13 +143,16 @@ what you need, what the six values are, and what each container does.
   at once, in any mix, so a watch's whole folder of exports arrives in one go. A computer's two
   exports of one dive become one dive with both files, and a file converted from another format that
   is one dive is kept on the dive it becomes; a logbook of several dives, or a DiveJSON document,
-  arrives without its file. You see what each file was read as and a row for every dive it becomes —
-  new, already here, brought back from deletion, gaining a file, or skipped and why — before
-  anything is written, and under each dive what its files did not record, what the import worked
-  out, and which of the dive's values it left out. Records you already have are matched rather than
-  duplicated, a dive you deleted comes back under the identifier it had, and the full archive
-  restores the files it carries too. An exit door you cannot walk back through is only half of
-  owning your data.
+  arrives without its file. The files go up once and the import waits on the server, a day by
+  default and [as long as the instance sets](docs/configuration.md#imports), so one started on one
+  device can be finished on another; an account finishes one import before it starts the next. The
+  review is the dives as cards, on whichever device opens it — what is new, and what changes on a
+  dive you already have — with any file that could not be read listed first, and nothing is written
+  until you import. Each import's review stays as history, thirty days by default and just as
+  configurable, with a log of what its files did not record, what the import worked out, and which
+  of the dive's values it left out. Records you already have are matched rather than duplicated, a
+  dive you deleted stays deleted, and the full archive restores the files it carries too. An exit
+  door you cannot walk back through is only half of owning your data.
 - **Year in review** — each January, an email with the year before in figures: dives and time
   underwater, the deepest and longest, dive sites, and species with the ones you saw for the first
   time.

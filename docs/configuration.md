@@ -504,14 +504,41 @@ Species photographs are a catalogue the whole instance shares, and count against
 dive-computer file stored by an earlier version stays as it was, uncompressed, and counts at its
 full size.
 
+**The files of a waiting [import](#imports) are not counted**, and one import per account is what
+bounds them: at most the 500 MB one import may carry, plus what a plain zip's readable files unzip
+to, since those are held unzipped and the zip is not, and one import reads at most 100 MB of them.
+What an import keeps counts once it is applied.
+
 **An upload that would take an account past it is refused**, before anything is stored, with a
 message that names both figures: "This upload would take your account past its storage limit: … of
 … used." A dive being logged is still saved, without the file; an import whose files would cross
 the limit — the files of one dive it keeps, or those a full-export archive restores — is refused
-whole, with nothing imported. Nothing already stored is ever removed, so lowering the number below
+whole, at the upload or again when it is applied, with nothing imported. Nothing already stored is ever removed, so lowering the number below
 what an account holds leaves its files in place — it can still delete, and replace a c-card scan or
 a picture with a smaller one, but cannot add. Nothing locks around the check either: two uploads
 racing each other can overshoot the limit by one of them.
+
+### Imports
+
+| Variable                        | Default | What it does                                                                                                                                                                                                   |
+| ------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `IMPORT_PENDING_LIFETIME_HOURS` | `24`    | How long an uploaded import waits to be applied or discarded, in hours, before it and its files are deleted. `IMPORT_PENDING_LIFETIME_HOURS=` with nothing after the `=` keeps it until the diver finishes it. |
+| `IMPORT_HISTORY_RETENTION_DAYS` | `30`    | How long an applied import's review and log stay in its history, in days. `IMPORT_HISTORY_RETENTION_DAYS=` with nothing after the `=` keeps each until the diver deletes it.                                   |
+
+A value below 1 refuses to start, for either: blank is the one way to say no limit.
+
+**A logbook import is uploaded once and lives on the server.** The files the app could read go into
+the same storage as every other upload and the review into the database, which is what lets any of
+the diver's devices open it. An account has one import waiting at a time, and a second upload is
+refused until that one is applied, discarded or past its lifetime. Applying it deletes its files and
+starts its history: the review and the log stay readable from the import page until the retention
+runs out or the diver deletes them.
+
+**Each import carries its own deadline**, set at the upload and set again at the apply, so a changed
+value reaches the imports uploaded or applied after it and leaves the rest as they are. Past its
+deadline an import stops answering at once, and the worker deletes it on the next hour. Leaving the
+pending lifetime blank means a diver who walks away from an import leaves its files on your disk or
+in your bucket, uncounted by the [storage limit](#storage-limit), until they come back to it.
 
 ### Account deletion
 
