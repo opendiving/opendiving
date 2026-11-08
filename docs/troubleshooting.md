@@ -282,15 +282,15 @@ has to wait as long as well: nginx gives up after 60 seconds unless told otherwi
 `MAP_RENDERER_DRAW_LIMIT_PER_USER` or `MAP_RENDERER_REQUEST_LIMIT_PER_USER` — sees water too, until
 the window passes and the page is loaded again.
 
-## A form in the iOS app shows no map
+## The iOS app shows no map
 
-The app draws a form's map only where `curl -s https://your-domain/api/v1/config` says
+The app draws a map — in the Sites tab, the dive form's *Find a Dive Site* and its forms — only where `curl -s https://your-domain/api/v1/config` says
 `"map_tiles":true` and names a `map_attribution`, so everything above about the two lines applies
-here as well. With `map_tiles` false the form has no map by design, and a pin is still placed by
-coordinates, place search or "Use my location". `map_attribution` stays `null` until the renderer
+here as well. With `map_tiles` false the app has no map by design: the finder is its list and
+search, and a form's pin is still placed by coordinates, place search or "Use my location". `map_attribution` stays `null` until the renderer
 has named its credit, which it may not have shortly after a start.
 
-A form that draws the credit over a map with no tiles is a different thing: on a keyed basemap, it
+A map that draws the credit with no tiles under it is a different thing: on a keyed basemap, it
 is the provider refusing a phone that sends neither `Origin` nor `Referer`.
 [configuration.md](configuration.md#third-party-calls) has the choice that leaves you.
 

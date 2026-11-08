@@ -48,7 +48,7 @@ and its QR code; `REGISTRATION_MODE=open` is the other setting, and the
 
 That is the whole product: the web app, the API and its worker, PostgreSQL, Redis, and Caddy
 terminating TLS with a certificate it fetches itself — plus, once you switch it on, a renderer that
-draws the maps behind the dive, trip and dive site cards and at the head of their pages. Nothing is built — every image is pulled,
+draws the maps behind the dive and trip cards and at the head of a dive's, a trip's and a dive site's page. Nothing is built — every image is pulled,
 prebuilt for **amd64 and arm64**, so a Raspberry Pi runs the same bytes as a VPS. Migrations apply
 themselves on startup, so an upgrade is `docker compose pull && docker compose up -d`. A backup is
 two artifacts: a `pg_dump` and a copy of the uploaded files, which are on a volume beside the stack
@@ -97,15 +97,19 @@ what you need, what the six values are, and what each container does.
   recorded gas switches, with a consumption trend on the Home page.
 - **Trips and species** — group dives into a liveaboard or a holiday week; track what you saw, with
   how many you counted or a band — few, many, abundant — and a note on each.
-- **Dive sites** — your site list is your own sites and the
-  [OpenDiving Commons](https://github.com/opendiving/opendiving-commons) sites you use: the other
-  names a site goes by, the depths it is dived at, its water, its altitude and how you get in, and
-  on a Commons site its OpenStreetMap or Wikidata entry. The Commons is an open pool of real dive
-  sites that comes with the app; a Commons site is one shared record, and your notes and tags on it
-  stay yours. A site's page sums up your dives there — how many, the last and the deepest, the
-  species you saw and your average rating — beside every dive logged at it, and a dive logged there
-  starts from its water, altitude and entry. The list sorts by name, by dives or by the last dive,
-  and filters by a tag. Divers propose new sites and corrections on the project's own instance,
+- **Dive sites** — the Sites section is one map and one search over your own sites and every
+  [OpenDiving Commons](https://github.com/opendiving/opendiving-commons) site, listing the nearest
+  to the map's centre first. Type a name and it finds sites, typos and accents forgiven, and places
+  too: pick Dahab and the map moves there, with the sites nearby. *Your sites* narrows it to your
+  own sites and the Commons sites you use, sorted by name, by dives or by the last dive and filtered
+  by a tag in the browser, and the dive form's site field opens the same finder, on the web and in
+  the iOS app. A site keeps the other names it goes by, the depths it is dived at, its water, its
+  altitude and how you get in, and on a Commons site its OpenStreetMap or Wikidata entry. The
+  Commons is an open pool of real dive sites that comes with the app; a Commons site is one shared
+  record, and your notes and tags on it stay yours. A site's page sums up your dives there — how
+  many, the last and the deepest, the species you saw and your average rating — beside every dive
+  logged at it, and a dive logged there starts from its water, altitude and entry. Divers propose
+  new sites and corrections on the project's own instance,
   where a reviewer accepts them; every other install carries a
   [read-only copy](docs/configuration.md#opendiving-commons).
 - **Gear tracking** — equipment with per-item dive counts and dive time, groupable into sets you
@@ -180,7 +184,7 @@ Roughly in priority order — contributions welcome:
   C implementation — so a computer not read yet is a contribution to libdivecomputer or to that
   repository. An original the app downloaded before it began tagging each one with the computer it
   came from is kept and never read.
-- **Statistics** — depth and time records, dives per year, a sites map.
+- **Statistics** — depth and time records, dives per year.
 - **Sharing** — a public link to a dive or a trip.
 - **iOS companion app** — in development: a client of your own server, with your logbook and
   certification cards, dives logged with or without signal, dive-computer files shared to it, and

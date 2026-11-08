@@ -84,7 +84,7 @@ broken image for up to an hour, until its cached copy expires.
 
 ## Cards and page heads need the map renderer
 
-From the release after 0.3.0, the maps behind the dive, trip and dive site cards, and at the head of
+From the release after 0.3.0, the maps behind the dive and trip cards, and at the head of
 a dive's, a trip's and a dive site's own page, are drawn by this stack rather than by the browser —
 by a `map-renderer` service that is off unless you switch it on. Upgrade without it and every card
 and every page head shows water where its map was: nothing draws a page head's map in the browser
@@ -134,6 +134,13 @@ data directory is version-specific, and a new major cannot read the old one's fi
 one comes, its release notes carry the procedure. Until then, `docker compose pull` never changes
 your Postgres major underneath you: every third-party image in the bundle is pinned to a digest, not
 just a tag.
+
+**The API creates two Postgres extensions, `pg_trgm` and `unaccent`**, which the dive site finder's
+search runs on: the migration that adds the search creates them on the API's first start after the
+upgrade, so there is nothing to run. Both ship with the bundled Postgres image and are trusted
+extensions, which a database's owner may create without being a superuser, and the bundled
+database's user is its owner. A dump taken afterwards carries them, and a restore creates them
+again.
 
 ## If something goes wrong
 

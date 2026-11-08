@@ -83,7 +83,7 @@ x-api-environment: &api-environment
 
 # What the web app and the map renderer both draw with: the instance's own origin, and the
 # basemap. One block, merged into both services below, because a renderer drawing on a
-# different basemap from the forms' is a card or a page head disagreeing with the map its
+# different basemap from the browser's is a card or a page head disagreeing with the map its
 # place was picked on.
 x-map-environment: &map-environment
   SITE_URL: ${SITE_URL:-https://${DOMAIN}}
@@ -173,14 +173,14 @@ services:
       api:
         condition: service_healthy
 
-  # Draws the tiles of the map that the dive, trip and dive site cards and the heads of
-  # their pages are put together from, for the API to store once for every account - the
+  # Draws the tiles of the map that the dive and trip cards and the heads of dive, trip and
+  # dive site pages are put together from, for the API to store once for every account - the
   # second program in the web image, run with its own command as `worker` runs the API
   # image's. Off unless you switch it on, and it takes two lines in `.env` to do that:
   # `map-renderer` added to COMPOSE_PROFILES, which starts this service, and
   # MAP_RENDERER_URL=map-renderer:3000, which tells the API to use it. Without both, cards
-  # and page heads show water instead of a map, and the iOS app's forms, which draw the
-  # basemap's style this service hands the API, have no map. It adds roughly 210 MB of
+  # and page heads show water instead of a map, and the iOS app, which draws the
+  # basemap's style this service hands the API, has no map. It adds roughly 210 MB of
   # memory at its peak, which is why a default install - and its 1 GB floor - goes without
   # it. See docs/configuration.md#the-map-renderer.
   map-renderer:
@@ -189,7 +189,7 @@ services:
     profiles: ["map-renderer"]
     restart: unless-stopped
     # The basemap the web app draws with, so the cards and page heads show the same map as
-    # the forms, and SITE_URL, which it sends to the basemap's host as the `Origin` and
+    # the browser does, and SITE_URL, which it sends to the basemap's host as the `Origin` and
     # `Referer` the instance's own pages send - a key restricted to your domain accepts it
     # for that. Nothing else: like `web`, it never sees `.env` whole.
     environment: *map-environment
