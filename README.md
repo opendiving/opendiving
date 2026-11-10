@@ -189,8 +189,10 @@ Roughly in priority order — contributions welcome:
 - **iOS companion app** — in development: a client of your own server, with your logbook and
   certification cards, dives logged with or without signal, dive-computer files shared to it, and
   downloads straight off the computer over Bluetooth — built for the Shearwater Perdix 3 and the
-  Suunto Ocean, whose support is experimental, with every other computer untried.
-  Nothing is in the App Store yet.
+  Suunto Ocean, whose support is experimental, with every other computer untried. Gear with
+  its sets and service, certifications with their card images, courses, people and contacts are
+  added, edited and deleted on the phone too, with or without signal, beside a list of your dive
+  sites and the marine life you have logged. Nothing is in the App Store yet.
 
 ## How it compares
 
