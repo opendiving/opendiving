@@ -114,7 +114,7 @@ services:
   # `COMPOSE_PROFILES=proxy`, so the default install runs it and a bring-your-own-proxy
   # user comments out one line. See docs/reverse-proxy.md.
   caddy:
-    image: caddy:2.11-alpine@sha256:e70b164da81ef698b3ad19af799ea6086ce6d9e48ed4079eb9fe26f6fbf14ee5
+    image: caddy:2.11-alpine@sha256:003a97808e781aa9f7e75cc2f43d34d461099031faf5e20faefb9f61126836f0
     profiles: ["proxy"]
     restart: unless-stopped
     ports:
