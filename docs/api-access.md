@@ -110,11 +110,11 @@ Every instance serves its OpenAPI document at `/api/v1/openapi.json`, with no ke
 `ENVIRONMENT` — on the project's instance that is <https://opendiving.app/api/v1/openapi.json>. It
 is generated from the routes themselves, so it lists every path, parameter and response shape as
 that instance's release has them, and each operation a permission covers carries what it needs under
-`x-opendiving-permissions`: a list of alternatives, each of which needs every permission in it. The
-interactive reference that renders it, `/docs`, is open only on a `local` instance and behind an
-operator account on `staging`; a `production` instance does not serve it. The web app renders the
-same document at `/developers` on every instance, with no sign-in — on the project's instance that
-is <https://opendiving.app/developers>.
+`x-opendiving-permissions`, as `{"anyOf": [[...], ...]}`: a list of alternatives, each of which
+needs every permission in it. The interactive reference that renders it, `/docs`, is open only on a
+`local` instance and behind an operator account on `staging`; a `production` instance does not serve
+it. The web app renders the same document at `/developers` on every instance, with no sign-in — on
+the project's instance that is <https://opendiving.app/developers>.
 
 ## Connecting an app through MCP
 
@@ -128,11 +128,11 @@ is made with, every read but check-in's ticked to begin with. **Allow selected p
 connects it; **Deny** sends it back with nothing.
 
 A connection can do what you allowed and nothing more: the app is offered only the operations those
-permissions cover. Files travel through it at up to 10 MiB each, and a download — an export, a dive
-file — comes back as a link the app fetches with its own token. What no key can do, no connection can
-either: nothing on the list above, and it is never the operator. Approving a connection needs you
-signed in, so neither a key nor another connection can make one. Unlike creating a key, connecting
-sends no email.
+permissions cover. The app can upload files of up to 10 MiB each, and a download — an export, a dive
+file — of up to 50 MiB comes back as a link the app fetches with its own token. What no key can do,
+no connection can either: nothing on the list above, and it is never the operator. Approving a
+connection needs you signed in, so neither a key nor another connection can make one. Unlike
+creating a key, connecting sends no email.
 
 **Connected applications**, on the same page, lists each one with its permissions and when it
 connected and was last used. **Revoke** ends it from the app's next request; connecting again takes
