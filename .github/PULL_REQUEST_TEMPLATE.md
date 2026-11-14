@@ -16,4 +16,7 @@ Changed a setting, a default or a step? The `docs/` page that documents it moves
 next one. `example.env` is documentation too — the paragraph above a setting is what an operator has
 at 1am.
 
+Does this need a change in `opendiving-api` or `opendiving-web` too? Link those PRs and say what
+order they merge in.
+
 Did something non-obvious bite you? That is a `DECISIONS.md` section, and it belongs in this PR.
