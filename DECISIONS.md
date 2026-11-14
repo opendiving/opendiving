@@ -262,8 +262,9 @@ never been the exhaustive one.
 
 **`COMMONS_PRIMARY` gets no row either, for a stronger reason.** It marks the one instance where
 OpenDiving Commons is edited, and unlike `PROJECT_OPERATED` it reaches rows and routes: a copy that
-set it would stop taking the bundle's updates to its records and open the proposal routes. It stays
-in `opendiving-api`'s `src/.env.example`, and `docs/configuration.md` describes the copy without it.
+set it would stop taking the bundle's updates to its records and open the Commons proposal routes. It
+stays in `opendiving-api`'s `src/.env.example`, and `docs/configuration.md` describes the copy
+without it.
 
 ## The template's registration line is `REGISTRATION_MODE=open`
 

@@ -72,7 +72,9 @@ choose *Admin*. Its *Invite Queue* lists the addresses that used the request for
 of them already have an account, and invites or removes them in a batch; its *Stats* screen shows
 daily totals of accounts created, sign-ins and active accounts; and its *Species* screen lists the
 species catalog newest first, where you can hide a species' photo, pin another file from Commons in
-its place, or re-fetch it by the rule.
+its place, or re-fetch it by the rule, and accept or decline the better files accounts propose for
+it — by hand or from a tool with an API key, as [api-access.md](api-access.md#proposing-a-species-photo)
+describes. Its *Proposed* chip counts the species with a proposal waiting.
 
 An invitation typed against an email address is an entry against that address: the invitee signs in
 with the address that was invited — by link, code or Google, exactly as anybody else does — so there
@@ -384,9 +386,9 @@ down, or the bucket's own lifecycle rules going the other way.
 | `DIVE_SITE_SEARCH_RATE_LIMIT_PER_USER`, `DIVE_SITE_SEARCH_RATE_LIMIT_WINDOW_SECONDS` | `300`, `300` | Searches one account may make of the dive site finder per window of that many seconds. The finder asks once a pause in typing and once per *Search this area*, so the default is a request a second for five minutes, past anyone typing; beyond it the search answers 429 until the window passes. |
 | `DIVE_SITE_SEARCH_GEOCODER_BUDGET_SECONDS` | `2` | How long a typed finder search waits on `GEOCODER_SEARCH_URL` for its places. Past it the answer comes back with the sites and without the places, so a slow geocoder costs the places and nothing else. A typed search also spends the account's geocoder budget, and a spent one costs the places, never the search. |
 | `WORMS_API_URL`, `WIKIDATA_API_URL`                                                                                | public              | The two name registers the species picker searches, called server-side. WoRMS is the taxonomic authority every catalog row is keyed on; Wikidata supplies the common names it lacks — WoRMS records exactly one vernacular for the clownfish, and it is in Japanese. Emptying one does not switch the feature off the way `GEOCODER_URL` does: search falls back to the species already in your catalog, and resolving one nobody has logged yet fails.                                                                                                                                                                                                                                                                                                                                                     |
-| `COMMONS_API_URL`                                                                                                  | public              | Wikimedia Commons, asked for a species photo's credit metadata and the URL of one scaled copy once Wikidata or an admin has named the file, and for the files in a species' Commons category when an admin opens its photo picker — never for anything a diver typed. This one *is* optional in the way the two above are not: `""` or an unreachable host simply means species have no photos. It configures the **metadata** calls only. The image bytes, the picker's previews included, are only ever fetched from `thumb.wikimedia.org` or `upload.wikimedia.org`, the two hosts one Commons reply can name; that pair is hard-coded and deliberately has no setting in front of it, because it is an SSRF fence — see [Third-party calls](#third-party-calls).                                                                                                                                                                            |
+| `COMMONS_API_URL`                                                                                                  | public              | Wikimedia Commons, asked for a species photo's credit metadata and the URL of one scaled copy once Wikidata or an admin has named the file, for the files in a species' Commons category when an admin opens its photo picker, and for a file a diver proposed for a species when an admin's *Species* screen shows the proposal or the admin accepts it — a title the diver, or a tool of theirs, named; never for a search anyone typed. This one *is* optional in the way the two above are not: `""` or an unreachable host simply means species have no photos. It configures the **metadata** calls only. The image bytes, the picker's previews included, are only ever fetched from `thumb.wikimedia.org` or `upload.wikimedia.org`, the two hosts one Commons reply can name; that pair is hard-coded and deliberately has no setting in front of it, because it is an SSRF fence — see [Third-party calls](#third-party-calls).                                                                                                                                                                            |
 | `SPECIES_USER_AGENT`                                                                                               | the project's       | The `User-Agent` on every species call — both registers, and every Commons call, metadata and image bytes alike. Ships as `OpenDiving (+https://github.com/opendiving/opendiving-api)`. Emptying it is **not** the graceful off switch the row above is: Wikimedia answers **403** to an empty one, on the metadata call and the byte fetch both, and the same header goes to WoRMS and Wikidata — so a blank value takes species search and resolution with it, not only the photos, and the API starts normally either way. Change it because the default identifies the *project*, not your instance: every deployment sends that one string, so one operator's runaway backfill is attributed to everyone running OpenDiving; put your own contact in — see [Third-party calls](#third-party-calls).   |
-| `SPECIES_WORMS_RATE_LIMIT_REQUESTS`, `SPECIES_WIKIDATA_RATE_LIMIT_REQUESTS`, `SPECIES_COMMONS_RATE_LIMIT_REQUESTS` | `120`, `300`, `120` | What the whole instance may spend on each upstream, over `SPECIES_WORMS_RATE_LIMIT_WINDOW_SECONDS`, `SPECIES_WIKIDATA_RATE_LIMIT_WINDOW_SECONDS` and `SPECIES_COMMONS_RATE_LIMIT_WINDOW_SECONDS` — `60` seconds each. Counted across every user and charged only to calls that actually leave, so exceeding one is never a 429: that upstream drops out and the rest still answer. Neither provider publishes a limit — WoRMS states none at all, and Wikimedia's applies to anonymous heavy use rather than to a call every few seconds — so all three are self-imposed politeness, set well above what a picker generates. Commons's is lower than Wikidata's and still ample — it is charged at most twice per *new* species, the credit call and the byte fetch, rather than once per search candidate, and an admin adds a few: two for a re-fetch or a pin, two or three to open the photo picker, whose previews are charged nothing. |
+| `SPECIES_WORMS_RATE_LIMIT_REQUESTS`, `SPECIES_WIKIDATA_RATE_LIMIT_REQUESTS`, `SPECIES_COMMONS_RATE_LIMIT_REQUESTS` | `120`, `300`, `120` | What the whole instance may spend on each upstream, over `SPECIES_WORMS_RATE_LIMIT_WINDOW_SECONDS`, `SPECIES_WIKIDATA_RATE_LIMIT_WINDOW_SECONDS` and `SPECIES_COMMONS_RATE_LIMIT_WINDOW_SECONDS` — `60` seconds each. Counted across every user and charged only to calls that actually leave, so exceeding one is never a 429: that upstream drops out and the rest still answer. Neither provider publishes a limit — WoRMS states none at all, and Wikimedia's applies to anonymous heavy use rather than to a call every few seconds — so all three are self-imposed politeness, set well above what a picker generates. Commons's is lower than Wikidata's and still ample — it is charged at most twice per *new* species, the credit call and the byte fetch, rather than once per search candidate, and an admin adds a few: two for a re-fetch, a pin or an accepted proposal, two or three to open the photo picker, and one to show a species' waiting proposals, whose previews, like the picker's, are charged nothing. |
 | `DIVE_CONDITIONS_PROVIDER`                                                                                         | *(none)*            | Off as it ships: nothing is asked. `open-meteo`, the one provider, has a cron in the worker fill a dive's empty air temperature, weather and waves from the weather, sea state and tide at the dive's place and hour, and the dive page shows the rest of what came back; a filled value is marked as fetched until the diver types another. Any other value is refused at startup. Open-Meteo's free API is for non-commercial use only — read [Third-party calls](#third-party-calls) before setting it. |
 | `DIVE_CONDITIONS_OPEN_METEO_API_KEY`                                                                               | *(none)*            | A subscriber's key, and a real secret. Set, every call goes to Open-Meteo's `customer-` hosts carrying it; unset, to the free ones. It has to be on a plan that includes the Historical Weather API — Professional or above: a key without it, Standard included, is refused on the archive and nothing is filled. |
 | `DIVE_CONDITIONS_OPEN_METEO_RATE_LIMIT_REQUESTS`, `DIVE_CONDITIONS_OPEN_METEO_RATE_LIMIT_WINDOW_SECONDS`           | `400`, `3600`       | What the whole instance may spend on Open-Meteo over that many seconds, charged only to calls that leave. The default sits under the free API's hourly, daily and monthly caps at once, which leaves room for one instance behind an address, not two — Open-Meteo limits by address. Over it, the run stops and the remaining dives wait for a later one; nothing errors. |
@@ -553,9 +555,9 @@ Deleting an account takes effect immediately — the app stops opening, on every
 is not destroyed until the grace period runs out. A cron in the `worker` container runs hourly at
 :30 and issues a real `DELETE FROM "user"` for each account past its deadline, taking that diver's
 dives, dive drafts, dive sites, their notes on Commons sites, any proposals for the
-[Commons](#opendiving-commons), certifications, check-in details, gear, trips, contacts, people,
-tags and every uploaded file with it. A record the Commons has already accepted stays, being the
-Commons' and no longer that diver's.
+[Commons](#opendiving-commons), their species photo proposals, certifications, check-in details,
+gear, trips, contacts, people, tags and every uploaded file with it. A record the Commons has
+already accepted stays, being the Commons' and no longer that diver's.
 Nothing else purges an account, and nothing decides on a user's behalf that one should go: the job
 only ever executes a request the user already made.
 
@@ -666,8 +668,10 @@ offers to replace it with that record, and nothing moves until the diver accepts
 
 **Proposing happens on the project's instance.** New sites and corrections go in at
 <https://opendiving.app>, which is invite-only, where a reviewer accepts them; they reach your copy
-in a later release. An install of yours has no proposal routes, no review queue and no controls for
-either, and nothing leaves it for the Commons.
+in a later release. An install of yours has no routes for proposing to the Commons, no queue to
+review them and no controls for either, and nothing leaves it for the Commons. Species photo
+proposals are a different thing and every install has them: they are proposals to you, about your
+own catalog, reviewed on your *Species* screen.
 
 ## Third-party calls
 
@@ -782,15 +786,18 @@ Nothing here phones home. What the app can be told to contact:
   basemap or a new release changes how it is drawn, or after 30 days in which nobody here was shown
   it.
 
-  **Wikimedia Commons is one more, and it is not one of those registers.** It is never asked
-  anything a diver typed — it receives a file title derived from an AphiaID, or one an admin chose,
-  and answers with a photograph's credit metadata and the URL of one scaled copy, which the server
-  then fetches. That is not a cache miss on a search: it happens when a species is first resolved
-  into your catalog, again for species already in it whenever an operator runs the photo backfill
-  script in the API container by hand — nothing runs it on a schedule — and when an admin works on a
-  species' photo on the *Species* screen: a re-fetch asks again, a pin fetches the file the admin
-  named, and the photo picker lists the files in the species' Commons category and fetches a small
-  preview of each. `COMMONS_API_URL` points the metadata calls at a mirror, and `""` switches
+  **Wikimedia Commons is one more, and it is not one of those registers.** No search a diver typed
+  reaches it. It receives a file title — derived from an AphiaID, chosen by an admin, or named in a
+  diver's photo proposal, often by a tool of theirs — and answers with a photograph's credit
+  metadata and the URL of one scaled copy, which the server then fetches. That is not a cache miss
+  on a search: it happens when a species is first resolved into your catalog, again for species
+  already in it whenever an operator runs the photo backfill script in the API container by hand —
+  nothing runs it on a schedule — and when an admin works on a species' photo on the *Species*
+  screen: a re-fetch asks again, a pin fetches the file the admin named, the photo picker lists the
+  files in the species' Commons category and fetches a small preview of each, and a species' waiting
+  proposals are shown with each proposed file's metadata and preview, and accepting one pins it.
+  Proposing asks Commons nothing, so a file title a diver named leaves your server only when you
+  look at it. `COMMONS_API_URL` points the metadata calls at a mirror, and `""` switches
   species photos off entirely. A photograph narrower than 500 px is refused rather than stored soft,
   so a species whose chosen file is that narrow has no photo; only an admin's pin stores one,
   unscaled. The image bytes themselves are only ever fetched from `thumb.wikimedia.org` or
