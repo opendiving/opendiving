@@ -13,15 +13,17 @@ Sign in, open **Settings → Authentication**, and press **Create API key** on t
 The form asks three things:
 
 - **Name** — a label for your own benefit, up to 50 characters: `laptop`, `backup cron`.
-- **Access** — **Read only**, the default, or **Read and write**. Pick read only unless the tool has
-  to change something.
 - **Expires after** — **30 days**, **90 days**, **1 year** (the default) or **Never**. An expired
   key stops working and stays on the card, marked **Expired**, until you revoke it.
+- **Key permissions** — what the key may do, ticked per part of the logbook as **Read**,
+  **Create & edit** and **Delete**, with **Select all** to tick everything. Only reading dives is
+  ticked to begin with, and a key needs at least one. Tick what the tool needs and nothing more —
+  [What a key may do](#what-a-key-may-do) says what each one covers.
 
 **Create key** shows the secret once, in a field labelled **New API key** with a **Copy** button.
 Copy it before you press **Done**: only a fingerprint of it is kept, so it cannot be shown again —
 lose it and the fix is a new key. Every key begins `odk_`; the card names each one by its first
-twelve characters, its access, and when it was created, last used and expires.
+twelve characters and when it was created, last used and expires, and lists what it may do.
 
 Creating a key sends a notice to the account's email address, and no setting turns that off. A key
 you did not make is the event it exists for.
@@ -143,9 +145,9 @@ revokes the connection.
 ## Proposing a species photo
 
 A species' photograph is a file from Wikimedia Commons, chosen by a rule until whoever runs the
-instance hides it or pins another. Any account can propose a better file, and a write key can do it
-from a tool. A proposal changes nothing until the operator accepts it, which makes it the species'
-photo, or declines it.
+instance hides it or pins another. Any account can propose a better file, and a key with
+`dives:write` can do it from a tool. A proposal changes nothing until the operator accepts it, which
+makes it the species' photo, or declines it.
 
 ```bash
 curl -X POST -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" \
@@ -184,11 +186,12 @@ list, it gathers the photographs Wikidata and Commons hold for it, shows them to
 one the instance stores, and proposes the one the model judges clearly better, with the model's
 reason as the note. It runs on your own machine from a checkout of that repository, and is not in
 the image. It needs [uv](https://docs.astral.sh/uv/), which fetches the Python the project pins; a
-write key; a key for the Anthropic API; and an address or page where Wikimedia can reach you.
+key with `dives:read` and `dives:write`; a key for the Anthropic API; and an address or page where
+Wikimedia can reach you.
 
 ```bash
 git clone https://github.com/opendiving/opendiving-api && cd opendiving-api
-export OPENDIVING_API_KEY=odk_...      # a Read and write key
+export OPENDIVING_API_KEY=odk_...      # dives:read and dives:write
 export ANTHROPIC_API_KEY=sk-ant-...
 uv run --extra dev python scripts/propose_species_photos.py \
   --instance https://dives.example.com --contact you@example.com --dry-run --limit 5
