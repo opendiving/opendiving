@@ -1,9 +1,10 @@
 # API access
 
-An API key lets a script or a tool of your own use your account through the API: a nightly backup,
-a spreadsheet that pulls your dives, a converter that pushes them in. The web app and the OpenDiving
-iOS app need none of this — they sign in the ordinary way. A key belongs to one account on one
-instance, so everything below works the same on an instance you run and on
+An API key lets a script or a tool of your own use your account through the API: a nightly backup, a
+spreadsheet that pulls your dives, a converter that pushes them in. The web app and the OpenDiving
+iOS app need none of this — they sign in the ordinary way — and an AI assistant or another app that
+speaks MCP can [connect without one](#connecting-an-app-through-mcp). A key belongs to one account
+on one instance, so everything below works the same on an instance you run and on
 <https://opendiving.app>; `dives.example.com` stands for whichever one yours is.
 
 ## Creating a key
@@ -43,19 +44,43 @@ curl -H "Authorization: Bearer $KEY" -o logbook.divejson \
 
 `/export/divejson` is the whole logbook as one DiveJSON document; `/export/uddf` is UDDF for
 Subsurface and the tools that read it; `/export/csv` is one row per dive for a spreadsheet; and
-`/export/archive` is a zip with the uploaded files as well.
+`/export/archive` is a zip with the uploaded files as well. With permissions chosen, the first
+request needs `dives:read`, and every export `export:read` and `files:read` together.
 
 A failed key — unknown, expired, revoked, or on an account that has asked to be deleted — gets the
 same `401` `"User not authenticated."` as any other bad credential.
 
+## What a key may do
+
+A key does what its permissions allow and nothing else. Each one names a part of the logbook and an
+action — `dives:read`, `gear:write`, `trips:delete` — so reading, creating and editing, and deleting
+are granted separately, for dives, drafts, sites, trips, gear, people, contacts, courses,
+certifications, tags, check-in details and presets alike. `profile` and `preferences` have a read and
+a write each; `files:read` and `files:write` cover downloading and uploading files, `export:read` the
+exports and `import:write` importing a logbook. `GET /api/v1/user/api-key-permissions` lists the
+full set.
+
+Some operations need more than one: an export, as above, or downloading a certification card, which
+takes `certifications:read` and `files:read`. The schema names what each operation needs — see [The
+contract](#the-contract). A request the key's permissions do not cover answers `403` `"Permission
+not granted for this operation."` before the route runs, and so does every route no permission
+names. `GET /api/v1/user` returns only the fields `profile:read` and `preferences:read` grant, and a
+`PATCH` to it needs the write permission for every field it sends: one field outside them refuses
+the whole update with `403`.
+
+Keys made before permissions existed, and the keys the iOS app makes, carry one of two older kinds of
+access instead, shown on the card as **Read only** and **Read and write**. Read only may use `GET`,
+`HEAD` and `OPTIONS`, and any other method answers `403` `"This API key is read-only."`; read and
+write may do what a signed-in browser can, short of the list below. Neither can be narrowed: to
+restrict one, create a key with the permissions it needs and revoke the old one.
+
 ## What a key cannot do
 
-- **A read-only key cannot write.** It may use `GET`, `HEAD` and `OPTIONS`; any other method answers
-  `403` `"This API key is read-only."` before anything happens.
-- **No key can manage sign-in.** The routes for API keys, passkeys, signed-in devices, the check-in
-  link and the invite link, the request to change the sign-in email address, and deleting the
-  account all answer a key with `403` `"This needs a signed-in browser or app, not an API key."` A
-  stolen key cannot lock you out or mint itself a successor.
+- **No key can manage sign-in.** The routes for API keys, MCP connections, passkeys, signed-in
+  devices, the check-in link and the invite link, short-lived download links, the request to change the
+  sign-in email address, and deleting the account all answer a key with `403` `"This needs a
+  signed-in browser or app, not an API key."` — whatever its permissions. A stolen key cannot lock
+  you out or mint itself a successor.
 - **No key is an operator.** On an account that runs the instance, a key still acts as an ordinary
   diver: the operator's admin routes refuse it, and `GET /api/v1/user` reports `is_superuser` false.
 
@@ -84,10 +109,36 @@ revoked or expires.
 Every instance serves its OpenAPI document at `/api/v1/openapi.json`, with no key and whatever its
 `ENVIRONMENT` — on the project's instance that is <https://opendiving.app/api/v1/openapi.json>. It
 is generated from the routes themselves, so it lists every path, parameter and response shape as
-that instance's release has them. The interactive reference that renders it, `/docs`, is open
-only on a `local` instance and behind an operator account on `staging`; a `production` instance
-does not serve it. The web app renders the same document at `/developers` on every instance, with no
-sign-in — on the project's instance that is <https://opendiving.app/developers>.
+that instance's release has them, and each operation a permission covers carries what it needs under
+`x-opendiving-permissions`: a list of alternatives, each of which needs every permission in it. The
+interactive reference that renders it, `/docs`, is open only on a `local` instance and behind an
+operator account on `staging`; a `production` instance does not serve it. The web app renders the
+same document at `/developers` on every instance, with no sign-in — on the project's instance that
+is <https://opendiving.app/developers>.
+
+## Connecting an app through MCP
+
+An AI assistant, or any other app that speaks the Model Context Protocol, can work with your logbook
+without a key, on an instance whose operator has switched it on. **Settings → MCP** shows the server
+address, `https://dives.example.com/api/v1/mcp`; where Settings has no MCP section, the instance
+does not offer it. Add the address in the app's MCP or connector settings, and the app sends you to
+OpenDiving to sign in and choose what it may do. The page names the app — with **Unverified name**
+when the app chose that name itself — and where it returns you, and lists the same permissions a key
+is made with, every read but check-in's ticked to begin with. **Allow selected permissions**
+connects it; **Deny** sends it back with nothing.
+
+A connection can do what you allowed and nothing more: the app is offered only the operations those
+permissions cover. Files travel through it at up to 10 MiB each, and a download — an export, a dive
+file — comes back as a link the app fetches with its own token. What no key can do, no connection can
+either: nothing on the list above, and it is never the operator. Approving a connection needs you
+signed in, so neither a key nor another connection can make one. Unlike creating a key, connecting
+sends no email.
+
+**Connected applications**, on the same page, lists each one with its permissions and when it
+connected and was last used. **Revoke** ends it from the app's next request; connecting again takes
+your approval again. The app holds a fifteen-minute token that it renews, and an app that goes thirty
+days without renewing it has to ask again. A renewal presented twice is taken as a copied token and
+revokes the connection.
 
 ## Proposing a species photo
 
@@ -170,9 +221,10 @@ another model.
 
 ## For the operator
 
-Nothing needs switching on: every account can create keys. Two settings bound them —
+Nothing needs switching on for keys: every account can create them. Two settings bound them —
 `API_KEY_MAX_PER_USER` and `API_KEY_CREATE_RATE_LIMIT_PER_USER` under
-[Sign-in](configuration.md#sign-in).
+[Sign-in](configuration.md#sign-in). MCP is off as it ships; `MCP_ENABLED` under
+[Optional features](configuration.md#optional-features) turns it on.
 
 Proposals wait on **Admin → Species**, under the *Proposed* chip, each beside the photo it would
 replace; accepting and declining happen there, in a signed-in session, since no key is an operator.
