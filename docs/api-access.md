@@ -176,3 +176,8 @@ Nothing needs switching on: every account can create keys. Two settings bound th
 
 Proposals wait on **Admin → Species**, under the *Proposed* chip, each beside the photo it would
 replace; accepting and declining happen there, in a signed-in session, since no key is an operator.
+The daily limit on proposing is `SPECIES_PHOTO_PROPOSAL_RATE_LIMIT_PER_USER`, 100, over
+`SPECIES_PHOTO_PROPOSAL_RATE_LIMIT_WINDOW_SECONDS`, a day; like the API's other limits it is
+described in `opendiving-api`'s
+[`src/.env.example`](https://github.com/opendiving/opendiving-api/blob/main/src/.env.example)
+rather than in [configuration.md](configuration.md).
