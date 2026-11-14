@@ -59,8 +59,11 @@ action — `dives:read`, `gear:write`, `trips:delete` — so reading, creating a
 are granted separately, for dives, drafts, sites, trips, gear, people, contacts, courses,
 certifications, tags, check-in details and presets alike. `profile` and `preferences` have a read and
 a write each; `files:read` and `files:write` cover downloading and uploading files, `export:read` the
-exports and `import:write` importing a logbook. `GET /api/v1/user/api-key-permissions` lists the
-full set.
+exports and `import:write` importing a logbook. `species:write` is a write with no read beside it,
+as `import:write` is: it covers resolving a species — adding one a search found to the catalog every
+account shares — and proposing and withdrawing a species photo, while reading species takes
+`dives:read`. A key with `dives:write` and not `species:write` still logs dives, attaching species already
+in the catalog. `GET /api/v1/user/api-key-permissions` lists the full set.
 
 Some operations need more than one: an export, as above, or downloading a certification card, which
 takes `certifications:read` and `files:read`. The schema names what each operation needs — see [The
@@ -70,11 +73,12 @@ names. `GET /api/v1/user` returns only the fields `profile:read` and `preference
 `PATCH` to it needs the write permission for every field it sends: one field outside them refuses
 the whole update with `403`.
 
-Keys made before permissions existed, and the keys the iOS app makes, carry one of two older kinds of
-access instead, shown on the card as **Read only** and **Read and write**. Read only may use `GET`,
-`HEAD` and `OPTIONS`, and any other method answers `403` `"This API key is read-only."`; read and
-write may do what a signed-in browser can, short of the list below. Neither can be narrowed: to
-restrict one, create a key with the permissions it needs and revoke the old one.
+Keys made before permissions existed carry one of two older kinds of access instead, shown on the
+card as **Read only** and **Read and write**; the web app and the iOS app make only keys with
+chosen permissions. Read only may use `GET`, `HEAD` and `OPTIONS`, and any other method answers
+`403` `"This API key is read-only."`; read and write may do what a signed-in browser can, short of
+the list below. Neither can be narrowed: to restrict one, create a key with the permissions it needs
+and revoke the old one.
 
 ## What a key cannot do
 
@@ -179,7 +183,7 @@ the first needs `dives:read`, the second `dives:write`. Changing it changes no d
 
 A species' photograph is a file from Wikimedia Commons, chosen by a rule until whoever runs the
 instance hides it or pins another. Any account can propose a better file, and a key with
-`dives:write` can do it from a tool. A proposal changes nothing until the operator accepts it, which
+`species:write` can do it from a tool. A proposal changes nothing until the operator accepts it, which
 makes it the species' photo, or declines it.
 
 ```bash
@@ -219,12 +223,12 @@ list, it gathers the photographs Wikidata and Commons hold for it, shows them to
 one the instance stores, and proposes the one the model judges clearly better, with the model's
 reason as the note. It runs on your own machine from a checkout of that repository, and is not in
 the image. It needs [uv](https://docs.astral.sh/uv/), which fetches the Python the project pins; a
-key with `dives:read` and `dives:write`; a key for the Anthropic API; and an address or page where
+key with `dives:read` and `species:write`; a key for the Anthropic API; and an address or page where
 Wikimedia can reach you.
 
 ```bash
 git clone https://github.com/opendiving/opendiving-api && cd opendiving-api
-export OPENDIVING_API_KEY=odk_...      # dives:read and dives:write
+export OPENDIVING_API_KEY=odk_...      # dives:read and species:write
 export ANTHROPIC_API_KEY=sk-ant-...
 uv run --extra dev python scripts/propose_species_photos.py \
   --instance https://dives.example.com --contact you@example.com --dry-run --limit 5
