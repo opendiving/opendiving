@@ -89,7 +89,9 @@ what you need, what the six values are, and what each container does.
   computers' records of a dive, goes through that import instead. Each file lands on a
   **recording**, one per device that recorded the dive: two computers on one dive are two
   recordings, and one computer's JSON beside its FIT is two files of one recording, each filling
-  what the other left blank. Every file you upload stays with the recording it came from and can be
+  what the other left blank. The account keeps its dive computers in an order, set in Settings or
+  in the iOS app, and when a second computer's recording joins a dive, the one higher in it is
+  shown by default. Every file you upload stays with the recording it came from and can be
   re-downloaded any time, and the per-sample profile is extracted and charted per recording, with a
   switcher when a dive has more than one. A computer that chopped one dive in half logs it as two
   dives, and **Merge** folds them back into one.
@@ -149,10 +151,13 @@ what you need, what the six values are, and what each container does.
   is one dive is kept on the dive it becomes; a logbook of several dives, or a DiveJSON document,
   arrives without its file. The files go up once and the import waits on the server, a day by
   default and [as long as the instance sets](docs/configuration.md#imports), so one started on one
-  device can be finished on another; an account finishes one import before it starts the next. The
-  review is the dives as cards, on whichever device opens it — what is new, and what changes on a
-  dive you already have — with any file that could not be read listed first, and nothing is written
-  until you import. Each import's review stays as history, thirty days by default and just as
+  device can be finished on another; an account finishes one such import before it starts the next.
+  The review is the dives as cards, on whichever device opens it — what is new, and what changes on
+  a dive you already have — with any file that could not be read listed first, and nothing is
+  written until you import. An upload can instead be applied in the one request, with no review:
+  it never waits, holds no file, and is how the iOS app imports what it downloads from a dive
+  computer and how a tool with an [API key](docs/api-access.md#importing-dives) brings dives in.
+  Each import's review stays as history, thirty days by default and just as
   configurable, with a log of what its files did not record, what the import worked out, and which
   of the dive's values it left out. Records you already have are matched rather than duplicated, a
   dive you deleted stays deleted, and the full archive restores the files it carries too. An exit
@@ -187,9 +192,13 @@ Roughly in priority order — contributions welcome:
 - **Statistics** — depth and time records, dives per year.
 - **Sharing** — a public link to a dive or a trip.
 - **iOS companion app** — in development: a client of your own server, with your logbook and
-  certification cards, dives logged with or without signal, dive-computer files shared to it, and
-  downloads straight off the computer over Bluetooth — built for the Shearwater Perdix 3 and the
-  Suunto Ocean, whose support is experimental, with every other computer untried. Gear with
+  certification cards, dives logged with or without signal, and dive-computer files shared to it,
+  each uploaded as it arrives and reviewed before anything is written. Or it downloads from the
+  computer over Bluetooth by itself: once a computer is paired, its new dives are downloaded each
+  time it connects, even with the phone locked, and imported without a review, and a notification
+  the phone makes tells you they are there. It is built for the Shearwater Perdix 3 and the Suunto
+  Ocean, whose support is experimental, with every other computer untried, and it needs a server
+  released after v0.7.0. Gear with
   its sets and service, certifications with their card images, courses, people and contacts are
   added, edited and deleted on the phone too, with or without signal, beside a list of your dive
   sites and the marine life you have logged. Nothing is in the App Store yet.
@@ -202,12 +211,13 @@ Honest answers to "why not X":
   dive-computer support and a full deco planner. It's desktop-first, with no web app or
   self-hostable server; OpenDiving is the server-shaped complement — a modern web UI on your own
   box, API-first, reachable from any browser. Use Subsurface to download over a cable, then bring
-  its `.ssrf` in whole, so both can hold the same log; over Bluetooth, the iOS app downloads
-  straight into OpenDiving.
+  its `.ssrf` in whole, so both can hold the same log; over Bluetooth, the iOS app downloads a
+  paired computer's new dives straight into OpenDiving by itself, each time the computer connects.
 - **[Submersion](https://submersion.app/) / [Bubbletrail](https://bubbletrail.app/)** — excellent
   newer open-source _apps_: local-first, on-device databases, Bluetooth downloads. OpenDiving is the
   household-server alternative: one instance, every browser and family member, one backup, an API —
-  and its iOS app's Bluetooth downloads land on that server rather than in a database on the phone.
+  and its iOS app's Bluetooth downloads land on that server by themselves, rather than in a database
+  on the phone.
 - **Vendor clouds (Shearwater, Garmin, Suunto, Oceanic+)** — where dives are born, not where they
   should live. OpenDiving reads their exports, and a file you upload to a dive stays with it
   forever, so switching computers never splits your history.

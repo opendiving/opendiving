@@ -541,6 +541,13 @@ refused until that one is applied, discarded or past its lifetime. Applying it d
 starts its history: the review and the log stay readable from the import page until the retention
 runs out or the diver deletes them.
 
+**An upload can instead be applied in the same request, and that one never waits.** It is how the
+iOS app imports what it downloads from a dive computer, with nobody there to review it, and how a
+tool with an [API key](api-access.md#importing-dives) brings dives in. Its files are written at
+once and none is held, so the pending lifetime does not touch it and what it keeps counts against
+the [storage limit](#storage-limit) at once; it goes ahead whether or not the account has an import
+waiting, leaves that one as it is, and starts its history as an applied import does.
+
 **Each import carries its own deadline**, set at the upload and set again at the apply, so a changed
 value reaches the imports uploaded or applied after it and leaves the rest as they are. Past its
 deadline an import stops answering at once, and the worker deletes it on the next hour. Leaving the

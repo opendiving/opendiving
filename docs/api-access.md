@@ -143,6 +143,38 @@ your approval again. The app holds a fifteen-minute token that it renews, and an
 days without renewing it has to ask again. A renewal presented twice is taken as a copied token and
 revokes the connection.
 
+## Importing dives
+
+A key with `import:write` and `files:write` can bring dives in with one request, applied at once and
+with no review — the way the iOS app imports what it downloads from a dive computer:
+
+```bash
+curl -X POST -H "Authorization: Bearer $KEY" -H "Idempotency-Key: $(uuidgen)" \
+  -F file=@dive-1.fit -F file=@dive-2.fit \
+  'https://dives.example.com/api/v1/imports?apply=true'
+```
+
+Each file is a `file` part, in any format the logbook import reads, and a zip of them is one too.
+The answer is `201` and the applied import: a `dives` row for each dive the files hold, saying
+whether it is new, modified, unchanged or skipped and why. It never waits — it goes ahead whether or
+not the account has an import waiting for a review, and holds no file on the server — and it is in
+the import history like any other. Without `apply=true` the upload is held for a review instead,
+one per account at a time, which the web app or the iOS app finishes.
+
+**Keep one `Idempotency-Key` for one set of files, and send it again when you retry.** A repeat under
+the key writes nothing and answers the import the first request made; it is a `409` while the first
+is still running, and a `410` once that import has been deleted or has expired. A request that was
+refused leaves the key unused. A `429` is the account's import budget and says nothing about the
+files; `413` is too much at once or past the account's storage limit; and when no file can be read
+at all, the answer is the first file's: `415` for bytes nothing here reads, `422` for a malformed
+file. A file that cannot be read beside others that can stops nothing, and its row in `members` says
+why.
+
+Where a second computer's recording joins a dive, the one that comes first in the account's order of
+dive computers is shown by default. `GET /api/v1/dive-computers` lists them, first to last, and
+`PUT /api/v1/dive-computers/order` with `{"serials": ["D9772626", "253810000400"]}` sets that order;
+the first needs `dives:read`, the second `dives:write`. Changing it changes no dive already stored.
+
 ## Proposing a species photo
 
 A species' photograph is a file from Wikimedia Commons, chosen by a rule until whoever runs the
