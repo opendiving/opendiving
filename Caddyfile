@@ -58,7 +58,7 @@
 	# the version that also holds for the installs that run their own proxy instead of
 	# this file. Adding them here as well would be a second definition of one policy,
 	# free to drift from the first.
-	@api path /api/v1* /docs
+	@api path /api/v1* /docs /.well-known/oauth-protected-resource/api/v1/mcp /.well-known/oauth-authorization-server/api/v1/mcp/oauth
 	handle @api {
 		reverse_proxy api:8000
 	}
