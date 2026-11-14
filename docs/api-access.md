@@ -125,9 +125,10 @@ without a key, on an instance whose operator has switched it on. **Settings → 
 address, `https://dives.example.com/api/v1/mcp`; where Settings has no MCP section, the instance
 does not offer it. Add the address in the app's MCP or connector settings, and the app sends you to
 OpenDiving to sign in and choose what it may do. The page names the app — with **Unverified name**
-when the app chose that name itself — and where it returns you, and lists the same permissions a key
-is made with, every read but check-in's ticked to begin with. **Allow selected permissions**
-connects it; **Deny** sends it back with nothing.
+when the app chose that name itself — and where it returns you, and lists the permissions the app
+asked for — `dives:read` alone when it asked for none — with every read among them but check-in's
+ticked to begin with. You can grant fewer, never more. **Allow selected permissions** connects it;
+**Deny** sends it back with nothing.
 
 A connection can do what you allowed and nothing more: the app is offered only the operations those
 permissions cover. The app can upload files of up to 10 MiB each, and a download — an export, a dive
