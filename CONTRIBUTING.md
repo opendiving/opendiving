@@ -30,8 +30,9 @@ conduct@opendiving.app.
   release existing.
 - **The third-party digests.** postgres, redis and caddy are pinned `tag@sha256:...` because nothing
   here is built — an operator pulls, so a floating tag would hand them whatever upstream published
-  today. Renovate raises a PR when one moves. Don't unpin them, and don't bump one by hand without
-  saying what you tested it against.
+  today. Renovate raises a PR when one moves and, three days after the new digest is published,
+  adds it to the merge queue once the checks pass (the repository's "Allow auto-merge" setting has
+  to be on). Don't unpin them, and don't bump one by hand without saying what you tested it against.
 - **`scripts/release_version.py`.** The version half of cutting a release: it reads the three
   repositories' commit windows since the last tag, proposes one product version, and writes that
   version into every manifest and lockfile entry that declares one in `opendiving-api` and

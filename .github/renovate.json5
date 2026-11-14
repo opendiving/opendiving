@@ -42,10 +42,10 @@
   // publishes. Vulnerability-driven ones ignore this entirely - see below.
   "schedule": ["before 9am on monday"],
 
-  // Rebase only on a conflict, not every time `main` moves. A Monday batch gets merged one PR
-  // at a time, each rebased by hand just before its merge, so rebasing the rest after every
-  // merge reruns CI across the whole batch for nothing. The rebase checkbox in a PR's body
-  // still asks for one on demand.
+  // Rebase only on a conflict, not every time `main` moves. The merge queue tests each PR
+  // squashed onto `main` as it then stands, so a branch never needs to be current, and
+  // rebasing the batch after every merge reruns CI across it for nothing. The rebase checkbox
+  // in a PR's body still asks for one on demand.
   "rebaseWhen": "conflicted",
 
   // Load-bearing here, and the opposite of what it means in `opendiving-api`. Nothing in
@@ -60,6 +60,7 @@
     "schedule": ["at any time"],
     "semanticCommitType": "fix",
     "labels": ["dependencies", "security"],
+    "automerge": false,
   },
 
   // GitHub's own alerts have to be switched on in repository settings to reach Renovate.
@@ -68,6 +69,18 @@
   "osvVulnerabilityAlerts": true,
 
   "packageRules": [
+    {
+      // Routine minor, patch and digest bumps join the merge queue on their own once the
+      // required checks pass; a merged digest still reaches no install before the next tag.
+      // Majors, 0.x packages and vulnerability fixes wait for a person, and nothing is offered
+      // for automerge until it has been public for three days - the window in which a
+      // hijacked release is usually pulled. First, so a later rule that holds something back
+      // overrides it.
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "matchCurrentVersion": "!/^0/",
+      "minimumReleaseAge": "3 days",
+      "automerge": true,
+    },
     {
       // The bundle is not code anyone runs from this repository - it is three files
       // uploaded as release assets, so a digest bumped here reaches an install on the
