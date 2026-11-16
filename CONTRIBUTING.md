@@ -176,6 +176,18 @@ removed behaviour they depended on, the profile backfill a changed reader asks f
 the bundle that an existing install has to copy** — a new required variable, a new service — is
 breaking in exactly this sense, because `docker compose pull` does not update the compose file.
 
+**A `!` does not mean that in every window.** Here it marks a breaking change in the sense of the
+table. In `opendiving-api` it marks a **wire break**, a change to the API's OpenAPI document that
+breaks a client's hand-written models, which its `api-contract` check fails a pull request for
+unless the title carries the marker; that repository's
+[CONTRIBUTING.md](https://github.com/opendiving/opendiving-api/blob/main/CONTRIBUTING.md#the-api-contract)
+defines it. A wire break is not by itself breaking in the table's sense. A break in an API change
+that an operator has to act on is recorded here instead, on the pull request that changes the
+bundle or `docs/upgrade.md`, and the release's Breaking section is written from those, not from the
+API's marker. The proposed version still counts every `!` as breaking, so an API wire break buys
+the minor a feature buys below 1.0, and a major from 1.0.0; where the window holds no operator
+break, the **Version** box below is where you decline it.
+
 **Then run
 [Cut the release](https://github.com/opendiving/opendiving/actions/workflows/release-cut.yml)** from
 this repository's Actions tab, on `main`. It takes two boxes, both optional:
