@@ -313,8 +313,10 @@ services:
     expose:
       - "5432"
 
-  # Cache and job queue. Nothing durable lives here: losing it costs cache warmth and
-  # resets the open rate-limit windows, and nothing else.
+  # Cache, job queue, and the request counts the worker has yet to move into Postgres,
+  # normally a few minutes' worth. Nothing durable lives here: losing it costs cache
+  # warmth, resets the open rate-limit windows, interrupts passkey sign-in until it is back
+  # and leaves those counts off the Admin section's External Requests screen.
   redis:
     image: redis:8-alpine@sha256:7958cfbb9d152f87dadfbc89f1b0b15938f0b81ff8982feb327476f4911935c3
     restart: unless-stopped
