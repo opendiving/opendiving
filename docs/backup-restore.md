@@ -17,9 +17,10 @@ a superset of everything the dump points at. The one gap is a file *deleted* bet
 which leaves a row in the restore pointing at a file the copy no longer has. If you want exactness
 rather than "one dangling row in the unlucky case", stop the stack first.
 
-Nothing else in the stack holds anything durable: Redis is cache, open rate-limit windows and
-passkey challenges that expire in minutes, and Caddy's volume holds certificates that re-issue
-themselves.
+Nothing else in the stack holds anything durable: Redis is cache, open rate-limit windows,
+passkey challenges that expire in minutes and the request counts the worker has yet to move into
+Postgres, normally a few minutes' worth, whose loss leaves them off the Admin section's *External
+Requests* screen; and Caddy's volume holds certificates that re-issue themselves.
 
 **If you switched the API to object storage**, the second artifact is a copy of your bucket rather
 than of the volume — everything said here about the files applies to it unchanged, and

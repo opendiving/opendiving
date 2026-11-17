@@ -70,10 +70,13 @@ above, which invites an address or hands out that member's own invite link. As t
 also get an **Admin** entry in the account menu — sign in as the first account, open the menu,
 choose *Admin*. Its *Invite Queue* lists the addresses that used the request form, tells you which
 of them already have an account, and invites or removes them in a batch; its *Stats* screen shows
-daily totals of accounts created, sign-ins and active accounts; and its *Species* screen lists the
-species catalog newest first, where you can hide a species' photo, pin another file from Commons in
-its place, or re-fetch it by the rule, and accept or decline the better files accounts propose for
-it — by hand or from a tool with an API key, as [api-access.md](api-access.md#proposing-a-species-photo)
+daily totals of accounts created, sign-ins and active accounts; its *External Requests* screen
+counts, day by day, the requests this server sent to the weather, place-name, species and
+profile-picture services it uses, how each ended and how long it took, the ones answered from the
+cache or held back by the instance's own limit instead, and how close the busiest day came to that
+limit; and its *Species* screen lists the species catalog newest first, where you can hide a
+species' photo, pin another file from Commons in its place, or re-fetch it by the rule, and accept
+or decline the better files accounts propose for it — by hand or from a tool with an API key, as [api-access.md](api-access.md#proposing-a-species-photo)
 describes. Its *Proposed* chip counts the species with a proposal waiting.
 
 An invitation typed against an email address is an entry against that address: the invitee signs in
@@ -277,11 +280,14 @@ a database that already exists under a different name).
 | `FILE_STORAGE_BACKEND`   | `local`       | Where uploaded files are kept: `local` writes them into `FILE_STORAGE_DIR`, `s3` puts them in an S3-compatible bucket. The bundle mounts a volume for `local`, so a compose install on one machine has nothing to set here — see [Object storage](#object-storage) for the install that does. Any other value refuses to start.                             |
 | `FILE_STORAGE_DIR`       | `/data/files` | Where the `local` backend writes uploaded dive-computer exports, c-card images, profile pictures, portraits, species photographs and the [map tiles](#the-map-renderer) behind cards and page heads, inside the container. The compose file mounts the `files-data` volume there, so there is nothing to set unless you replaced that volume with a bind mount — and then the host directory has to be owned by uid 1000 or the API refuses to start. Ignored entirely under `s3`. |
 
-Redis holds cache entries, open rate-limit windows, in-flight passkey challenges and, for the
-[reuse grace](#sign-in), the answer each recent refresh was given. Losing it costs a cold cache,
-interrupts passkey sign-in until it is back and makes a refresh retried inside the grace sign in
-again; nothing durable lives there. What is durable lives in two places, and a backup has to cover
-both: the records are in Postgres, and the uploaded files themselves are on the `files-data` volume — or in
+Redis holds cache entries, open rate-limit windows, in-flight passkey challenges, for the
+[reuse grace](#sign-in) the answer each recent refresh was given, and the counts behind the Admin
+section's *External Requests* screen until the worker moves them into Postgres. The worker does that
+every five minutes, so normally Redis holds a few minutes' worth; while the worker is down they wait
+for it, and a count left unmoved for a week expires. Losing Redis costs a cold cache, interrupts
+passkey sign-in until it is back, makes a refresh retried inside the grace sign in again and leaves
+the counts not yet moved off that screen; nothing durable lives there. What is durable lives in two
+places, and a backup has to cover both: the records are in Postgres, and the uploaded files themselves are on the `files-data` volume — or in
 your bucket, if you switched the backend below. See [backup-restore.md](backup-restore.md).
 
 ### Object storage
