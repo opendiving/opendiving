@@ -201,7 +201,7 @@ Roughly in priority order — contributions welcome:
   released after v0.7.0. Gear with
   its sets and service, certifications with their card images, courses, people and contacts are
   added, edited and deleted on the phone too, with or without signal, beside a list of your dive
-  sites and the marine life you have logged. Nothing is in the App Store yet.
+  sites and the aquatic life you have logged. Nothing is in the App Store yet.
 
 ## How it compares
 
