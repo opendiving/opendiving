@@ -136,6 +136,11 @@ what you need, what the six values are, and what each container does.
   their account on the same instance by its username, if you choose, and you see that account's
   current username beside the name and nothing else of theirs; they are not told. A UDDF or
   Subsurface file's buddies and dive guides arrive as people.
+- **Custom properties** — whatever a record has no field for, as your own keys and values: a dive
+  computer's firmware and serial, a trip's booking reference, a site's mooring buoy. Dives, dive
+  sites, trips, courses, gear and gear sets, people, contacts and c-cards each carry them in the
+  order you wrote them, edited in the record's form and listed under its details. They travel with
+  the record through the API and the DiveJSON export, and an import brings them back.
 - **Full export** — one click takes _everything_ out in open formats: a
   **[DiveJSON](https://divejson.org)** document — the open dive-log interchange format this
   project publishes and implements — a **UDDF** document other programs import, a **CSV** for a
