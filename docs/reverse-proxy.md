@@ -221,7 +221,7 @@ Sign-in still needs a mail relay: the magic link has to reach an inbox. A LAN in
 `ENVIRONMENT=local` with no `SMTP_HOST`, which logs the link to `docker compose logs api` instead of
 emailing it — fine for one person who has shell access, and no way to onboard anyone else. That
 holds with invitations too: an invitation sent to an address is an email, and so is the sign-in link
-the invitee then needs, so both end up in your log rather than in their inbox. A member's invite link
+the invitee then needs, so both end up in your log rather than in their inbox. A member's connect link
 reaches people without any email, but whoever follows it still has to sign in, and that link ends up
 in the log the same way. Configure a relay before inviting anybody.
 

@@ -42,8 +42,8 @@ Point your domain's DNS record at the machine **before** starting the stack — 
 Let's Encrypt for a certificate as it starts, and it can only get one for a name that already
 resolves. Then open `https://your-domain`, press **Sign In**, ask for a link, and the first account
 to sign in is yours — it carries the operator's rights. A new install is invite-only, so everybody
-after you gets in by an invitation, sent to their address or handed over as a member's invite link
-and its QR code; `REGISTRATION_MODE=open` is the other setting, and the
+after you gets in by an invitation, sent to their address from the Admin section or handed over as
+a member's connect link and its QR code; `REGISTRATION_MODE=open` is the other setting, and the
 [configuration guide](docs/configuration.md#who-may-create-an-account) has both.
 
 That is the whole product: the web app, the API and its worker, PostgreSQL, Redis, and Caddy
@@ -132,9 +132,10 @@ what you need, what the six values are, and what each container does.
   part of a trip. A UDDF file's dive bases, shops and accommodation arrive as contacts.
 - **People** — who you dived, travelled and trained with: buddies, guides, instructors, fellow
   students, whoever came along. Each is kept once and picked from a list, with the role they had on
-  that dive, trip or course, and a course's or a c-card's instructor is one of them. Link one to
-  their account on the same instance by its username, if you choose, and you see that account's
-  current username beside the name and nothing else of theirs; they are not told. A UDDF or
+  that dive, trip or course, and a course's or a c-card's instructor is one of them. Connect one to
+  their account on the same instance by following their connect link or scanning its QR code, and
+  each of you sees the other's name, username and picture; they are told, and find you under
+  *Added you* on their People. A UDDF or
   Subsurface file's buddies and dive guides arrive as people.
 - **Full export** — one click takes _everything_ out in open formats: a
   **[DiveJSON](https://divejson.org)** document — the open dive-log interchange format this
