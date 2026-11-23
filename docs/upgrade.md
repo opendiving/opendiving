@@ -101,6 +101,23 @@ then the two lines in `.env` that [configuration.md](configuration.md#the-map-re
 after that, and stored for everybody. Leaving it off is a supported choice too, and the lighter one:
 the renderer adds roughly 210 MB of memory at its peak.
 
+## Members bring people in through a connect link
+
+From the release after 0.7.0, a member of an `invite` instance no longer invites an address. They
+bring somebody in through the **Connect link** on People instead: whoever follows it starts with the
+member in their People, and the member finds them under *Added you*. Nobody but you invites an
+address, from the Admin section —
+[configuration.md](configuration.md#who-may-create-an-account) has the whole of it. An invitation a
+member sent before the upgrade still admits its address until the worker deletes it, 90 days after it
+was sent, as it does every invitation nobody accepts.
+
+Two settings in `.env` change with it, and neither stops the API starting:
+
+- `INVITATION_ATTEMPT_RATE_LIMIT_PER_USER` is read by nothing, and can leave `.env`.
+- `PERSON_LINK_RATE_LIMIT_PER_USER` is now read as `PERSON_CONNECT_RATE_LIMIT_PER_USER`, and still
+  caps how many people one member's logbook imports may connect to accounts in a window. If you set
+  the old name, rename it; left as it is, it is ignored and the limit is the default, 10.
+
 ## Pin the version
 
 `OPENDIVING_VERSION` in `.env` selects the tag both images run, and it defaults to `latest`. Once
