@@ -189,7 +189,7 @@ Roughly in priority order — contributions welcome:
   them with `divejson-raw`, from [`divejson-c`](https://github.com/divejson/divejson-c), DiveJSON's
   C implementation — so a computer not read yet is a contribution to libdivecomputer or to that
   repository. An original the app downloaded before it began tagging each one with the computer it
-  came from is kept and never read.
+  came from is read too, the server having labelled each from the computer its recording names.
 - **Statistics** — depth and time records, dives per year.
 - **Sharing** — a public link to a dive or a trip.
 - **iOS companion app** — in development: a client of your own server, with your logbook and
