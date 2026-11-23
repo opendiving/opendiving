@@ -83,7 +83,7 @@ and revoke the old one.
 ## What a key cannot do
 
 - **No key can manage sign-in.** The routes for API keys, MCP connections, passkeys, signed-in
-  devices, the check-in link and the invite link, short-lived download links, the request to change the
+  devices, the check-in link and the connect link, short-lived download links, the request to change the
   sign-in email address, and deleting the account all answer a key with `403` `"This needs a
   signed-in browser or app, not an API key."` — whatever its permissions. A stolen key cannot lock
   you out or mint itself a successor.

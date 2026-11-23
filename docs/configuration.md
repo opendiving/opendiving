@@ -50,10 +50,9 @@ which is what this app did before the setting existed.
 
 | Variable                                   | Default  | What it does                                                                                                                                                                                                                                                                                                       |
 | ------------------------------------------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `REGISTRATION_MODE`                        | `invite` | `invite` admits only an address somebody already invited, or somebody who follows a member's invite link: the home page offers a stranger a **Request an invite** form instead of a sign-in form, and their address joins a queue you work through. `open` gives an account to anybody who proves they own an address. The first account on an empty instance needs no invitation in either mode — see below. An unknown value refuses to start. |
-| `INVITATIONS_PER_USER`                     | `5`      | How many invitations one member may make per window — addresses they invite and accounts created through their invite link, counted together. A rate, not a lifetime allotment. Counted from the invitations themselves, revoked ones included, so it bounds emails sent and sign-ups through the link alike; a member at it has a link that admits nobody not already invited. Superusers are exempt. |
+| `REGISTRATION_MODE`                        | `invite` | `invite` admits only an address that was invited, or somebody who follows a member's connect link: the home page offers a stranger a **Request an invite** form instead of a sign-in form, and their address joins a queue you work through. `open` gives an account to anybody who proves they own an address. The first account on an empty instance needs no invitation in either mode — see below. An unknown value refuses to start. |
+| `INVITATIONS_PER_USER`                     | `5`      | How many accounts one member may bring in per window through their connect link, on an `invite` instance. A rate, not a lifetime allotment. Counted from the invitations those sign-ups write, so a member at it has a link that admits nobody not already invited — it still connects anybody who has an account. Superusers are exempt. |
 | `INVITATIONS_WINDOW_DAYS`                  | `1`      | The window those are counted over.                                                                                                                                                                                                                                                                                 |
-| `INVITATION_ATTEMPT_RATE_LIMIT_PER_USER`   | `20`     | A separate backstop on how often one member may *attempt* an invitation, over `MAGIC_LINK_RATE_LIMIT_WINDOW_SECONDS`. Inviting an address that already has an account is refused without creating anything, so the quota above never charges for it; this is what stops that refusal being a probe. Superusers get it too. |
 | `INVITE_REQUEST_RATE_LIMIT_WINDOW_SECONDS` | `3600`   | The window for the two limits below, on the anonymous request-an-invite endpoint. Consulted only in `invite` mode.                                                                                                                                                                                                 |
 | `INVITE_REQUEST_RATE_LIMIT_PER_EMAIL`      | `3`      | Requests per window for one submitted address.                                                                                                                                                                                                                                                                     |
 | `INVITE_REQUEST_RATE_LIMIT_PER_IP`         | `10`     | Requests per window from one caller, subject to `TRUSTED_PROXY_IPS` being right.                                                                                                                                                                                                                                   |
@@ -65,9 +64,9 @@ instance has no invitations and nobody who could send one — and it is why noth
 a bootstrap script. It fires on the table being empty rather than once, so an instance whose last
 account is deleted and purged hands the same deal to whoever signs in next.
 
-**How you invite people.** Every member has an *Invitations* card in Settings, subject to the quota
-above, which invites an address or hands out that member's own invite link. As the operator you
-also get an **Admin** entry in the account menu — sign in as the first account, open the menu,
+**How people get in.** Every member has a **Connect link** in the header of People, on every
+instance: one link per member, shown as an address and a QR code to copy, share or scan. Nobody but
+the operator invites an address. As the operator you also get an **Admin** entry in the account menu — sign in as the first account, open the menu,
 choose *Admin*. Its *Invite Queue* lists the addresses that used the request form, tells you which
 of them already have an account, and invites or removes them in a batch; its *Stats* screen shows
 daily totals of accounts created, sign-ins and active accounts; its *External Requests* screen
@@ -79,14 +78,16 @@ species' photo, pin another file from Commons in its place, or re-fetch it by th
 or decline the better files accounts propose for it — by hand or from a tool with an API key, as [api-access.md](api-access.md#proposing-a-species-photo)
 describes. Its *Proposed* chip counts the species with a proposal waiting.
 
-An invitation typed against an email address is an entry against that address: the invitee signs in
-with the address that was invited — by link, code or Google, exactly as anybody else does — so there
-is no token for them to lose and nothing extra for you to explain. A member's **invite link** is the
-other kind: one per member, shown on their card as an address and a QR code to copy, share or scan.
-Whoever follows it creates an account with whatever address they sign in with, counted as that
-member's invitation, and the member sees them on the card by the name on their account rather than
-by address. Anybody holding the link can use it until its member resets or removes it on the same
-card. It sends no email of its own.
+An invitation from the queue is an entry against that address: the invitee signs in with the
+address that was invited — by link, code or Google, exactly as anybody else does — so there is no
+token for them to lose and nothing extra for you to explain. A member's **connect link** is the other
+kind. Somebody signed in who follows it puts the member in their People, connected, and somebody new
+creates an account with whatever address they sign in with and starts with the member in their
+People the same way; on an `invite` instance that account is counted as the member's invitation,
+under the quota above, and on an `open` one it is counted as nothing, since anybody may register
+there anyway. A connection shows each side the other's name, username and picture, and the member
+finds whoever connected under *Added you* on People. Anybody holding the link can use it until its
+member resets or removes it. It sends no email of its own.
 
 Somebody who is not invited still gets their sign-in email. The endpoint that sends it deliberately
 never learns whether an address is invited, or even whether it has an account, which is what keeps

@@ -569,8 +569,9 @@ printf '  to sign in is yours, with the rights to invite everybody else. Certifi
 printf '  images and migrations all happen on that first start; docker compose logs -f is\n'
 printf '  where it reports in.\n\n'
 printf '  This instance is invite-only, which is the default: the home page offers a\n'
-printf '  stranger a request form rather than a sign-in form, and you invite from Settings\n'
-printf '  or from the Admin section. REGISTRATION_MODE in .env is the other setting.\n\n'
+printf '  stranger a request form rather than a sign-in form, and you invite from the\n'
+printf '  Admin section or with your connect link on People. REGISTRATION_MODE in .env is\n'
+printf '  the other setting.\n\n'
 
 if [ "$DNS_CONFIRMED" != "1" ]; then
     printf '  %s!%s Point %s at this machine %sbefore%s that command.\n\n' "$YELLOW" "$OFF" "$DOMAIN" "$BOLD" "$OFF"
