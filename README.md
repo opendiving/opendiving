@@ -159,9 +159,10 @@ what you need, what the six values are, and what each container does.
   computer and how a tool with an [API key](docs/api-access.md#importing-dives) brings dives in.
   Each import's review stays as history, thirty days by default and just as
   configurable, with a log of what its files did not record, what the import worked out, and which
-  of the dive's values it left out. Records you already have are matched rather than duplicated, a
-  dive you deleted stays deleted, and the full archive restores the files it carries too. An exit
-  door you cannot walk back through is only half of owning your data.
+  of the dive's values it left out. Records you already have are matched rather than duplicated, so
+  a file of a dive you merged adds no dive; a record you deleted and import again is added as a new
+  one, and the full archive restores the files it carries too. An exit door you cannot walk back
+  through is only half of owning your data.
 - **Year in review** — each January, an email with the year before in figures: dives and time
   underwater, the deepest and longest, dive sites, and species with the ones you saw for the first
   time.
