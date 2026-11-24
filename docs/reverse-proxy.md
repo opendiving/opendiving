@@ -110,6 +110,14 @@ new. Pass `Authorization`, `Host` and `Origin` through unchanged, and `WWW-Authe
 401: it is how a client finds the OAuth server. A hop that changes `Host` needs that value in
 [`MCP_ALLOWED_HOSTS`](configuration.md#optional-features).
 
+## The iOS app's links
+
+With [`IOS_APP_ID`](configuration.md#optional-features) set, iOS learns which app opens this
+instance's links from `/.well-known/apple-app-site-association`, which the web container serves
+itself. Hand that path to the web container without a redirect, since Apple does not follow one,
+and from the internet, since Apple's CDN is what fetches it. A proxy that sends everything to
+`web:3000`, like the snippets below and the bundled Caddyfile, already does.
+
 ## Snippets
 
 Adapt the upstream host to however your proxy reaches the stack.

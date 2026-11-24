@@ -166,6 +166,10 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       WEB_HSTS: ${WEB_HSTS:-}
       WEB_NOINDEX: ${WEB_NOINDEX:-}
+      # The iOS app this instance's links open, named in the file iOS reads at
+      # `/.well-known/apple-app-site-association`. Empty, that path is a 404. Only an
+      # operator who builds the app themselves has a value for it - see example.env.
+      IOS_APP_ID: ${IOS_APP_ID:-}
     expose:
       - "3000"
     # The image carries its own healthcheck (`GET /healthz`).
