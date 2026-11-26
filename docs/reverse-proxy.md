@@ -113,10 +113,10 @@ new. Pass `Authorization`, `Host` and `Origin` through unchanged, and `WWW-Authe
 ## The iOS app's links
 
 With [`IOS_APP_ID`](configuration.md#optional-features) set, iOS learns which app opens this
-instance's links from `/.well-known/apple-app-site-association`, which the web container serves
-itself. Hand that path to the web container without a redirect, since Apple does not follow one,
-and from the internet, since Apple's CDN is what fetches it. A proxy that sends everything to
-`web:3000`, like the snippets below and the bundled Caddyfile, already does.
+instance's links, and may use its passkeys, from `/.well-known/apple-app-site-association`, which
+the web container serves itself. Hand that path to the web container without a redirect, since
+Apple does not follow one, and from the internet, since Apple's CDN is what fetches it. A proxy that
+sends everything to `web:3000`, like the snippets below and the bundled Caddyfile, already does.
 
 ## Snippets
 
