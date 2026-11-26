@@ -110,8 +110,7 @@ appears if you set `GOOGLE_CLIENT_ID`. **Passkeys** appear when the visitor's br
 WebAuthn against this instance, which is a property of how you deployed it rather than a setting —
 see below. The iOS app offers them only on an instance its build carries the domain of, which for
 the project's own build is the project's instance alone; an operator's own build does so here once
-[`IOS_APP_ID`](#optional-features) names it. Anywhere else the app offers no passkey, and its
-Settings say passkeys are added on the web.
+[`IOS_APP_ID`](#optional-features) names it. Anywhere else the app offers no passkey.
 
 Nothing here is required. The defaults are the tested configuration, and an instance that sets none
 of it still has working sign-in as long as mail is delivered. Who is *allowed* to end up with an
