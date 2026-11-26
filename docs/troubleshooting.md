@@ -178,8 +178,8 @@ delete `/admin*` from the `@api path` line by hand.
 
 ## No passkey option, or a passkey that never works
 
-Passkeys are offered by the browser, not by a setting — there is no switch to check. Where they are
-missing or failing, it is one of four things, in order of likelihood:
+In a browser, passkeys are offered by the browser, not by a setting — there is no switch to check.
+Where they are missing or failing, it is one of four things, in order of likelihood:
 
 - **The instance is on plain HTTP.** Browsers expose WebAuthn only in a secure context, so the
   option is correctly absent. Email sign-in is unaffected.
@@ -199,6 +199,12 @@ missing or failing, it is one of four things, in order of likelihood:
 **And after a domain change, every existing passkey is gone.** Browsers scope a credential to the
 hostname it was created under, so moving `FRONTEND_URL` to a new one silently orphans them all.
 Everyone signs in by email once and adds a passkey again; nobody is locked out.
+
+**The iOS app is the exception.** It offers a passkey only on the instance its build carries the
+domain of, so the project's own build offers none on yours. An operator's own build needs that
+domain switched on and [`IOS_APP_ID`](configuration.md#optional-features) naming it, as the app's
+[CONTRIBUTING.md](https://github.com/opendiving/opendiving-ios/blob/main/CONTRIBUTING.md#links-that-open-the-app)
+describes.
 
 ## Signing in works, then a reload signs me out
 
